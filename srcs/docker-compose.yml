@@ -20,9 +20,6 @@ services:
       - ./backend:/app
     env_file:
       - .env
-    # In production, we will use expose instead of ports
-    #expose:
-    #  - "8000"
     ports:
       - "8000:8000"
     depends_on:
@@ -30,17 +27,17 @@ services:
     networks:
       - transcendence
 
-  #frontend:
-  #  build:
-  #    context: ./frontend
-  #    dockerfile: Dockerfile
-  #  ports:
-  #    - "3000:3000"
-  #  networks:
-  #    - transcendence
-  #  volumes:
-  #    - ./frontend:/app
-  #  command: npm start
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - transcendence
+    volumes:
+      - ./frontend:/app
+    command: npm start
 
 networks:
   transcendence:
