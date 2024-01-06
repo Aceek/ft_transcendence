@@ -1,22 +1,24 @@
+COMPOSE = ./srcs/docker-compose.yml
+
 all:
-	@docker compose -f ./srcs/docker-compose.yml up -d --build
+	@docker-compose -f $(COMPOSE) up -d --build
 
 down:
-	@docker compose -f ./srcs/docker-compose.yml down
+	@docker-compose -f $(COMPOSE) down
 
 re: fclean all
 
 clean:
-	@docker-compose -f srcs/docker-compose.yml down --volumes --remove-orphans
+	@docker-compose -f $(COMPOSE) down --volumes --remove-orphans
 
 fclean : clean
 	docker rmi $$(docker images -q)
 
 logs:
-	@docker compose -f ./srcs/docker-compose.yml logs
+	@docker-compose -f $(COMPOSE) logs
 
 ps:
-	@docker compose -f ./srcs/docker-compose.yml ps
+	@docker-compose -f $(COMPOSE) ps
 
 ssh:
-	@docker compose -f ./srcs/docker-compose.yml exec $(s) /bin/bash
+	@docker-compose -f $(COMPOSE) exec $(s) /bin/bash
