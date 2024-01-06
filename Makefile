@@ -19,4 +19,4 @@ ps:
 	@docker compose -f ./srcs/docker-compose.yml ps
 
 ssh:
-	@docker compose -f ./srcs/docker-compose.yml exec $(service) /bin/bash
+	@docker compose -f ./srcs/docker-compose.yml exec $(s) /bin/bash
