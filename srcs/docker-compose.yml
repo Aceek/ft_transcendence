@@ -5,10 +5,10 @@ services:
     image: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: nom_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+    env_file:
+      - .env
+    expose:
+      - "5432"
     networks:
       - transcendence
 
@@ -16,9 +16,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - ./backend:/code
+      - ./backend:/app
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     depends_on:
