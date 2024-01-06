@@ -7,5 +7,6 @@ WORKDIR /app
 COPY . /app/
 
 RUN pip install -r requirements.txt
+	&& python3 manage.py migrate
 
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+ENTRYPOINT ["python3", "manage.py", "runserver"]
