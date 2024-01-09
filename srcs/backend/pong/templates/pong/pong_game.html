@@ -1,4 +1,5 @@
 <!-- pong_game.html -->
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -6,10 +7,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'pong/pong.css' %}">
-    <script src="{% static 'pong/pong.js' %}" defer></script>
-    <!-- Additional head content -->
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geo&display=swap">
+
+    <title>Pong Game</title>
 </head>
 <body>
-    <!-- Your HTML content -->
+    <canvas id="pongCanvas" width="800" height="400"></canvas>
+    <script src="{% static 'pong/pong.js' %}" defer></script>
 </body>
 </html>
+
