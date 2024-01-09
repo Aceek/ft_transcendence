@@ -1,8 +1,26 @@
+# Asgiref est un package utilisé par Django pour gérer la communication asynchrone dans les applications web.
 asgiref==3.7.2
+
+# Decouple est un package qui facilite la gestion des paramètres et des configurations de votre application en utilisant des fichiers de configuration ou des variables d'environnement.
 decouple==0.0.7
+
+# Django est le framework web Python populaire backend qui est utilisé pour créer des applications web.
 Django==5.0.1
+
+# Django REST framework (DRF) est une extension de Django qui facilite la création d'API RESTful pour votre application web.
 djangorestframework==3.14.0
+
+# psycopg2-binary est un adaptateur de base de données PostgreSQL pour Python, utilisé pour connecter votre application Django à une base de données PostgreSQL.
 psycopg2-binary==2.9.9
+
+# pytz est une bibliothèque Python qui facilite la gestion des fuseaux horaires.
 pytz==2023.3.post1
+
+# sqlparse est un analyseur SQL en Python utilisé pour formater et analyser des requêtes SQL.
 sqlparse==0.4.4
+
+# typing_extensions est une extension du module `typing` de Python, qui fournit des outils pour l'annotation de type plus avancée.
 typing_extensions==4.9.0
+
+# drf-yasg (Yet Another Swagger Generator) est un package qui simplifie la génération de la documentation Swagger (ou OpenAPI) pour les API créées avec Django REST framework.
+drf-yasg==1.21.7
