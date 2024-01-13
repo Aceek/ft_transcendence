@@ -22,5 +22,5 @@ sqlparse==0.4.4
 # typing_extensions est une extension du module `typing` de Python, qui fournit des outils pour l'annotation de type plus avancée.
 typing_extensions==4.9.0
 
-# drf-yasg (Yet Another Swagger Generator) est un package qui simplifie la génération de la documentation Swagger (ou OpenAPI) pour les API créées avec Django REST framework.
-drf-yasg==1.21.7
+# drf-specacular est un package qui génère automatiquement une documentation OpenAPI pour votre API RESTful.
+drf-spectacular
