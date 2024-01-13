@@ -24,3 +24,8 @@ typing_extensions==4.9.0
 
 # drf-specacular est un package qui génère automatiquement une documentation OpenAPI pour votre API RESTful.
 drf-spectacular
+
+# pillow est une bibliothèque Python qui prend en charge l'ouverture, la manipulation et l'enregistrement de nombreux formats d'image différents.
+pillow==10.2.0
+
+python-magic==0.4.27

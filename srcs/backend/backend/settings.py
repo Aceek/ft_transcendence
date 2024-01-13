@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from os import environ
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -36,14 +37,24 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Description de votre API",
 }
 
-
+# DRF settings
 REST_FRAMEWORK = {
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+# Custom user model
+AUTH_USER_MODEL = "CustomUser.CustomUser"
+
+# Chemin où les fichiers médias sont stockés sur le serveur
+MEDIA_ROOT = BASE_DIR / "media"
+
+# URL publique pour accéder aux fichiers médias
+MEDIA_URL = "/media/"
 
 # Application definition
 
 INSTALLED_APPS = [
+    "CustomUser",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -88,14 +99,22 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": environ.get("POSTGRES_DB"),
+#         "USER": environ.get("POSTGRES_USER"),
+#         "PASSWORD": environ.get("POSTGRES_PASSWORD"),
+#         "HOST": environ.get("POSTGRES_HOST"),
+#         "PORT": environ.get("POSTGRES_PORT"),
+#     }
+# }
+
+#dev database
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": environ.get("POSTGRES_DB"),
-        "USER": environ.get("POSTGRES_USER"),
-        "PASSWORD": environ.get("POSTGRES_PASSWORD"),
-        "HOST": environ.get("POSTGRES_HOST"),
-        "PORT": environ.get("POSTGRES_PORT"),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
