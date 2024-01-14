@@ -58,6 +58,7 @@ MEDIA_URL = "/media/"
 
 INSTALLED_APPS = [
     "CustomUser",
+    "authentication",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -131,6 +132,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -138,6 +142,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+    {
+        'NAME': 'authentication.validators.Minimum1UppercaseValidator',
+    },
+    {
+        'NAME': 'authentication.validators.Minimum1LowercaseValidator',
+    },
+    {
+        'NAME': 'authentication.validators.Minimum1NumberValidator',
+    },
+    {
+        'NAME': 'authentication.validators.Minimum1SpecialCharacterValidator',
+    }
 ]
 
 
