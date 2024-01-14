@@ -8,6 +8,29 @@ class AuthenticationConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "authentication"
 
+@register
+def check_jwt_installed_app(app_configs, **kwargs):
+    if "rest_framework_simplejwt" not in settings.INSTALLED_APPS:
+        return [
+            Error(
+                "rest_framework_simplejwt not found in INSTALLED_APPS",
+                hint="Add 'rest_framework_simplejwt' to INSTALLED_APPS in settings.py",
+                id="authentication.E000",
+            )
+        ]
+    return []
+
+@register
+def check_jwt_blacklist_installed_app(app_configs, **kwargs):
+    if "rest_framework_simplejwt.token_blacklist" not in settings.INSTALLED_APPS:
+        return [
+            Error(
+                "rest_framework_simplejwt.token_blacklist not found in INSTALLED_APPS",
+                hint="Add 'rest_framework_simplejwt.token_blacklist' to INSTALLED_APPS in settings.py",
+                id="authentication.E008",
+            )
+        ]
+    return []
 
 @register
 def check_auth_backends(app_configs, **kwargs):
