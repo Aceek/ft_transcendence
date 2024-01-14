@@ -1,31 +1,28 @@
-# Asgiref est un package utilisé par Django pour gérer la communication asynchrone dans les applications web.
 asgiref==3.7.2
-
-# Decouple est un package qui facilite la gestion des paramètres et des configurations de votre application en utilisant des fichiers de configuration ou des variables d'environnement.
+attrs==23.2.0
+certifi==2023.11.17
+charset-normalizer==3.3.2
 decouple==0.0.7
-
-# Django est le framework web Python populaire backend qui est utilisé pour créer des applications web.
 Django==5.0.1
-
-# Django REST framework (DRF) est une extension de Django qui facilite la création d'API RESTful pour votre application web.
 djangorestframework==3.14.0
-
-# psycopg2-binary est un adaptateur de base de données PostgreSQL pour Python, utilisé pour connecter votre application Django à une base de données PostgreSQL.
-psycopg2-binary==2.9.9
-
-# pytz est une bibliothèque Python qui facilite la gestion des fuseaux horaires.
-pytz==2023.3.post1
-
-# sqlparse est un analyseur SQL en Python utilisé pour formater et analyser des requêtes SQL.
-sqlparse==0.4.4
-
-# typing_extensions est une extension du module `typing` de Python, qui fournit des outils pour l'annotation de type plus avancée.
-typing_extensions==4.9.0
-
-# drf-specacular est un package qui génère automatiquement une documentation OpenAPI pour votre API RESTful.
-drf-spectacular
-
-# pillow est une bibliothèque Python qui prend en charge l'ouverture, la manipulation et l'enregistrement de nombreux formats d'image différents.
+djangorestframework-simplejwt==5.3.1
+drf-spectacular==0.27.0
+idna==3.6
+inflection==0.5.1
+jsonschema==4.20.0
+jsonschema-specifications==2023.12.1
+oauthlib==3.2.2
 pillow==10.2.0
-
+psycopg2-binary==2.9.9
+PyJWT==2.8.0
 python-magic==0.4.27
+pytz==2023.3.post1
+PyYAML==6.0.1
+referencing==0.32.1
+requests==2.31.0
+requests-oauthlib==1.3.1
+rpds-py==0.17.1
+sqlparse==0.4.4
+typing_extensions==4.9.0
+uritemplate==4.1.1
+urllib3==2.1.0
