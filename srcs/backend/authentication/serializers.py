@@ -134,12 +134,11 @@ class User42Serializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def create(self, validated_data):
-        User = get_user_model()
-        user, created = User.objects.get_or_create(email=validated_data["email"])
+        user, created = get_user_model().objects.get_or_create(email=validated_data["email"])
         if created:
             user.set_unusable_password()
             username = validated_data["login"]
-            while User.objects.filter(username=username).exists():
+            while user.objects.filter(username=username).exists():
                 username = generate_random_username()
             user.username = username
             user.save()
@@ -164,9 +163,8 @@ class OAuth42Serializer(serializers.Serializer):
             serializer = User42Serializer(data=user_data)
             if serializer.is_valid():
                 user = serializer.save()
-                if self.user.is_2fa_enabled:
-                    if self.user.is_2fa_enabled:
-                        instance_2fa = initiate_2fa(self.user)
+                if user.is_2fa_enabled:
+                    instance_2fa = initiate_2fa(self.user)
                     return {
                         "detail": "2FA code sent to your email.",
                         "2FA": f"{instance_2fa.token}",
