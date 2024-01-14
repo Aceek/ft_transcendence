@@ -8,29 +8,6 @@ class AuthenticationConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "authentication"
 
-@register
-def check_jwt_installed_app(app_configs, **kwargs):
-    if "rest_framework_simplejwt" not in settings.INSTALLED_APPS:
-        return [
-            Error(
-                "rest_framework_simplejwt not found in INSTALLED_APPS",
-                hint="Add 'rest_framework_simplejwt' to INSTALLED_APPS in settings.py",
-                id="authentication.E000",
-            )
-        ]
-    return []
-
-@register
-def check_jwt_blacklist_installed_app(app_configs, **kwargs):
-    if "rest_framework_simplejwt.token_blacklist" not in settings.INSTALLED_APPS:
-        return [
-            Error(
-                "rest_framework_simplejwt.token_blacklist not found in INSTALLED_APPS",
-                hint="Add 'rest_framework_simplejwt.token_blacklist' to INSTALLED_APPS in settings.py",
-                id="authentication.E008",
-            )
-        ]
-    return []
 
 @register
 def check_auth_backends(app_configs, **kwargs):
@@ -170,5 +147,43 @@ def check_2fa_field_user_model(app_configs, **kwargs):
             "is_2fa_enabled not found in user model",
             hint="Add is_2fa_enabled as a BooleanField to user model",
             id="authentication.E007",
+        )
+    ]
+
+@register
+def check_jwt_blacklist_installed_app(app_configs, **kwargs):
+    if "rest_framework_simplejwt.token_blacklist" not in settings.INSTALLED_APPS:
+        return [
+            Error(
+                "rest_framework_simplejwt.token_blacklist not found in INSTALLED_APPS",
+                hint="Add 'rest_framework_simplejwt.token_blacklist' to INSTALLED_APPS in settings.py",
+                id="authentication.E008",
+            )
+        ]
+    return []
+
+@register
+def check_jwt_installed_app(app_configs, **kwargs):
+    if "rest_framework_simplejwt" not in settings.INSTALLED_APPS:
+        return [
+            Error(
+                "rest_framework_simplejwt not found in INSTALLED_APPS",
+                hint="Add 'rest_framework_simplejwt' to INSTALLED_APPS in settings.py",
+                id="authentication.E009",
+            )
+        ]
+    return []
+
+@register
+def check_2fa_field_user_model(app_configs, **kwargs):
+    user_model = get_user_model()
+    fields = [field.name for field in user_model._meta.get_fields()]
+    if "id" in fields:
+        return []
+    return [
+        Error(
+            "id not found in user model",
+            hint="Add id primary key to user model",
+            id="authentication.E010",
         )
     ]
