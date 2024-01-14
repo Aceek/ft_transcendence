@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 from .storage import OverwriteStorage
@@ -31,6 +31,7 @@ class CustomUser(AbstractUser):
     username = models.CharField(
         max_length=20, unique=True, validators=[validate_username]
     )
+    is_active = models.BooleanField(default=False)
     avatar = models.ImageField(
         upload_to=avatar_image_path,
         storage=OverwriteStorage(),
@@ -54,3 +55,10 @@ def delete_avatar(sender, instance, **kwargs):
     if os.path.exists(user_uid_folder):
         if not os.listdir(user_uid_folder):
             os.rmdir(user_uid_folder)
+
+@receiver(pre_save, sender=CustomUser)
+def update_is_active_if_email_changed(sender, instance, **kwargs):
+    if instance.pk:
+        old_email = CustomUser.objects.get(pk=instance.pk).email
+        if old_email != instance.email:
+            instance.is_active = False
