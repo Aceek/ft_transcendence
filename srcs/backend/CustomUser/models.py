@@ -24,7 +24,7 @@ def avatar_image_path(instance, filename):
 
 
 class CustomUser(AbstractUser):
-    uid = models.UUIDField(
+    id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     email = models.EmailField(unique=True)
@@ -44,6 +44,7 @@ class CustomUser(AbstractUser):
             validate_image_dimensions,
         ],
     )
+    is_2fa_enabled = models.BooleanField(default=False)
 
 
 @receiver(pre_delete, sender=CustomUser)
@@ -58,7 +59,12 @@ def delete_avatar(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=CustomUser)
 def update_is_active_if_email_changed(sender, instance, **kwargs):
-    if instance.pk:
-        old_email = CustomUser.objects.get(pk=instance.pk).email
-        if old_email != instance.email:
+    if instance._state.adding:
+        return
+    try:
+        old_instance = CustomUser.objects.get(pk=instance.pk)
+        if old_instance.email != instance.email:
             instance.is_active = False
+            print("change")
+    except CustomUser.DoesNotExist:
+        pass
