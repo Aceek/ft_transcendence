@@ -29,3 +29,5 @@ drf-spectacular
 pillow==10.2.0
 
 python-magic==0.4.27
+
+requests==2.31.0

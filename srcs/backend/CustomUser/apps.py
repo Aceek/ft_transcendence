@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.checks import register, Error, Warning
+import os
 
 
 @register()
@@ -44,6 +45,19 @@ def check_auth_user_model(app_configs, **kwargs):
                 "AUTH_USER_MODEL is not set correctly",
                 hint='Ensure AUTH_USER_MODEL is set to "CustomUser.CustomUser" in your settings.py',
                 id="custom_user.E001",
+            )
+        )
+    return errors
+
+@register() #check if env HOST variable is set
+def check_host(app_configs, **kwargs):
+    errors = []
+    if not os.environ.get("HOST"):
+        errors.append(
+            Error(
+                "HOST environment variable is not set",
+                hint="Set HOST environment variable to your domain name",
+                id="custom_user.E002",
             )
         )
     return errors
