@@ -20,7 +20,7 @@ def avatar_image_path(instance, filename):
     ext = filename.split(".")[-1]
     new_filename = f"{instance.username}_pp.{ext}"
 
-    return os.path.join(f"avatars/{instance.uid}", new_filename)
+    return os.path.join(f"avatars/{instance.id}", new_filename)
 
 
 class CustomUser(AbstractUser):
@@ -52,7 +52,7 @@ def delete_avatar(sender, instance, **kwargs):
     if instance.avatar:
         if os.path.isfile(instance.avatar.path):
             os.remove(instance.avatar.path)
-    user_uid_folder = os.path.join(settings.MEDIA_ROOT, "avatars", str(instance.uid))
+    user_uid_folder = os.path.join(settings.MEDIA_ROOT, "avatars", str(instance.id))
     if os.path.exists(user_uid_folder):
         if not os.listdir(user_uid_folder):
             os.rmdir(user_uid_folder)
