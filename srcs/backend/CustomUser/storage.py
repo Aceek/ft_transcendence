@@ -1,7 +1,7 @@
 from django.core.files.storage import get_storage_class
 
+
 class OverwriteStorage(get_storage_class()):
-    
     def _save(self, name, content):
         self.delete(name)
         return super(OverwriteStorage, self)._save(name, content)

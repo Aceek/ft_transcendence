@@ -44,12 +44,13 @@ class CustomUser(AbstractUser):
         ],
     )
 
+
 @receiver(pre_delete, sender=CustomUser)
 def delete_avatar(sender, instance, **kwargs):
     if instance.avatar:
         if os.path.isfile(instance.avatar.path):
             os.remove(instance.avatar.path)
-    user_uid_folder = os.path.join(settings.MEDIA_ROOT, 'avatars', str(instance.uid))
+    user_uid_folder = os.path.join(settings.MEDIA_ROOT, "avatars", str(instance.uid))
     if os.path.exists(user_uid_folder):
         if not os.listdir(user_uid_folder):
             os.rmdir(user_uid_folder)

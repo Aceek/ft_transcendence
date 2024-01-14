@@ -37,6 +37,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Description de votre API",
 }
 
+# Define in environement variables !!
+SECRET_KEY = "(gw2z)6h-00%6(flz0_y4t^ln(c8y8d5_+hf(fq1%$7+r5rumt"
+
 # DRF settings
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

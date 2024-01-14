@@ -5,6 +5,10 @@ from PIL import Image
 
 import re
 
+MAX_WIDTH = 450
+MAX_HEIGHT = 450
+MIN_WIDTH = 100
+MIN_HEIGHT = 100
 
 def validate_username(username):
     if len(username) < 4 or len(username) > 20:
@@ -33,19 +37,16 @@ def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png"]):
 
 
 def validate_image_dimensions(value):
-    min_width = 100
-    max_width = 450
-    min_height = 100
-    max_height = 450
 
     image = Image.open(value)
     width, height = image.size
+    print("image.size = ", image.size)
 
-    if width < min_width or height < min_height:
+    if width < MIN_WIDTH or height < MIN_HEIGHT:
         raise ValidationError(
             "Les dimensions de l'image doivent être au moins de 100x100 pixels."
         )
-    if width > max_width or height > max_height:
+    if width > MAX_WIDTH or height > MAX_HEIGHT:
         raise ValidationError(
             "Les dimensions de l'image ne doivent pas dépasser 450x450 pixels."
         )
