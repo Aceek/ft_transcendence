@@ -28,7 +28,7 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ.get("DEBUG_VAR")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["ft-transcendence.fr"]
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
@@ -36,9 +36,6 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Votre API",
     "DESCRIPTION": "Description de votre API",
 }
-
-# Define in environement variables !!
-SECRET_KEY = "(gw2z)6h-00%6(flz0_y4t^ln(c8y8d5_+hf(fq1%$7+r5rumt"
 
 # DRF settings
 REST_FRAMEWORK = {
@@ -67,6 +64,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "drf_spectacular",
     "rest_framework",
+    'rest_framework_simplejwt',
+	'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -168,7 +167,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
@@ -178,3 +176,25 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'authentication.backends.EmailModelBackend',
+]
+
+OAUTH_UID = environ.get("OAUTH_UID")
+
+OAUTH_REDIRECT_URI = environ.get("OAUTH_REDIRECT_URI")
+
+OAUTH_SECRET = environ.get("OAUTH_SECRET")
+
+EMAIL_HOST = environ.get("EMAIL_HOST")
+
+EMAIL_USE_TLS = environ.get("EMAIL_USE_TLS")
+
+EMAIL_PORT = environ.get("EMAIL_PORT")
+
+EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
+
+EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
+
