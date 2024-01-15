@@ -36,33 +36,33 @@ import os
 #         send_mail(subject, message, from_email, recipient_list, fail_silently=False)
 
 
-class VerifyEmailSerializer(serializers.Serializer):
-    uid = serializers.CharField()
+# class VerifyEmailSerializer(serializers.Serializer):
+#     uid = serializers.CharField()
 
-    def validate(self, attrs):
-        try:
-            uid = attrs["uid"]
-            user = get_user_model().objects.get(pk=uid)
-            if not user:
-                raise serializers.ValidationError("Invalid user.")
-            if user.is_active:
-                raise serializers.ValidationError("Account already activated.")
-        except Exception:
-            raise serializers.ValidationError("Invalid verification link.")
-        return attrs
+#     def validate(self, attrs):
+#         try:
+#             uid = attrs["uid"]
+#             user = get_user_model().objects.get(pk=uid)
+#             if not user:
+#                 raise serializers.ValidationError("Invalid user.")
+#             if user.is_active:
+#                 raise serializers.ValidationError("Account already activated.")
+#         except Exception:
+#             raise serializers.ValidationError("Invalid verification link.")
+#         return attrs
 
-    def send_mail(self):
-        user = get_user_model().objects.get(pk=self.validated_data["uid"])
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-        domain = os.environ.get("HOST")
-        url_api = reverse(
-            "email-verification:email-verification"
-        )  # a changer par la bonne view (url_api)
-        verification_link = f"{domain}{url_api}?uid={uid}&token{token}/"
+#     def send_mail(self):
+#         user = get_user_model().objects.get(pk=self.validated_data["uid"])
+#         uid = urlsafe_base64_encode(force_bytes(user.pk))
+#         token = default_token_generator.make_token(user)
+#         domain = os.environ.get("HOST")
+#         url_api = reverse(
+#             "email-verification:email-verification"
+#         )  # a changer par la bonne view (url_api)
+#         verification_link = f"{domain}{url_api}?uid={uid}&token{token}/"
 
-        subject = "Vérification d'e-mail"
-        message = f"Cliquez sur ce lien pour vérifier votre adresse e-mail : {verification_link}"
-        recipient_list = [user.email]
+#         subject = "Vérification d'e-mail"
+#         message = f"Cliquez sur ce lien pour vérifier votre adresse e-mail : {verification_link}"
+#         recipient_list = [user.email]
 
-        send_mail(subject, message, None, recipient_list, fail_silently=False)
+#         send_mail(subject, message, None, recipient_list, fail_silently=False)

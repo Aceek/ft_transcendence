@@ -61,23 +61,7 @@ def delete_avatar(sender, instance, **kwargs):
 
 
 def send_api_verification_email(uid):
-    url_relative = reverse("email-verification:email-verification")
-
-    # Construire l'URL complète avec le nom de domaine
-    domain = os.environ.get("HOST")  # get the domain name from the environment variable
-    complete_url = f"{domain}{url_relative}?uid={uid}"
-    try:
-        # Envoyer la requête GET à l'URL
-        response = requests.get(complete_url)
-
-        # Vérifier si la réponse est réussie (statut HTTP 200)
-        if response.status_code == 200:
-            print("Requête GET réussie.")
-        else:
-            print(f"Échec de la requête GET avec le statut : {response.status_code}")
-
-    except requests.exceptions.RequestException as e:
-        print(f"Erreur lors de l'envoi de la requête GET : {str(e)}")
+    print("j'envoi l'email frero\n")
 
 
 @receiver(pre_save, sender=CustomUser)

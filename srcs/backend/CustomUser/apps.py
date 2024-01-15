@@ -48,19 +48,6 @@ def check_auth_user_model(app_configs, **kwargs):
         )
     return errors
 
-@register() #check if env HOST variable is set
-def check_host(app_configs, **kwargs):
-    errors = []
-    if not os.environ.get("HOST"):
-        errors.append(
-            Error(
-                "HOST environment variable is not set",
-                hint="Set HOST environment variable to your domain name",
-                id="custom_user.E002",
-            )
-        )
-    return errors
-
 
 class CustomuserConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
