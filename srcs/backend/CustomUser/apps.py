@@ -21,7 +21,6 @@ def check_settings(app_configs, **kwargs):
 
 @register()
 def check_media_url(app_configs, **kwargs):
-    print(settings.MEDIA_URL)
     warnings = []
     if hasattr(settings, "MEDIA_URL"):
         # Vérification si MEDIA_URL est vide ou égale à "/"
