@@ -15,6 +15,7 @@ from .serializers import (
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = RegisterSerializer
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -30,6 +31,7 @@ class LoginView(TokenObtainPairView):
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = LogoutSerializer
 
     def post(self, request):
         serializer = LogoutSerializer(data=request.data)
@@ -41,6 +43,7 @@ class LogoutView(APIView):
 
 class OAuth42View(APIView):
     permission_classes = [AllowAny]
+    serializer_class = OAuth42Serializer
 
     def get(self, request):
         serializer = OAuth42Serializer(data=request.GET)
@@ -51,6 +54,7 @@ class OAuth42View(APIView):
 
 class VerifyEmailView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = VerifyEmailSerializer
 
     def get(self, request, *args, **kwargs):
         serializer = VerifyEmailSerializer(data=request.GET)
@@ -67,6 +71,7 @@ class VerifyEmailView(APIView):
 
 class TwoFactorVerifyView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = TwoFactorValidateSerializer
 
     def post(self, request):
         serializer = TwoFactorValidateSerializer(data=request.data)
