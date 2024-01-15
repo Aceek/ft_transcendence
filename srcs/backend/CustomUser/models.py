@@ -13,7 +13,6 @@ from .validators import (
     validate_image_ext,
 )
 
-import requests
 import uuid
 import os
 
@@ -34,6 +33,7 @@ class CustomUser(AbstractUser):
         max_length=20, unique=True, validators=[validate_username]
     )
     is_active = models.BooleanField(default=False)
+    is_2fa_enabled = models.BooleanField(default=False)
     avatar = models.ImageField(
         upload_to=avatar_image_path,
         storage=OverwriteStorage(),
@@ -46,7 +46,7 @@ class CustomUser(AbstractUser):
             validate_image_dimensions,
         ],
     )
-    is_2fa_enabled = models.BooleanField(default=False)
+    friends = models.ManyToManyField("self", blank=True, symmetrical=False)
 
 
 @receiver(pre_delete, sender=CustomUser)
@@ -71,4 +71,3 @@ def update_is_active_if_email_changed(sender, instance, **kwargs):
             send_verification_email(instance)
     except CustomUser.DoesNotExist:
         pass
-
