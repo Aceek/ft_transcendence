@@ -32,7 +32,7 @@ ALLOWED_HOSTS = ["ft-transcendence.fr"]
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
-    "SCHEMA_PATH_FUNC": "path.to.your.schema.view",
+    "SCHEMA_PATH_FUNC": ".",
     "TITLE": "Votre API",
     "DESCRIPTION": "Description de votre API",
 }
@@ -56,6 +56,7 @@ MEDIA_URL = "/media/"
 INSTALLED_APPS = [
     "CustomUser",
     "authentication",
+    "email_verification",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -113,11 +114,11 @@ WSGI_APPLICATION = "backend.wsgi.application"
 #     }
 # }
 
-#dev database
+# dev database
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
 
