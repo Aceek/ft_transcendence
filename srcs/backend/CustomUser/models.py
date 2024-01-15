@@ -4,7 +4,7 @@ from django.db.models.signals import pre_delete, pre_save, post_save
 from django.dispatch import receiver
 from django.conf import settings
 from .storage import OverwriteStorage
-from django.urls import reverse
+from email_verification.utils import send_verification_email
 from .validators import (
     validate_username,
     validate_mime_type,
@@ -60,10 +60,6 @@ def delete_avatar(sender, instance, **kwargs):
             os.rmdir(user_uid_folder)
 
 
-def send_api_verification_email(uid):
-    print("j'envoi l'email frero\n")
-
-
 @receiver(pre_save, sender=CustomUser)
 def update_is_active_if_email_changed(sender, instance, **kwargs):
     if instance._state.adding:
@@ -72,7 +68,7 @@ def update_is_active_if_email_changed(sender, instance, **kwargs):
         old_instance = CustomUser.objects.get(pk=instance.pk)
         if old_instance.email != instance.email:
             instance.is_active = False
-            send_api_verification_email(instance.id)
+            send_verification_email(instance)
     except CustomUser.DoesNotExist:
         pass
 
