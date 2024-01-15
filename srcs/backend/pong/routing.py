@@ -1,8 +1,6 @@
-# pong/urls.py
-from django.urls import path, re_path, include
-from channels.routing import ProtocolTypeRouter  # Import ProtocolTypeRouter
-from channels.routing import URLRouter
-from .views import pong_game
+# routing.py
+from channels.routing import ProtocolTypeRouter, URLRouter
+from django.urls import re_path
 from .consumers import GameConsumer
 
 websocket_urlpatterns = [
@@ -16,7 +14,3 @@ application = ProtocolTypeRouter(
         # Add other protocols if needed (e.g., http)
     }
 )
-
-urlpatterns = [
-    path('', pong_game, name='pong_game'),
-]
