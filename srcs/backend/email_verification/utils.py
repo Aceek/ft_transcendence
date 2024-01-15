@@ -13,7 +13,7 @@ def send_verification_email(user):
     token = default_token_generator.make_token(user)
     domain = environ.get("DOMAIN")
     # url_api = reverse("validate") # attendre l'implementation de la view
-    url_api = "/api/users/validate/"  # tmp solution
+    url_api = "/api/mail/validate/"  # tmp solution
     verification_link = f"{domain}{url_api}?uid={uid}&token={token}/"
 
     subject = "Vérification d'e-mail"
