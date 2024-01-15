@@ -18,14 +18,6 @@ class RegisterTestCase(APITestCase):
         }
         response = self.client.post(self.URL, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        verification_email = mail.outbox[0].body
-        uid_token_match = search(r"uid=(.*)&token=(.*)", verification_email)
-        verify_url = reverse("verify-email")
-        verify_url += (
-            f"?uid={uid_token_match.group(1)}&token={uid_token_match.group(2)}"
-        )
-        response = self.client.get(verify_url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_register_existing_email(self):
         user_model = get_user_model()
@@ -52,7 +44,7 @@ class RegisterTestCase(APITestCase):
         response = self.client.post(self.URL, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.json(), {"username": ["A user with that username already exists."]}
+            response.json(), {"username": ["user with this username already exists."]}
         )
 
     def test_register_not_an_email(self):
@@ -197,6 +189,7 @@ class LoginTestCase(APITestCase):
             username=self.USER_USERNAME,
             email=self.USER_EMAIL,
             password=self.USER_PASSWORD,
+            is_active=True,
         )
 
     def test_login_successful(self):
@@ -236,7 +229,7 @@ class LoginTestCase(APITestCase):
         self.client.post(register_url, data)
         verification_email = mail.outbox[0].body
         uid_token_match = search(r"uid=(.*)&token=(.*)", verification_email)
-        verify_url = reverse("verify-email")
+        verify_url = reverse("validate")
         verify_url += (
             f"?uid={uid_token_match.group(1)}&token={uid_token_match.group(2)}"
         )
@@ -256,6 +249,7 @@ class LogoutTestCase(APITestCase):
         super().__init__(methodName)
         self.access_token = None
         self.refresh_token = None
+        self.header = None
 
     def setUp(self):
         usr_username = "testuser"
@@ -266,17 +260,18 @@ class LogoutTestCase(APITestCase):
             username=usr_username,
             email=usr_email,
             password=usr_password,
+            is_active=True,
         )
         login_url = reverse("login")
         data = {"email": usr_email, "password": usr_password}
         response = self.client.post(login_url, data)
         self.access_token = response.data["access"]
         self.refresh_token = response.data["refresh"]
+        self.header = {"Authorization": f"Bearer {self.access_token}"}
 
     def test_logout_successful(self):
-        header = {"Authorization": f"Bearer {self.access_token}"}
         data = {"refresh": self.refresh_token}
-        response = self.client.post(self.URL, data, headers=header)
+        response = self.client.post(self.URL, data, headers=self.header)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_logout_no_authenticated(self):

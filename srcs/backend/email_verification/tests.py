@@ -9,7 +9,7 @@ from re import search
 from .models import TwoFactorEmailModel
 
 class VerifyEmailTestCase(APITestCase):
-    URL = reverse("verify-email")
+    URL = reverse("validate")
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
