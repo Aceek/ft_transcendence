@@ -1,16 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth import password_validation
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
+from django.utils.crypto import get_random_string
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainSerializer
 from oauthlib.oauth2 import InvalidGrantError
 from requests_oauthlib import OAuth2Session
-from .utils import send_verification_email, generate_random_username, initiate_2fa
-from .models import TwoFactorEmailModel
+from random import randint
+from email_verification.utils import initiate_2fa, send_verification_email
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -77,56 +75,7 @@ class LogoutSerializer(serializers.Serializer):
             raise serializers.ValidationError(str(e))
 
 
-class VerifyEmailSerializer(serializers.Serializer):
-    uid = serializers.CharField()
-    token = serializers.CharField()
 
-    def validate(self, attrs):
-        try:
-            uid_decrypt = force_str(urlsafe_base64_decode(attrs["uid"]))
-            user = get_user_model().objects.get(pk=uid_decrypt)
-            if (
-                not default_token_generator.check_token(user, attrs["token"])
-                or not user
-            ):
-                raise serializers.ValidationError("Invalid verification link.")
-            if user.is_active:
-                raise serializers.ValidationError("Account already activated.")
-        except Exception:
-            raise serializers.ValidationError("Invalid verification link.")
-        return attrs
-
-    def save(self):
-        uid = force_str(urlsafe_base64_decode(self.validated_data["uid"]))
-        user = get_user_model().objects.get(pk=uid)
-        user.is_active = True
-        user.save()
-        return user
-
-
-class TwoFactorValidateSerializer(serializers.Serializer):
-    token = serializers.UUIDField()
-    code = serializers.CharField(max_length=6)
-
-    def validate(self, attrs):
-        token = attrs["token"]
-        two_factor = TwoFactorEmailModel.objects.get(token=token)
-        email = two_factor.user.email
-        if two_factor.is_expired():
-            raise serializers.ValidationError("2FA code expired.")
-        if two_factor.code != attrs["code"]:
-            raise serializers.ValidationError("Invalid 2FA code.")
-        attrs["email"] = email
-        two_factor.delete()
-        return attrs
-
-    def save(self):
-        user = get_user_model().objects.get(email=self.validated_data["email"])
-        refresh = RefreshToken.for_user(user)
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
 
 
 class User42Serializer(serializers.Serializer):
@@ -139,7 +88,10 @@ class User42Serializer(serializers.Serializer):
             user.set_unusable_password()
             username = validated_data["login"]
             while user.objects.filter(username=username).exists():
-                username = generate_random_username()
+                username = get_random_string(
+                    length=randint(6, 20), 
+                    allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789_-."
+                )
             user.username = username
             user.save()
         return user
