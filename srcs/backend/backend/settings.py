@@ -65,8 +65,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "drf_spectacular",
     "rest_framework",
-    'rest_framework_simplejwt',
-	'rest_framework_simplejwt.token_blacklist',
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 MIDDLEWARE = [
@@ -132,9 +132,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        'OPTIONS': {
-            'min_length': 8,
-        }
+        "OPTIONS": {
+            "min_length": 8,
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -143,17 +143,17 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
     {
-        'NAME': 'authentication.validators.Minimum1UppercaseValidator',
+        "NAME": "authentication.validators.Minimum1UppercaseValidator",
     },
     {
-        'NAME': 'authentication.validators.Minimum1LowercaseValidator',
+        "NAME": "authentication.validators.Minimum1LowercaseValidator",
     },
     {
-        'NAME': 'authentication.validators.Minimum1NumberValidator',
+        "NAME": "authentication.validators.Minimum1NumberValidator",
     },
     {
-        'NAME': 'authentication.validators.Minimum1SpecialCharacterValidator',
-    }
+        "NAME": "authentication.validators.Minimum1SpecialCharacterValidator",
+    },
 ]
 
 
@@ -179,8 +179,8 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'authentication.backends.EmailModelBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "authentication.backends.EmailModelBackend",
 ]
 
 OAUTH_UID = environ.get("OAUTH_UID")
@@ -198,4 +198,3 @@ EMAIL_PORT = environ.get("EMAIL_PORT")
 EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
 
 EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
-

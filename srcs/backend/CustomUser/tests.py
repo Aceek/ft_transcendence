@@ -98,11 +98,15 @@ class CustomUserAPITest(TestCase):
     def test_update_user_not_unique_username(self):
         user = CustomUser.objects.create_user(username="testuser2")
         url = reverse("users-detail", kwargs={"pk": self.user.pk})
-        response = self.client.patch(url, {"username": user.username}, format="multipart")
+        response = self.client.patch(
+            url, {"username": user.username}, format="multipart"
+        )
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_not_unique_email(self):
-        user = CustomUser.objects.create_user(username="testuser2", email="test@user2.42")
+        user = CustomUser.objects.create_user(
+            username="testuser2", email="test@user2.42"
+        )
         url = reverse("users-detail", kwargs={"pk": self.user.pk})
         response = self.client.patch(url, {"email": user.email}, format="multipart")
         self.assertNotEqual(response.status_code, 200)

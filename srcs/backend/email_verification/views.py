@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from .serializers import TwoFactorValidateSerializer, VerifyEmailSerializer
 
+
 class TwoFactorVerifyView(APIView):
     permission_classes = [AllowAny]
     serializer_class = TwoFactorValidateSerializer
@@ -13,6 +14,7 @@ class TwoFactorVerifyView(APIView):
         if serializer.is_valid():
             return Response(serializer.save(), status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class VerifyEmailView(APIView):
     permission_classes = [AllowAny]

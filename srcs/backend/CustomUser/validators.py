@@ -10,6 +10,7 @@ MAX_HEIGHT = 450
 MIN_WIDTH = 100
 MIN_HEIGHT = 100
 
+
 def validate_username(username):
     if len(username) < 4 or len(username) > 20:
         raise ValidationError(
@@ -37,7 +38,6 @@ def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png"]):
 
 
 def validate_image_dimensions(value):
-
     image = Image.open(value)
     width, height = image.size
     print("image.size = ", image.size)

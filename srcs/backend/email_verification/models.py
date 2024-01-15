@@ -10,7 +10,7 @@ class TwoFactorEmailModel(models.Model):
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     expiration = models.DateTimeField(default=now() + timedelta(minutes=10))
-    user = models.ForeignKey(to='CustomUser.CustomUser', on_delete=models.CASCADE)
+    user = models.ForeignKey(to="CustomUser.CustomUser", on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid4, editable=False, unique=True)
 
     def save(self, *args, **kwargs):

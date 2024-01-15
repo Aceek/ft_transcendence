@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import TwoFactorEmailModel
 
+
 class TwoFactorValidateSerializer(serializers.Serializer):
     token = serializers.UUIDField()
     code = serializers.CharField(max_length=6)
@@ -19,7 +20,7 @@ class TwoFactorValidateSerializer(serializers.Serializer):
         if two_factor.code != attrs["code"]:
             raise serializers.ValidationError("Invalid 2FA code.")
         attrs["email"] = email
-        #two_factor.delete()
+        # two_factor.delete()
         return attrs
 
     def save(self):
@@ -29,7 +30,8 @@ class TwoFactorValidateSerializer(serializers.Serializer):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }
-    
+
+
 class VerifyEmailSerializer(serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()

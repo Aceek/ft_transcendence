@@ -150,6 +150,7 @@ def check_2fa_field_user_model(app_configs, **kwargs):
         )
     ]
 
+
 @register
 def check_jwt_blacklist_installed_app(app_configs, **kwargs):
     if "rest_framework_simplejwt.token_blacklist" not in settings.INSTALLED_APPS:
@@ -162,6 +163,7 @@ def check_jwt_blacklist_installed_app(app_configs, **kwargs):
         ]
     return []
 
+
 @register
 def check_jwt_installed_app(app_configs, **kwargs):
     if "rest_framework_simplejwt" not in settings.INSTALLED_APPS:
@@ -173,6 +175,7 @@ def check_jwt_installed_app(app_configs, **kwargs):
             )
         ]
     return []
+
 
 @register
 def check_2fa_field_user_model(app_configs, **kwargs):

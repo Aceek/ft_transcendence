@@ -71,4 +71,3 @@ def update_is_active_if_email_changed(sender, instance, **kwargs):
             send_verification_email(instance)
     except CustomUser.DoesNotExist:
         pass
-
