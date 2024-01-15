@@ -40,7 +40,6 @@ def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png"]):
 def validate_image_dimensions(value):
     image = Image.open(value)
     width, height = image.size
-    print("image.size = ", image.size)
 
     if width < MIN_WIDTH or height < MIN_HEIGHT:
         raise ValidationError(

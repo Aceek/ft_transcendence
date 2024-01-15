@@ -135,7 +135,6 @@ class OAuth42Serializer(serializers.Serializer):
         authorization_url, state = self.oauth.authorization_url(
             self.API_URL + "oauth/authorize"
         )
-        print(authorization_url)
         return {"authorization_url": authorization_url}
 
     def exchange_code(self, code):
