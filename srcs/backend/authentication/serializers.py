@@ -86,7 +86,7 @@ class User42Serializer(serializers.Serializer):
         if created:
             user.set_unusable_password()
             username = validated_data["login"]
-            while user.objects.filter(username=username).exists():
+            while get_user_model().objects.filter(username=username).exists():
                 username = get_random_string(
                     length=randint(6, 20),
                     allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789_-.",
