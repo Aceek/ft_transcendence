@@ -5,8 +5,6 @@ from .views import (
     LoginView,
     LogoutView,
     OAuth42View,
-    VerifyEmailView,
-    TwoFactorVerifyView,
 )
 
 urlpatterns = [
@@ -15,6 +13,4 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("oauth2/", OAuth42View.as_view(), name="oauth2"),
-    path("verify-email/", VerifyEmailView.as_view(), name="verify-email"),
-    path("2fa/", TwoFactorVerifyView.as_view(), name="2fa"),
 ]
