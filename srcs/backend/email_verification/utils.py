@@ -14,7 +14,7 @@ def send_verification_email(user):
     token = default_token_generator.make_token(user)
     domain = environ.get("DOMAIN")
     url_api = reverse("validate")
-    verification_link = f"{domain}{url_api}?uid={uid}&token={token}/"
+    verification_link = f"{domain}{url_api}?uid={uid}&token={token}"
 
     subject = "Vérification d'e-mail"
     message = (
