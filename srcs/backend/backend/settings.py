@@ -28,7 +28,7 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ.get("DEBUG_VAR")
 
-ALLOWED_HOSTS = ["ft-transcendence.fr"]
+ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
