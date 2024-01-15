@@ -29,7 +29,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("CustomUser.urls")),
-    path("auth/", include("authentication.urls")),
+    path("api/auth/", include("authentication.urls")),
+    path("api/mail/", include("email_verification.urls")),
     path("api/schema/", SpectacularJSONAPIView.as_view(), name="schema"),
     path(
         "api/swagger/",
@@ -37,6 +38,4 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    path("api/", include("email_verification.urls"), name="email-verification"),
-
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
