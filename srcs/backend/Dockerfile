@@ -6,6 +6,8 @@ WORKDIR /app
 
 COPY . /app/
 
+RUN apt-get update && apt-get install -y zsh
+
 RUN pip install -r requirements.txt
 
 # Créez un utilisateur avec le nom spécifié
