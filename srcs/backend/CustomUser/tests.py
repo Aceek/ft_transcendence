@@ -7,6 +7,7 @@ from rest_framework.test import APIClient
 from django.test import override_settings
 import shutil
 import io
+import uuid
 
 TEST_DIR = "tests"
 
@@ -116,3 +117,153 @@ class CustomUserAPITest(TestCase):
             shutil.rmtree(TEST_DIR, ignore_errors=True)
         except OSError:
             pass
+
+
+class CustomUserFriendshipTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user1 = CustomUser.objects.create_user(
+            username="user1", email="user1@mail.fr"
+        )
+        self.user2 = CustomUser.objects.create_user(
+            username="user2", email="user2@mail.fr"
+        )
+        self.user3 = CustomUser.objects.create_user(
+            username="user3", email="user3@mail.fr"
+        )
+
+    def test_add_friend(self):
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertTrue(self.user2 in self.user1.friends.all())
+
+    def test_add_multiple_friend(self):
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id), str(self.user3.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertTrue(self.user2 in self.user1.friends.all())
+        self.assertTrue(self.user3 in self.user1.friends.all())
+
+    def test_add_multiple_friend_mutliple_request(self):
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user3.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertTrue(self.user2 in self.user1.friends.all())
+        self.assertTrue(self.user3 in self.user1.friends.all())
+
+    def test_add_friend_already_friend(self):
+        self.user1.friends.add(self.user2)
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        friends = self.user1.friends.all()
+        count = sum(1 for friend in friends if friend == self.user2)
+        self.assertEqual(count, 1)
+
+    def test_add_friend_not_found(self):
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(uuid.uuid4())]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_add_friend_bad_request(self):
+        response = self.client.patch(
+            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": "bad"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_remove_friend(self):
+        self.user1.friends.add(self.user2)
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertFalse(self.user2 in self.user1.friends.all())
+
+    def test_remove_multiple_friend(self):
+        self.user1.friends.add(self.user2)
+        self.user1.friends.add(self.user3)
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id), str(self.user3.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertFalse(self.user2 in self.user1.friends.all())
+        self.assertFalse(self.user3 in self.user1.friends.all())
+
+    def test_remove_multiple_friend_mutliple_request(self):
+        self.user1.friends.add(self.user2)
+        self.user1.friends.add(self.user3)
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user3.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertFalse(self.user2 in self.user1.friends.all())
+        self.assertFalse(self.user3 in self.user1.friends.all())
+
+    def test_remove_friend_not_friend(self):
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(self.user2.id)]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user1.refresh_from_db()
+        self.assertFalse(self.user2 in self.user1.friends.all())
+
+    def test_remove_friend_not_found(self):
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": [str(uuid.uuid4())]},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_remove_friend_bad_request(self):
+        response = self.client.patch(
+            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+            {"friends": "bad"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
