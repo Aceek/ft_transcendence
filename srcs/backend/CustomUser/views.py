@@ -14,9 +14,9 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     serializer_class = CustomUserSerializer
 
     def get_serializer_class(self):
-        if self.action == "remove_friends":
+        if self.action == "remove_friends" or self.action == "update_friends":
             return CustomUserSerializerFriend
-        elif self.request.method == 'PATCH':
+        elif self.request.method == "PATCH":
             return CustomUserUpdateSerializer
         return super().get_serializer_class()
 
