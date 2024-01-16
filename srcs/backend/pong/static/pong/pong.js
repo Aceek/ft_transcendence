@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var ballX = canvas.width / 2;
     var ballY = canvas.height / 2;
 
+    // Scores
+    var leftPlayerScore = 0;
+    var rightPlayerScore = 0;
+
     // Event listeners for key presses
     document.addEventListener('keydown', function (event) {
         handleKeyPress(event.key, true);
@@ -49,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function () {
         ballX = data.ballPosition.x;
         ballY = data.ballPosition.y;
 
+        // Update scores
+        leftPlayerScore = data.leftPlayerScore;
+        rightPlayerScore = data.rightPlayerScore;
+
         // Draw the updated state
         draw();
     }
@@ -66,6 +74,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Draw the white dash line in the middle
         drawWhiteDashLine();
+
+        // Draw scores
+        drawScores();
+
+        // Check if the match is over and display a message
+        if (data.matchOver) {
+            drawGameOverMessage();
+        }
     }
 
     function drawPaddle(x, y) {
@@ -78,16 +94,43 @@ document.addEventListener('DOMContentLoaded', function () {
         ctx.fillRect(x - ballSize / 2, y - ballSize / 2, ballSize, ballSize);
     }
 
-	function drawWhiteDashLine() {
-		ctx.strokeStyle = '#fff'; // Set stroke color instead of fill color
-		ctx.setLineDash([5, 5]); // Set dash pattern: 5 pixels on, 5 pixels off
-		ctx.beginPath();
-		ctx.moveTo(canvas.width / 2, 0);
-		ctx.lineTo(canvas.width / 2, canvas.height);
-		ctx.stroke();
-		ctx.setLineDash([]); // Reset dash pattern
+    function drawWhiteDashLine() {
+        ctx.strokeStyle = '#fff';
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+	function drawScores() {
+		ctx.fillStyle = '#fff';
+		ctx.font = '100px "Geo", sans-serif';
+	
+		// Calculate the position for scores in the top center
+		var middleDashLineX = canvas.width / 2;
+		var scoreTextWidth = ctx.measureText(leftPlayerScore).width;
+		var distanceFromDashLine = 30;
+		
+		// Set the height position in relation to the canvas height
+		var heightPosition = canvas.height / 6;
+	
+		// Draw left player's score
+		ctx.fillText(leftPlayerScore, middleDashLineX - scoreTextWidth - distanceFromDashLine, heightPosition);
+	
+		// Draw right player's score
+		ctx.fillText(rightPlayerScore, middleDashLineX + distanceFromDashLine, heightPosition);
 	}
 	
+
+    function drawGameOverMessage() {
+        ctx.fillStyle = '#fff';
+        ctx.font = '100px "Geo", sans-serif';
+        ctx.fillText('Game Over!', canvas.width / 2 - 300, canvas.height / 2 - 100);
+        ctx.font = '50px "Geo", sans-serif';
+        ctx.fillText('Player ' + (leftPlayerScore > rightPlayerScore ? 'Left' : 'Right') + ' Wins!', canvas.width / 2 - 250, canvas.height / 2);
+    }
 
     // Start the game loop
     function update() {

@@ -22,6 +22,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.canvas_width = 800
         self.ball_launched = False
         self.last_update_time = time.time()
+        self.left_player_score = 0
+        self.right_player_score = 0
+        self.match_over = False
 
         # Initialize ball position and speed
         self.ball_position = {
@@ -143,13 +146,28 @@ class GameConsumer(AsyncWebsocketConsumer):
             'leftPaddleY': self.left_paddle_y,
             'rightPaddleY': self.right_paddle_y,
             'ballPosition': self.ball_position,
+            'leftPlayerScore': self.left_player_score,
+            'rightPlayerScore': self.right_player_score,
+            'matchOver': self.match_over,
         }))
 
     def score_for_left_player(self):
-        pass
+        self.left_player_score += 1
+        self.check_game_over()
 
     def score_for_right_player(self):
-        pass
+        self.right_player_score += 1
+        self.check_game_over()
+
+    def check_game_over(self):
+        # Check if any player has reached the maximum score (10)
+        if self.left_player_score == 10 or self.right_player_score == 10:
+            # Reset scores and restart the game
+            self.left_player_score = self.right_player_score = 0
+            self.match_over = True
+        else:
+            # Continue the game
+            self.reset_ball()
 
     def reset_ball(self):
         # Set the ball to the initial position and choose a new random speed
