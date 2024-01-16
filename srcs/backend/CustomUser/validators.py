@@ -23,6 +23,13 @@ def validate_username(username):
         )
 
 
+def validate_image(value):
+    validate_image_size(value)
+    validate_mime_type(value)
+    validate_image_dimensions(value)
+    validate_image_ext(value)
+
+
 def validate_image_size(value):
     max_size = 3 * 1024 * 1024  # 3 MB
     if value.size > max_size:

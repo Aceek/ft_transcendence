@@ -1,17 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import pre_delete, pre_save, post_save
+from django.db.models.signals import pre_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 from .storage import OverwriteStorage
 from email_verification.utils import send_verification_email
-from .validators import (
-    validate_username,
-    validate_mime_type,
-    validate_image_size,
-    validate_image_dimensions,
-    validate_image_ext,
-)
+from .validators import validate_username, validate_image
 
 import uuid
 import os
@@ -39,12 +33,7 @@ class CustomUser(AbstractUser):
         storage=OverwriteStorage(),
         null=True,
         blank=True,
-        validators=[
-            validate_image_ext,
-            validate_mime_type,
-            validate_image_size,
-            validate_image_dimensions,
-        ],
+        validators=[validate_image],
     )
     friends = models.ManyToManyField("self", blank=True, symmetrical=False)
 
