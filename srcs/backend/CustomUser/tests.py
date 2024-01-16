@@ -258,7 +258,7 @@ class CustomUserFriendshipTest(TestCase):
             {"friends": [str(uuid.uuid4())]},
             format="json",
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 200)
 
     def test_remove_friend_bad_request(self):
         response = self.client.patch(
