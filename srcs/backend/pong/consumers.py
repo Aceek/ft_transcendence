@@ -24,6 +24,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.last_update_time = time.time()
         self.left_player_score = 0
         self.right_player_score = 0
+        self.score_limit = 1
         self.match_over = False
 
         # Initialize ball position and speed
@@ -97,7 +98,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.handle_game_update(delta_time)
 
     def update_ball_position(self, delta_time):
-        if not self.ball_launched:
+        if not self.ball_launched or self.match_over:
             return
 
         # Update ball's position based on its speed and direction
@@ -128,10 +129,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Check for scoring (ball crossing left or right border)
         if self.ball_position['x'] < 0 - self.ball_size/2:
             self.score_for_right_player()
-            self.reset_ball()
         elif self.ball_position['x'] > self.canvas_width + self.ball_size/2:
             self.score_for_left_player()
-            self.reset_ball()
 
     def handle_paddle_collision(self):
         self.ball_position['speedX'] *= -1
@@ -161,9 +160,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     def check_game_over(self):
         # Check if any player has reached the maximum score (10)
-        if self.left_player_score == 10 or self.right_player_score == 10:
-            # Reset scores and restart the game
-            self.left_player_score = self.right_player_score = 0
+        if self.left_player_score == self.score_limit or self.right_player_score == self.score_limit:
+            # Set match_over to True
             self.match_over = True
         else:
             # Continue the game

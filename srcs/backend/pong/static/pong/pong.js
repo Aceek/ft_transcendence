@@ -44,45 +44,48 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    function handleGameUpdate(data) {
-        // Update paddle positions based on server information
-        leftPaddleY = data.leftPaddleY;
-        rightPaddleY = data.rightPaddleY;
-
-        // Update ball position based on server information
-        ballX = data.ballPosition.x;
-        ballY = data.ballPosition.y;
-
-        // Update scores
-        leftPlayerScore = data.leftPlayerScore;
-        rightPlayerScore = data.rightPlayerScore;
-
-        // Draw the updated state
-        draw();
-    }
-
-    function draw() {
-        // Clear the canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw paddles using the updated positions
-        drawPaddle(0, leftPaddleY);
-        drawPaddle(canvas.width - paddleWidth, rightPaddleY);
-
-        // Draw the ball using the updated position
-        drawBall(ballX, ballY);
-
-        // Draw the white dash line in the middle
-        drawWhiteDashLine();
-
-        // Draw scores
-        drawScores();
-
-        // Check if the match is over and display a message
-        if (data.matchOver) {
-            drawGameOverMessage();
-        }
-    }
+	function handleGameUpdate(data) {
+		// Update paddle positions based on server information
+		leftPaddleY = data.leftPaddleY;
+		rightPaddleY = data.rightPaddleY;
+	
+		// Update ball position based on server information
+		ballX = data.ballPosition.x;
+		ballY = data.ballPosition.y;
+	
+		// Update scores
+		leftPlayerScore = data.leftPlayerScore;
+		rightPlayerScore = data.rightPlayerScore;
+	
+		// Log the value of matchOver
+		console.log('Match Over:', data.matchOver);
+	
+		// Draw the updated state
+		draw(data);  // Pass the data parameter to draw()
+	}
+	
+	function draw(data) {
+		// Clear the canvas
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
+		// Draw paddles using the updated positions
+		drawPaddle(0, leftPaddleY);
+		drawPaddle(canvas.width - paddleWidth, rightPaddleY);
+	
+		// Draw the ball using the updated position
+		drawBall(ballX, ballY);
+	
+		// Draw the white dash line in the middle
+		drawWhiteDashLine();
+	
+		// Draw scores
+		drawScores(data);  // Pass the data parameter to drawScores()
+	
+		// Check if the match is over and display a message
+		if (data.matchOver) {
+			drawGameOverMessage();
+		}
+	}
 
     function drawPaddle(x, y) {
         ctx.fillStyle = '#fff';
@@ -104,33 +107,51 @@ document.addEventListener('DOMContentLoaded', function () {
         ctx.setLineDash([]);
     }
 
-	function drawScores() {
+    function drawScores() {
+        ctx.fillStyle = '#fff';
+        ctx.font = '100px "Geo", sans-serif';
+
+        // Calculate the position for scores in the top center
+        var middleDashLineX = canvas.width / 2;
+        var scoreTextWidth = ctx.measureText(leftPlayerScore).width;
+        var distanceFromDashLine = 30;
+
+        // Set the height position in relation to the canvas height
+        var heightPosition = canvas.height / 6;
+
+        // Draw left player's score
+        ctx.fillText(leftPlayerScore, middleDashLineX - scoreTextWidth - distanceFromDashLine, heightPosition);
+
+        // Draw right player's score
+        ctx.fillText(rightPlayerScore, middleDashLineX + distanceFromDashLine, heightPosition);
+    }
+
+	function drawGameOverMessage() {
 		ctx.fillStyle = '#fff';
 		ctx.font = '100px "Geo", sans-serif';
 	
-		// Calculate the position for scores in the top center
+		var gameOverText = 'Game Over!';
+		var gameOverTextWidth = ctx.measureText(gameOverText).width;
+	
+		// Calculate the position for the game over message centered from the dash line
 		var middleDashLineX = canvas.width / 2;
-		var scoreTextWidth = ctx.measureText(leftPlayerScore).width;
-		var distanceFromDashLine = 30;
-		
-		// Set the height position in relation to the canvas height
-		var heightPosition = canvas.height / 6;
+		var gameOverTextX = middleDashLineX - gameOverTextWidth / 2;
 	
-		// Draw left player's score
-		ctx.fillText(leftPlayerScore, middleDashLineX - scoreTextWidth - distanceFromDashLine, heightPosition);
+		// Set the height position at 2/3 of the canvas height
+		var heightPosition = (2 / 3) * canvas.height;
 	
-		// Draw right player's score
-		ctx.fillText(rightPlayerScore, middleDashLineX + distanceFromDashLine, heightPosition);
+		ctx.fillText(gameOverText, gameOverTextX, heightPosition);
+	
+		// Adjust font size for the player winning message
+		ctx.font = '50px "Geo", sans-serif';
+	
+		// Calculate the position for the player winning message centered from the dash line
+		var playerWinsText = 'Player ' + (leftPlayerScore > rightPlayerScore ? 'Left' : 'Right') + ' Wins!';
+		var playerWinsTextWidth = ctx.measureText(playerWinsText).width;
+		var playerWinsTextX = middleDashLineX - playerWinsTextWidth / 2;
+	
+		ctx.fillText(playerWinsText, playerWinsTextX, heightPosition + 70); // Adjust vertical spacing
 	}
-	
-
-    function drawGameOverMessage() {
-        ctx.fillStyle = '#fff';
-        ctx.font = '100px "Geo", sans-serif';
-        ctx.fillText('Game Over!', canvas.width / 2 - 300, canvas.height / 2 - 100);
-        ctx.font = '50px "Geo", sans-serif';
-        ctx.fillText('Player ' + (leftPlayerScore > rightPlayerScore ? 'Left' : 'Right') + ' Wins!', canvas.width / 2 - 250, canvas.height / 2);
-    }
 
     // Start the game loop
     function update() {
