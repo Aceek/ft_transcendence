@@ -134,7 +134,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend(self):
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -144,7 +144,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_multiple_friend(self):
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": [str(self.user2.id), str(self.user3.id)]},
             format="json",
         )
@@ -155,13 +155,13 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_multiple_friend_mutliple_request(self):
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": [str(self.user3.id)]},
             format="json",
         )
@@ -173,7 +173,7 @@ class CustomUserFriendshipTest(TestCase):
     def test_add_friend_already_friend(self):
         self.user1.friends.add(self.user2)
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -185,7 +185,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend_not_found(self):
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": [str(uuid.uuid4())]},
             format="json",
         )
@@ -193,7 +193,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend_bad_request(self):
         response = self.client.patch(
-            reverse("users-update-friends", kwargs={"pk": self.user1.pk}),
+            reverse("users-detail", kwargs={"pk": self.user1.pk}),
             {"friends": "bad"},
             format="json",
         )
