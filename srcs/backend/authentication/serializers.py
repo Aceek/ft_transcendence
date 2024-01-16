@@ -92,6 +92,7 @@ class User42Serializer(serializers.Serializer):
                     allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789_-.",
                 )
             user.username = username
+            user.is_active = True
             user.save()
         return user
 
