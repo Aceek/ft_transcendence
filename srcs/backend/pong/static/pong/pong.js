@@ -63,6 +63,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Draw the ball using the updated position
         drawBall(ballX, ballY);
+
+        // Draw the white dash line in the middle
+        drawWhiteDashLine();
     }
 
     function drawPaddle(x, y) {
@@ -74,6 +77,17 @@ document.addEventListener('DOMContentLoaded', function () {
         ctx.fillStyle = '#fff';
         ctx.fillRect(x - ballSize / 2, y - ballSize / 2, ballSize, ballSize);
     }
+
+	function drawWhiteDashLine() {
+		ctx.strokeStyle = '#fff'; // Set stroke color instead of fill color
+		ctx.setLineDash([5, 5]); // Set dash pattern: 5 pixels on, 5 pixels off
+		ctx.beginPath();
+		ctx.moveTo(canvas.width / 2, 0);
+		ctx.lineTo(canvas.width / 2, canvas.height);
+		ctx.stroke();
+		ctx.setLineDash([]); // Reset dash pattern
+	}
+	
 
     // Start the game loop
     function update() {
