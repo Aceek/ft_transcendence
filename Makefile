@@ -15,7 +15,11 @@ fclean : clean
 	docker rmi $$(docker images -q)
 
 logs:
+ifdef s
+	@docker-compose -f $(COMPOSE) logs $(s)
+else
 	@docker-compose -f $(COMPOSE) logs
+endif
 
 ps:
 	@docker-compose -f $(COMPOSE) ps
