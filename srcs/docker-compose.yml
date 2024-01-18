@@ -45,6 +45,7 @@ services:
       - transcendence
     volumes:
       - ./frontend/app:/app
+      - /app/node_modules
     command: npm start
 
 networks:
