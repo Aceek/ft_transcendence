@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "CustomUser",
     "authentication",
     "email_verification",
+    "stats",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
