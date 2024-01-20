@@ -8,7 +8,7 @@ class CustomuserConfig(AppConfig):
     name = "CustomUser"
 
     def ready(self):
-        from . import signals
+        import CustomUser.signals
 
 
 @register()

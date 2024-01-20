@@ -24,3 +24,6 @@ class CustomUser(AbstractUser):
         validators=[validate_image],
     )
     friends = models.ManyToManyField("self", blank=True, symmetrical=False)
+
+    def __str__(self):
+        return self.username
