@@ -1,7 +1,14 @@
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.checks import register, Error, Warning
-import os
+
+
+class CustomuserConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "CustomUser"
+
+    def ready(self):
+        from . import signals
 
 
 @register()
@@ -47,8 +54,3 @@ def check_auth_user_model(app_configs, **kwargs):
             )
         )
     return errors
-
-
-class CustomuserConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "CustomUser"
