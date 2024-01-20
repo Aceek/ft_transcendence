@@ -5,6 +5,8 @@ from .serializers import CustomUserSerializer, CustomUserSerializerFriend
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .services import remove_friend
+from rest_framework import exceptions
+import uuid
 
 
 class CustomUserListView(APIView):
@@ -39,11 +41,23 @@ class CustomUserDetailView(APIView):
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, user_id=None):
         """
-        Get user profile base on auth token
+        Get user profile base on auth or user_id
         """
-        user = request.user
+        if user_id:
+            try:
+                uuid.UUID(user_id, version=4)
+            except ValueError:
+                raise exceptions.ValidationError(detail="Invalid user_id")
+
+            try:
+                user = CustomUser.objects.get(id=user_id)
+            except CustomUser.DoesNotExist:
+                raise exceptions.NotFound(detail="User does not exist")
+        else:
+            user = request.user
+
         serializer = CustomUserSerializer(user)
         return Response(serializer.data)
 
