@@ -1,29 +1,10 @@
-from rest_framework import viewsets
 from .models import CustomUser
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CustomUserSerializer
-from .serializers import CustomUserSerializerFriend
-from rest_framework import exceptions
-from rest_framework import mixins
+from .serializers import CustomUserSerializer, CustomUserSerializerFriend
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-
-
-# class CustomUserListView(
-#     mixins.RetrieveModelMixin,
-#     mixins.UpdateModelMixin,
-#     mixins.ListModelMixin,
-#     viewsets.GenericViewSet,
-# ):
-#     queryset = CustomUser.objects.all()
-#     serializer_class = CustomUserSerializer
-
-#     def get_serializer_class(self):
-#         if self.action == "remove_friends" or self.action == "update_friends":
-#             return CustomUserSerializerFriend
-#         return super().get_serializer_class()
+from .services import remove_friend
 
 
 class CustomUserListView(APIView):
@@ -33,12 +14,17 @@ class CustomUserListView(APIView):
 
     # GET /users/ retrieve all users
     def get(self, request, format=None):
+        """
+        Get all users
+        """
         users = CustomUser.objects.all()
         serializer = CustomUserSerializer(users, many=True)
         return Response(serializer.data)
 
-    # PATCH /users/ update friends base on jwt token
     def patch(self, request, format=None):
+        """
+        Update user profile base on auth token
+        """
         user = request.user
         serializer = CustomUserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -53,8 +39,10 @@ class CustomUserDetailView(APIView):
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
-    # GET /users/profile/ retrieve user profile base on jwt token
     def get(self, request):
+        """
+        Get user profile base on auth token
+        """
         user = request.user
         serializer = CustomUserSerializer(user)
         return Response(serializer.data)
@@ -66,15 +54,17 @@ class CustomUserFriendView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request):
+        """
+        Remove friends from user
+        """
         user = request.user
         serializer = CustomUserSerializerFriend(data=request.data)
 
         if serializer.is_valid():
-            friends_to_remove = serializer.validated_data["friends"]
-            for friend_id in friends_to_remove:
-                user.friends.remove(friend_id)
-            user.save()
-            return_serializer = CustomUserSerializerFriend(user)
+            remove_friend(user, serializer.validated_data["friends"])
+            return_serializer = CustomUserSerializerFriend(
+                user.friends.all(), many=True
+            )
             return Response(return_serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
