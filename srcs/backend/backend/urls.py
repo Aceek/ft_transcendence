@@ -28,6 +28,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("CustomUser.urls")),
+    path("api/", include("stats.urls")),
     path("api/auth/", include("authentication.urls")),
     path("api/mail/", include("email_verification.urls")),
     path("api/schema/", SpectacularJSONAPIView.as_view(), name="schema"),
