@@ -5,12 +5,10 @@ from .serializers import CustomUserSerializer, CustomUserSerializerFriend
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .services import remove_friend
-from rest_framework import exceptions
-import uuid
+from django.shortcuts import get_object_or_404
 
 
 class CustomUserListView(APIView):
-    queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
@@ -37,33 +35,23 @@ class CustomUserListView(APIView):
 
 
 class CustomUserDetailView(APIView):
-    queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_user(self, user_id):
+        return get_object_or_404(CustomUser, id=user_id)
+
     def get(self, request, user_id=None):
         """
-        Get user profile base on auth or user_id
+        Get user profile based on auth or user_id
         """
-        if user_id:
-            try:
-                uuid.UUID(user_id, version=4)
-            except ValueError:
-                raise exceptions.ValidationError(detail="Invalid user_id")
+        user = self.get_user(user_id) if user_id else request.user
 
-            try:
-                user = CustomUser.objects.get(id=user_id)
-            except CustomUser.DoesNotExist:
-                raise exceptions.NotFound(detail="User does not exist")
-        else:
-            user = request.user
-
-        serializer = CustomUserSerializer(user)
+        serializer = self.serializer_class(user)
         return Response(serializer.data)
 
 
 class CustomUserFriendView(APIView):
-    queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializerFriend
     permission_classes = [IsAuthenticated]
 

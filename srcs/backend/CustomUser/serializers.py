@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from CustomUser.models import CustomUser
-import uuid
 
 
 class CustomUserSerializer(serializers.ModelSerializer):

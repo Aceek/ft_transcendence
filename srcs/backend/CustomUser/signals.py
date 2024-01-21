@@ -2,9 +2,9 @@ from django.db.models.signals import pre_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 from email_verification.utils import send_verification_email
+from .models import CustomUser
 import os
 
-from .models import CustomUser
 
 
 @receiver(pre_delete, sender=CustomUser)
