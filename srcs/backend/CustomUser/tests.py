@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from PIL import Image
@@ -8,6 +8,8 @@ from django.test import override_settings
 import shutil
 import io
 import uuid
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
 
 TEST_DIR = "tests"
 
@@ -19,13 +21,17 @@ class CustomUserAPITest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.username = "testuser"
-        self.email = "testuser@example.com"
-        self.user = CustomUser.objects.create_user(
-            username=self.username, email=self.email
+        self.user = get_user_model().objects.create_user(
+            username="testuser",
+            email="test@example.fr",
+            password="PasSalut12!",
+            is_active=True,
+            avatar=self.create_test_image("valid_avatar.png"),
         )
-        self.user.avatar = self.create_test_image("valid_avatar.png")
         self.user.save()
+        refresh = RefreshToken.for_user(self.user)
+        self.token = str(refresh.access_token)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
 
     def create_test_image(
         self, image_name, size=VALID_IMAGE_SIZE, image_mode="RGB", image_format="PNG"
@@ -40,7 +46,7 @@ class CustomUserAPITest(TestCase):
         )
 
     def test_update_user_with_large_avatar(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         large_avatar = self.create_test_image(
             "large_avatar.png", size=self.LARGE_IMAGE_SIZE
         )
@@ -48,13 +54,13 @@ class CustomUserAPITest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_with_valid_avatar(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         valid_avatar = self.create_test_image("valid_avatar.png")
         response = self.client.patch(url, {"avatar": valid_avatar}, format="multipart")
         self.assertEqual(response.status_code, 200)
 
     def test_update_user_with_bad_format_ext_avatar(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         bad_format_avatar = self.create_test_image("bad_format_avatar.bmp")
         response = self.client.patch(
             url, {"avatar": bad_format_avatar}, format="multipart"
@@ -62,7 +68,7 @@ class CustomUserAPITest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_with_bad_mime_type_avatar(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         bad_mime_type_avatar = self.create_test_image(
             "bad_mime_type_avatar.png", image_format="PDF"
         )
@@ -72,33 +78,33 @@ class CustomUserAPITest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_to_short(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(url, {"username": "a"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_to_long(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(url, {"username": "a" * 21}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_with_special_chars(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(url, {"username": "a!b"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_with_spaces(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(url, {"username": "a b"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_with_emoji(self):
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(url, {"username": "😀"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_not_unique_username(self):
         user = CustomUser.objects.create_user(username="testuser2")
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(
             url, {"username": user.username}, format="multipart"
         )
@@ -108,7 +114,7 @@ class CustomUserAPITest(TestCase):
         user = CustomUser.objects.create_user(
             username="testuser2", email="test@user2.42"
         )
-        url = reverse("users-detail", kwargs={"pk": self.user.pk})
+        url = reverse("users")
         response = self.client.patch(url, {"email": user.email}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
@@ -121,20 +127,32 @@ class CustomUserAPITest(TestCase):
 
 class CustomUserFriendshipTest(TestCase):
     def setUp(self):
-        self.client = APIClient()
-        self.user1 = CustomUser.objects.create_user(
-            username="user1", email="user1@mail.fr"
+        self.client1, self.user1 = self.create_authenticated_client(
+            "user1",
+            "user1@mail.fr",
         )
-        self.user2 = CustomUser.objects.create_user(
-            username="user2", email="user2@mail.fr"
+        self.client2, self.user2 = self.create_authenticated_client(
+            "user2", "user2@mail.fr"
         )
-        self.user3 = CustomUser.objects.create_user(
-            username="user3", email="user3@mail.fr"
+        self.client3, self.user3 = self.create_authenticated_client(
+            "user3", "user3@mail.fr"
         )
 
+    def create_authenticated_client(self, username, email):
+        client = APIClient()
+        user = get_user_model().objects.create_user(
+            username=username,
+            email=email,
+            password="PasSalut12!",
+            is_active=True,
+        )
+        refresh = RefreshToken.for_user(user)
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(refresh.access_token)}")
+        return client, user
+
     def test_add_friend(self):
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -143,8 +161,8 @@ class CustomUserFriendshipTest(TestCase):
         self.assertTrue(self.user2 in self.user1.friends.all())
 
     def test_add_multiple_friend(self):
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": [str(self.user2.id), str(self.user3.id)]},
             format="json",
         )
@@ -154,14 +172,14 @@ class CustomUserFriendshipTest(TestCase):
         self.assertTrue(self.user3 in self.user1.friends.all())
 
     def test_add_multiple_friend_mutliple_request(self):
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": [str(self.user3.id)]},
             format="json",
         )
@@ -172,8 +190,8 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend_already_friend(self):
         self.user1.friends.add(self.user2)
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -184,16 +202,16 @@ class CustomUserFriendshipTest(TestCase):
         self.assertEqual(count, 1)
 
     def test_add_friend_not_found(self):
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": [str(uuid.uuid4())]},
             format="json",
         )
         self.assertEqual(response.status_code, 400)
 
     def test_add_friend_bad_request(self):
-        response = self.client.patch(
-            reverse("users-detail", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("users"),
             {"friends": "bad"},
             format="json",
         )
@@ -201,8 +219,8 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_remove_friend(self):
         self.user1.friends.add(self.user2)
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -213,8 +231,8 @@ class CustomUserFriendshipTest(TestCase):
     def test_remove_multiple_friend(self):
         self.user1.friends.add(self.user2)
         self.user1.friends.add(self.user3)
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": [str(self.user2.id), str(self.user3.id)]},
             format="json",
         )
@@ -226,25 +244,25 @@ class CustomUserFriendshipTest(TestCase):
     def test_remove_multiple_friend_mutliple_request(self):
         self.user1.friends.add(self.user2)
         self.user1.friends.add(self.user3)
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": [str(self.user3.id)]},
             format="json",
-        )
+        ) 
         self.assertEqual(response.status_code, 200)
         self.user1.refresh_from_db()
         self.assertFalse(self.user2 in self.user1.friends.all())
         self.assertFalse(self.user3 in self.user1.friends.all())
 
     def test_remove_friend_not_friend(self):
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -253,17 +271,51 @@ class CustomUserFriendshipTest(TestCase):
         self.assertFalse(self.user2 in self.user1.friends.all())
 
     def test_remove_friend_not_found(self):
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": [str(uuid.uuid4())]},
             format="json",
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.status_code, 200)
 
     def test_remove_friend_bad_request(self):
-        response = self.client.patch(
-            reverse("users-remove-friends", kwargs={"pk": self.user1.pk}),
+        response = self.client1.patch(
+            reverse("remove_friends"),
             {"friends": "bad"},
             format="json",
         )
         self.assertEqual(response.status_code, 400)
+
+
+class TestCustomUserListView(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            username="testuser",
+            email="test@example.fr",
+            password="PasSalut12!",
+            is_active=True,
+        )
+        refresh = RefreshToken.for_user(self.user)
+        self.token = str(refresh.access_token)
+
+    def test_customuser_list(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        response = self.client.get(reverse("users"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_customuser_list_unauthorized(self):
+        response = self.client.get(reverse("users"))
+        self.assertEqual(response.status_code, 401)
+
+    def test_customuser_list_forbidden(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+        self.user.is_active = False
+        self.user.save()
+        response = self.client.get(reverse("users"))
+        self.assertEqual(response.status_code, 401)
+
+    def test_customuser_list_bad_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}bad")
+        response = self.client.get(reverse("users"))
+        self.assertEqual(response.status_code, 401)

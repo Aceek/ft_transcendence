@@ -31,7 +31,7 @@ class CustomUserListView(APIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomUserDetailView(APIView):
@@ -64,9 +64,6 @@ class CustomUserFriendView(APIView):
 
         if serializer.is_valid():
             remove_friend(user, serializer.validated_data["friends"])
-            return_serializer = CustomUserSerializerFriend(
-                user.friends.all(), many=True
-            )
-            return Response(return_serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
