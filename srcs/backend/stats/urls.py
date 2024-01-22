@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import StatsView, MatchHistoryView, MatchHistoryViewById
+from .views import StatsView, MatchHistoryView
 
 
 urlpatterns = [
@@ -10,7 +10,7 @@ urlpatterns = [
     path("history/me", MatchHistoryView.as_view(), name="history"),
     path(
         "history/<uuid:user_id>",
-        MatchHistoryViewById.as_view(),
+        MatchHistoryView.as_view(),
         name="history_by_user_id",
     ),
 ]

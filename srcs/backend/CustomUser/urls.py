@@ -1,5 +1,10 @@
 from django.urls import path
-from .views import CustomUserListView, CustomUserDetailView, CustomUserFriendView
+from .views import (
+    CustomUserListView,
+    CustomUserDetailView,
+    CustomUserFriendView,
+    CustomUserUpdateView,
+)
 
 
 urlpatterns = [
@@ -10,5 +15,6 @@ urlpatterns = [
         CustomUserDetailView.as_view(),
         name="profile_by_user_id",
     ),
+    path("users/profile/update", CustomUserUpdateView.as_view(), name="update_profile"),
     path("users/remove_friends", CustomUserFriendView.as_view(), name="remove_friends"),
 ]

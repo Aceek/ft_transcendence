@@ -6,49 +6,46 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from .services import remove_friend
 from django.shortcuts import get_object_or_404
+from rest_framework.generics import RetrieveAPIView, UpdateAPIView, ListAPIView
 
 
-class CustomUserListView(APIView):
+class CustomUserListView(ListAPIView):
+    """
+    List all users
+    """
+
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
-    # GET /users/ retrieve all users
-    def get(self, request, format=None):
-        """
-        Get all users
-        """
-        users = CustomUser.objects.all()
-        serializer = CustomUserSerializer(users, many=True)
-        return Response(serializer.data)
-
-    def patch(self, request, format=None):
-        """
-        Update user profile base on auth token
-        """
-        user = request.user
-        serializer = CustomUserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        return CustomUser.objects.all()
 
 
-class CustomUserDetailView(APIView):
+class CustomUserUpdateView(UpdateAPIView):
+    """
+    Update user base on authenticated user
+    """
+
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_user(self, user_id):
-        return get_object_or_404(CustomUser, id=user_id)
+    def get_object(self):
+        return self.request.user
 
-    def get(self, request, user_id=None):
-        """
-        Get user profile based on auth or user_id
-        """
-        user = self.get_user(user_id) if user_id else request.user
 
-        serializer = self.serializer_class(user)
-        return Response(serializer.data)
+class CustomUserDetailView(RetrieveAPIView):
+    """
+    Get user base on authenticated user
+    """
+
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        user_id = self.kwargs.get("user_id")
+        return (
+            get_object_or_404(CustomUser, id=user_id) if user_id else self.request.user
+        )
 
 
 class CustomUserFriendView(APIView):

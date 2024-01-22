@@ -46,7 +46,7 @@ class CustomUserAPITest(TestCase):
         )
 
     def test_update_user_with_large_avatar(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         large_avatar = self.create_test_image(
             "large_avatar.png", size=self.LARGE_IMAGE_SIZE
         )
@@ -54,13 +54,13 @@ class CustomUserAPITest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_with_valid_avatar(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         valid_avatar = self.create_test_image("valid_avatar.png")
         response = self.client.patch(url, {"avatar": valid_avatar}, format="multipart")
         self.assertEqual(response.status_code, 200)
 
     def test_update_user_with_bad_format_ext_avatar(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         bad_format_avatar = self.create_test_image("bad_format_avatar.bmp")
         response = self.client.patch(
             url, {"avatar": bad_format_avatar}, format="multipart"
@@ -68,7 +68,7 @@ class CustomUserAPITest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_with_bad_mime_type_avatar(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         bad_mime_type_avatar = self.create_test_image(
             "bad_mime_type_avatar.png", image_format="PDF"
         )
@@ -78,33 +78,33 @@ class CustomUserAPITest(TestCase):
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_to_short(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(url, {"username": "a"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_to_long(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(url, {"username": "a" * 21}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_with_special_chars(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(url, {"username": "a!b"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_with_spaces(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(url, {"username": "a b"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_bad_username_with_emoji(self):
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(url, {"username": "😀"}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
     def test_update_user_not_unique_username(self):
         user = CustomUser.objects.create_user(username="testuser2")
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(
             url, {"username": user.username}, format="multipart"
         )
@@ -114,7 +114,7 @@ class CustomUserAPITest(TestCase):
         user = CustomUser.objects.create_user(
             username="testuser2", email="test@user2.42"
         )
-        url = reverse("users")
+        url = reverse("update_profile")
         response = self.client.patch(url, {"email": user.email}, format="multipart")
         self.assertNotEqual(response.status_code, 200)
 
@@ -152,7 +152,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend(self):
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -162,7 +162,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_multiple_friend(self):
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": [str(self.user2.id), str(self.user3.id)]},
             format="json",
         )
@@ -173,13 +173,13 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_multiple_friend_mutliple_request(self):
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": [str(self.user3.id)]},
             format="json",
         )
@@ -191,7 +191,7 @@ class CustomUserFriendshipTest(TestCase):
     def test_add_friend_already_friend(self):
         self.user1.friends.add(self.user2)
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": [str(self.user2.id)]},
             format="json",
         )
@@ -203,7 +203,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend_not_found(self):
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": [str(uuid.uuid4())]},
             format="json",
         )
@@ -211,7 +211,7 @@ class CustomUserFriendshipTest(TestCase):
 
     def test_add_friend_bad_request(self):
         response = self.client1.patch(
-            reverse("users"),
+            reverse("update_profile"),
             {"friends": "bad"},
             format="json",
         )
@@ -302,6 +302,7 @@ class TestCustomUserListView(TestCase):
     def test_customuser_list(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
         response = self.client.get(reverse("users"))
+        print(response.data)
         self.assertEqual(response.status_code, 200)
 
     def test_customuser_list_unauthorized(self):
