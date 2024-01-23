@@ -8,12 +8,12 @@ async function fetchContent(url) {
 
 
 function getLoginPage() {
-    fetch('static/html/login-form.html')
+    fetch('public/html/login-form.html')
         .then(response => response.text())
         .then(template => {
             document.getElementById('main').innerHTML = template;
         });
-    console.log(fetchContent(api_url + 'auth/oauth2/'));
+    //console.log(fetchContent(api_url + 'auth/oauth2/'));
 }
 
 getLoginPage();
