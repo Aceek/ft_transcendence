@@ -6,7 +6,7 @@
   "scripts": {
     "server": "browser-sync start --server 'src' --files 'src'",
     "sass": "node-sass --recursive --watch src/static/scss/ -o src/static/css/",
-    "start": "npm-run-all --parallel server sass"
+    "start": "npm-run-all --parallel server"
   },
   "keywords": [],
   "author": "",
