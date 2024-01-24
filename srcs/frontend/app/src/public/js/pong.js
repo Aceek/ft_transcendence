@@ -1,7 +1,22 @@
+console.log('Pong.js is executed!');
+
 document.addEventListener('DOMContentLoaded', function () {
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
     var socket = new WebSocket('ws://' + window.location.host + '/ws/pong/');
+
+    socket.onopen = function(event) {
+        console.log('WebSocket connection opened:', event);
+    };
+    
+    socket.onmessage = function(event) {
+        console.log('WebSocket message received:', event.data);
+        // Rest of the code...
+    };
+    
+    socket.onclose = function(event) {
+        console.log('WebSocket connection closed:', event);
+    };
 
     // Paddle properties
     var paddleWidth = 10;

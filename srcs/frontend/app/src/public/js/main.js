@@ -21,9 +21,15 @@ function getPongGamePage() {
         .then(response => response.text())
         .then(template => {
             document.getElementById('main').innerHTML = template;
+
+            // Load Pong script after injecting the Pong game HTML
+            const script = document.createElement('script');
+            script.src = 'public/js/pong.js';
+            document.head.appendChild(script);
         });
 }
 
 // getLoginPage();
 getPongGamePage();
+console.log('main.js was executed!');
 
