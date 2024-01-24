@@ -16,5 +16,14 @@ function getLoginPage() {
     //console.log(fetchContent(api_url + 'auth/oauth2/'));
 }
 
-getLoginPage();
+function getPongGamePage() {
+    fetch('public/html/pong_game.html')
+        .then(response => response.text())
+        .then(template => {
+            document.getElementById('main').innerHTML = template;
+        });
+}
+
+// getLoginPage();
+getPongGamePage();
 
