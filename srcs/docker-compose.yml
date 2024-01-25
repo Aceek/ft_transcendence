@@ -9,7 +9,11 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} " ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} "
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,8 +54,7 @@ services:
       - ./frontend:/app
     command: npm start
 
-
-# ELK configuration + filebeat to collect logs
+  # ELK configuration + filebeat to collect logs
   filebeat:
     container_name: filebeat
     image: docker.elastic.co/beats/filebeat:7.9.2
@@ -67,10 +70,14 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
     container_name: elasticsearch
+    # env_file:
+      # - .env
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - cluster.name=docker-cluster
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     networks:
@@ -85,10 +92,9 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.9.2
+    env_file:
+      - .env
     container_name: kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - xpack.security.enabled=false
     ports:
       - 5601:5601
     networks:
@@ -99,6 +105,8 @@ services:
 
   logstash:
     image: docker.elastic.co/logstash/logstash:7.9.2
+    env_file:
+      - .env
     container_name: logstash
     volumes:
       - ./logstash/pipeline:/usr/share/logstash/pipeline
