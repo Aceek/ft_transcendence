@@ -1,6 +1,5 @@
 version: '3.8'
 
-
 networks:
   transcendence:
     external: false
@@ -77,55 +76,17 @@ services:
 
   # Elasticsearch + Kibana + Logstash + filebeat  (Secure cert)
   setup:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
+    build:
+      context: ./elk-b/setup
+      args:
+        ELASTIC_VERSION: ${STACK_VERSION}
+    env_file:
+      - .env
     volumes:
+      - ./elk-b/setup/entrypoint.sh:/entrypoint.sh:ro,Z
       - certs:/usr/share/elasticsearch/config/certs
     user: "0"
-
-    command: >
-      bash -c '
-        if [ x${ELASTIC_PASSWORD} == x ]; then
-          echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
-          exit 1;
-        elif [ x${KIBANA_PASSWORD} == x ]; then
-          echo "Set the KIBANA_PASSWORD environment variable in the .env file";
-          exit 1;
-        fi;
-        if [ ! -f config/certs/ca.zip ]; then
-          echo "Creating CA";
-          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
-          unzip config/certs/ca.zip -d config/certs;
-        fi;
-        if [ ! -f config/certs/certs.zip ]; then
-          echo "Creating certs";
-          echo -ne \
-          "instances:\n"\
-          "  - name: es01\n"\
-          "    dns:\n"\
-          "      - es01\n"\
-          "      - localhost\n"\
-          "    ip:\n"\
-          "      - 127.0.0.1\n"\
-          "  - name: kibana\n"\
-          "    dns:\n"\
-          "      - kibana\n"\
-          "      - localhost\n"\
-          "    ip:\n"\
-          "      - 127.0.0.1\n"\
-          > config/certs/instances.yml;
-          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
-          unzip config/certs/certs.zip -d config/certs;
-        fi;
-        echo "Setting file permissions"
-        chown -R root:root config/certs;
-        find . -type d -exec chmod 750 \{\} \;;
-        find . -type f -exec chmod 640 \{\} \;;
-        echo "Waiting for Elasticsearch availability";
-        until curl -s --cacert config/certs/ca/ca.crt https://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
-        echo "Setting kibana_system password";
-        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
-        echo "All done!";
-      '
+    init: true
     healthcheck:
       test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
       interval: 1s
@@ -144,8 +105,6 @@ services:
       - esdata01:/usr/share/elasticsearch/data
     ports:
       - ${ES_PORT}:9200
-    env_file:
-      - ./elk-b/.env
     environment:
       - node.name=es01
       - cluster.name=${CLUSTER_NAME}
@@ -190,8 +149,6 @@ services:
       - kibanadata:/usr/share/kibana/data
     ports:
       - ${KIBANA_PORT}:5601
-    env_file:
-      - ./elk-b/.env
     environment:
       - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://es01:9200
@@ -228,8 +185,6 @@ services:
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
       - "/:/hostfs:ro"
-    env_file:
-      - ./elk-b/.env
     environment:
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -246,12 +201,9 @@ services:
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata01:/usr/share/filebeat/data
-      # - "./filebeat_ingest_data/:/usr/share/filebeat/ingest_data/"
       - "./elk-b/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
-      - "/mnt/docker-desktop-data/data/docker/containers:/var/lib/docker/containers:ro"
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    env_file:
-      - ./elk-b/.env
     environment:
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -272,11 +224,8 @@ services:
     volumes:
       - certs:/usr/share/logstash/certs
       - logstashdata01:/usr/share/logstash/data
-      # - "./logstash_ingest_data/:/usr/share/logstash/ingest_data/"
       - ./elk-b/logstash/pipeline:/usr/share/logstash/pipeline
       - ./elk-b/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
-    env_file:
-      - ./elk-b/.env
     environment:
       - xpack.monitoring.enabled=false
       - ELASTIC_USER=elastic

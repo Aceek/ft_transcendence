@@ -35,7 +35,6 @@ metricbeat.modules:
     - "diskio"
     - "healthcheck"
     - "info"
-    #- "image"
     - "memory"
     - "network"
   hosts: ["unix:///var/run/docker.sock"]
