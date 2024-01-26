@@ -1,186 +1,120 @@
-import json
-import random
-import asyncio
-import time
-from asyncio import sleep
-from channels.generic.websocket import AsyncWebsocketConsumer
+# # pong/views.py
+# import json
+# import random
+# from django.shortcuts import render
+# from django.http import JsonResponse
+# from .models import Paddle, Ball, Game
 
-class GameConsumer(AsyncWebsocketConsumer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.initialize_game()
+# def pong_game(request):
+#     # Retrieve or create game instance
+#     game, created = Game.objects.get_or_create(id=1)
 
-    def initialize_game(self):
-        # Initialize game parameters
-        self.paddle_width = 10
-        self.paddle_height = 80 
-        self.left_paddle_y = self.right_paddle_y = 160
-        self.paddle_speed = 16
-        self.ball_speed_range = 50
-        self.ball_size = 10
-        self.canvas_height = 400
-        self.canvas_width = 800
-        self.ball_launched = False
-        self.last_update_time = time.time()
-        self.left_player_score = 0
-        self.right_player_score = 0
-        self.score_limit = 1
-        self.match_over = False
+#     # Retrieve or create paddle instances
+#     left_paddle, created = Paddle.objects.get_or_create(player='left', game=game)
+#     right_paddle, created = Paddle.objects.get_or_create(player='right', game=game)
 
-        # Initialize ball position and speed
-        self.ball_position = {
-            'x': 400,
-            'y': 300,
-            'speedX': random.choice([-self.ball_speed_range, self.ball_speed_range]),
-            'speedY': random.choice([-self.ball_speed_range, self.ball_speed_range]),
-        }
+#     # Retrieve or create ball instance
+#     ball, created = Ball.objects.get_or_create(game=game)
 
-    async def connect(self):
-        await self.accept()
-        self.ball_launched = True
-        asyncio.create_task(self.game_loop())
+#     # Perform game logic (update paddle and ball positions, check collisions, etc.)
+#     delta_time = 0.002  # Adjust the delta_time based on your game loop timing
+#     update_ball_position(ball, delta_time, game)
 
-    async def disconnect(self, close_code):
-        pass
+#     # Return game state as JSON response
+#     game_state = {
+#         'leftPaddleY': left_paddle.y,
+#         'rightPaddleY': right_paddle.y,
+#         'ballPosition': {'x': ball.x, 'y': ball.y},
+#         'leftPlayerScore': game.left_player_score,
+#         'rightPlayerScore': game.right_player_score,
+#         'matchOver': game.match_over,
+#     }
 
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        print(f"Received message: {text_data}")
+#     return JsonResponse(game_state)
 
-        delta_time = 0.0
+# def update_ball_position(ball, delta_time, game):
+#     if not game.ball_launched or game.match_over:
+#         return
 
-        if data['message'] == 'paddle_movement':
-            await self.handle_paddle_movement(data, delta_time)
-        else:
-            await self.handle_game_update(delta_time, data)
+#     # Update ball's position based on its speed and direction
+#     ball.x += ball.speed_x * delta_time
+#     ball.y += ball.speed_y * delta_time
 
-    async def game_loop(self):
-        last_update_time = time.time()
+#     check_collisions(ball, game)
+#     check_scoring(ball, game)
 
-        while True:
-            current_time = time.time()
-            delta_time = current_time - last_update_time
+# def check_collisions(ball, game):
+#     # Check for collisions with paddles
+#     if (
+#         (ball.x - ball.size/2 < game.paddle_width and
+#          game.left_paddle_y < ball.y < game.left_paddle_y + game.paddle_height) or
+#         (ball.x + ball.size/2 > game.canvas_width - game.paddle_width and
+#          game.right_paddle_y < ball.y < game.right_paddle_y + game.paddle_height)
+#     ):
+#         handle_paddle_collision(ball)
 
-            # Update ball position based on game mechanics
-            self.update_ball_position(delta_time)
+#     # Check for collisions with walls
+#     if (
+#         ball.y - ball.size/2 < 0 or
+#         ball.y + ball.size/2 > game.canvas_height
+#     ):
+#         handle_wall_collision(ball)
 
-            # Example: Echo the updated positions back to all clients
-            await self.send_game_update(delta_time)
+# def check_scoring(ball, game):
+#     # Check for scoring (ball crossing left or right border)
+#     if ball.x < 0 - ball.size/2:
+#         score_for_right_player(game)
+#     elif ball.x > game.canvas_width + ball.size/2:
+#         score_for_left_player(game)
 
-            # Adjust the sleep duration based on the delta time
-            await asyncio.sleep(0.002 - delta_time)  # 240 FPS target
+# def handle_paddle_collision(ball):
+#     ball.speed_x *= -1
 
-            last_update_time = current_time
+# def handle_wall_collision(ball):
+#     ball.speed_y *= -1
 
-    async def handle_paddle_movement(self, data, delta_time):
-        key, is_pressed = data['key'], data['isPressed']
-        self.update_paddle_positions(key, is_pressed)
-        self.ball_launched = True
-        await self.send_game_update(delta_time)
+# def handle_game_update(ball, game):
+#     update_ball_position(ball, 0.002, game)
+#     return {
+#         'leftPaddleY': game.left_paddle_y,
+#         'rightPaddleY': game.right_paddle_y,
+#         'ballPosition': {'x': ball.x, 'y': ball.y},
+#         'leftPlayerScore': game.left_player_score,
+#         'rightPlayerScore': game.right_player_score,
+#         'matchOver': game.match_over,
+#     }
 
-    def update_paddle_positions(self, key, is_pressed):
-        # Update paddle coordinates based on key and is_pressed
-        update_left_paddle = key == 'w' or key == 's'
-        update_right_paddle = key == 'ArrowUp' or key == 'ArrowDown'
+# def score_for_left_player(game):
+#     game.left_player_score += 1
+#     check_game_over(game)
 
-        if update_left_paddle:
-            self.left_paddle_y = max(0, min(320, self.left_paddle_y + (-1 if key == 'w' else 1) * self.paddle_speed))
-        elif update_right_paddle:
-            self.right_paddle_y = max(0, min(320, self.right_paddle_y + (-1 if key == 'ArrowUp' else 1) * self.paddle_speed))
+# def score_for_right_player(game):
+#     game.right_player_score += 1
+#     check_game_over(game)
 
-    async def update_game_state(self):
-        delta_time = time.time() - self.last_update_time
-        self.last_update_time = time.time()
-        self.update_ball_position(delta_time)
-        await asyncio.sleep(0)
+# def check_game_over(game):
+#     # Check if any player has reached the maximum score (10)
+#     if game.left_player_score == game.score_limit or game.right_player_score == game.score_limit:
+#         # Set match_over to True
+#         game.match_over = True
+#     else:
+#         # Continue the game
+#         reset_ball(game)
 
-    async def send_game_update(self, delta_time=0.0):
-        await self.handle_game_update(delta_time)
+# def reset_ball(game):
+#     # Set the ball to the initial position and choose a new random speed
+#     game.ball_position = {
+#         'x': 400,
+#         'y': 300,
+#         'speedX': random.choice([-game.ball_speed_range, game.ball_speed_range]),
+#         'speedY': random.choice([-game.ball_speed_range, game.ball_speed_range]),
+#     }
 
-    def update_ball_position(self, delta_time):
-        if not self.ball_launched or self.match_over:
-            return
+#     # Stop the ball temporarily
+#     game.ball_launched = False
 
-        # Update ball's position based on its speed and direction
-        self.ball_position['x'] += self.ball_position['speedX'] * delta_time
-        self.ball_position['y'] += self.ball_position['speedY'] * delta_time
+#     # Wait for a moment before launching the ball again
+#     sleep(10)
 
-        self.check_collisions()
-        self.check_scoring()
-
-    def check_collisions(self):
-        # Check for collisions with paddles
-        if (
-            (self.ball_position['x'] - self.ball_size/2 < self.paddle_width and
-             self.left_paddle_y < self.ball_position['y'] < self.left_paddle_y + self.paddle_height) or
-            (self.ball_position['x'] + self.ball_size/2 > self.canvas_width - self.paddle_width and
-             self.right_paddle_y < self.ball_position['y'] < self.right_paddle_y + self.paddle_height)
-        ):
-            self.handle_paddle_collision()
-
-        # Check for collisions with walls
-        if (
-            self.ball_position['y'] - self.ball_size/2 < 0 or
-            self.ball_position['y'] + self.ball_size/2 > self.canvas_height
-        ):
-            self.handle_wall_collision()
-
-    def check_scoring(self):
-        # Check for scoring (ball crossing left or right border)
-        if self.ball_position['x'] < 0 - self.ball_size/2:
-            self.score_for_right_player()
-        elif self.ball_position['x'] > self.canvas_width + self.ball_size/2:
-            self.score_for_left_player()
-
-    def handle_paddle_collision(self):
-        self.ball_position['speedX'] *= -1
-
-    def handle_wall_collision(self):
-        self.ball_position['speedY'] *= -1
-
-    async def handle_game_update(self, delta_time, data=None):
-        self.update_ball_position(delta_time)
-        await self.send(text_data=json.dumps({
-            'type': 'game.update',
-            'leftPaddleY': self.left_paddle_y,
-            'rightPaddleY': self.right_paddle_y,
-            'ballPosition': self.ball_position,
-            'leftPlayerScore': self.left_player_score,
-            'rightPlayerScore': self.right_player_score,
-            'matchOver': self.match_over,
-        }))
-
-    def score_for_left_player(self):
-        self.left_player_score += 1
-        self.check_game_over()
-
-    def score_for_right_player(self):
-        self.right_player_score += 1
-        self.check_game_over()
-
-    def check_game_over(self):
-        # Check if any player has reached the maximum score (10)
-        if self.left_player_score == self.score_limit or self.right_player_score == self.score_limit:
-            # Set match_over to True
-            self.match_over = True
-        else:
-            # Continue the game
-            self.reset_ball()
-
-    def reset_ball(self):
-        # Set the ball to the initial position and choose a new random speed
-        self.ball_position = {
-            'x': 400,
-            'y': 300,
-            'speedX': random.choice([-self.ball_speed_range, self.ball_speed_range]),
-            'speedY': random.choice([-self.ball_speed_range, self.ball_speed_range]),
-        }
-
-        # Stop the ball temporarily
-        self.ball_launched = False
-
-        # Wait for a moment before launching the ball again
-        sleep(10)
-
-        # Launch the ball
-        self.ball_launched = True
+#     # Launch the ball
+#     game.ball_launched = True

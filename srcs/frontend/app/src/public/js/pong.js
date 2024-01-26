@@ -3,35 +3,15 @@ console.log('Pong.js is executed!');
 document.addEventListener('DOMContentLoaded', function () {
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
-    var socket = new WebSocket('ws://' + window.location.host + '/ws/pong/');
 
-    socket.onopen = function(event) {
-        console.log('WebSocket connection opened:', event);
-    };
-    
-    socket.onmessage = function(event) {
-        console.log('WebSocket message received:', event.data);
-        // Rest of the code...
-    };
-    
-    socket.onclose = function(event) {
-        console.log('WebSocket connection closed:', event);
-    };
+    // Replace WebSocket with API endpoint
+    const apiEndpoint = 'http://localhost:8000/api/move-paddle/';
 
     // Paddle properties
     var paddleWidth = 10;
     var paddleHeight = 80;
     var leftPaddleY = (canvas.height - paddleHeight) / 2;
     var rightPaddleY = (canvas.height - paddleHeight) / 2;
-
-    // Ball properties
-    var ballSize = 10;
-    var ballX = canvas.width / 2;
-    var ballY = canvas.height / 2;
-
-    // Scores
-    var leftPlayerScore = 0;
-    var rightPlayerScore = 0;
 
     // Event listeners for key presses
     document.addEventListener('keydown', function (event) {
@@ -43,41 +23,37 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function handleKeyPress(key, isPressed) {
-        // Send WebSocket message for paddle movements
-        socket.send(JSON.stringify({
-            'message': 'paddle_movement',
-            'key': key,
-            'isPressed': isPressed,
-        }));
+        // Make a POST request to the backend API for paddle movements
+        fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                'game_id': 1,  // Replace with your actual game ID
+                'paddle_left_y': leftPaddleY,  // Send the current position of the left paddle
+                'paddle_right_y': rightPaddleY,  // Send the current position of the right paddle
+                'key': key,
+                'isPressed': isPressed,
+            }),
+        })
+        .then(response => response.json())
+        .then(gameState => {
+            // Handle the updated game state received from the backend
+            updateGameView(gameState);
+        })
+        .catch(error => console.error('Error:', error));
     }
 
-    socket.onmessage = function (event) {
-        var data = JSON.parse(event.data);
+    // Function to update the game view based on the received game state
+    function updateGameView(data) {
+        // Update paddle positions based on server information
+        leftPaddleY = data.leftPaddleY;
+        rightPaddleY = data.rightPaddleY;
 
-        if (data.type === 'game.update') {
-            handleGameUpdate(data);
-        }
-    };
-
-	function handleGameUpdate(data) {
-		// Update paddle positions based on server information
-		leftPaddleY = data.leftPaddleY;
-		rightPaddleY = data.rightPaddleY;
-	
-		// Update ball position based on server information
-		ballX = data.ballPosition.x;
-		ballY = data.ballPosition.y;
-	
-		// Update scores
-		leftPlayerScore = data.leftPlayerScore;
-		rightPlayerScore = data.rightPlayerScore;
-	
-		// Log the value of matchOver
-		console.log('Match Over:', data.matchOver);
-	
-		// Draw the updated state
-		draw(data);  // Pass the data parameter to draw()
-	}
+        // Draw the updated state
+        draw(data);
+    }
 	
 	function draw(data) {
 		// Clear the canvas
