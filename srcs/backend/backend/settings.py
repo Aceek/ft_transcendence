@@ -76,7 +76,6 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
 	"pong",
 	# 'channels',
-    # "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -87,7 +86,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -120,6 +118,9 @@ if DEBUG:
     ]
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
     INSTALLED_APPS += ['debug_toolbar']
+    DEBUG_TOOLBAR_CONFIG = {
+        'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
+    }
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

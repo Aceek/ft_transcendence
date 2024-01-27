@@ -2,7 +2,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import PaddleCoordinates, Game
+from .models import Game, PaddleCoordinates
+from .serializers import GameInfoSerializer, PaddleCoordinatesSerializer
+from django.shortcuts import get_object_or_404
 
 class InitGameView(APIView):
     def post(self, request, *args, **kwargs):
@@ -22,19 +24,22 @@ class InitGameView(APIView):
         except Exception as e:
             return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class GameInfoView(APIView):
     def get(self, request, *args, **kwargs):
-        game_id = request.query_params.get('game_id')
+        game_id = self.kwargs.get('game_id')
 
         try:
-            # Retrieve paddle coordinates for the specified game
-            paddle_coordinates = PaddleCoordinates.objects.filter(game_id=game_id)
+            # Retrieve game and paddle coordinates for the specified game
+            game = Game.objects.get(id=game_id)
+            paddle_coordinates = PaddleCoordinates.objects.filter(game=game)
 
-            data = {
-                'game_id': game_id,
+            # Serialize the data
+            serializer = GameInfoSerializer({
+                'game_id': game.id,
                 'paddle_coordinates': [{'player_id': pc.player_id, 'paddle_y': pc.paddle_y} for pc in paddle_coordinates]
-            }
+            })
 
-            return Response(data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Game.DoesNotExist:
             return Response({'error': 'Game not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -44,13 +49,13 @@ class InitGameView(APIView):
 
 class PaddleMoveView(APIView):
     def post(self, request, *args, **kwargs):
-        game_id = request.data.get('game_id')
+        game_id = kwargs.get('game_id')  # Access the game_id from URL parameters
         player_id = request.data.get('player_id')
         direction = request.data.get('direction')  # 'up' or 'down'
 
         try:
             # Retrieve the specific paddle coordinates
-            paddle_coordinates = PaddleCoordinates.objects.get(game_id=game_id, player_id=player_id)
+            paddle_coordinates = get_object_or_404(PaddleCoordinates, game_id=game_id, player_id=player_id)
 
             # Increment or decrement paddle_y based on direction
             if direction == 'up':
