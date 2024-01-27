@@ -196,6 +196,8 @@ services:
     depends_on:
       es01:
         condition: service_healthy
+      kibana:
+        condition: service_healthy
     image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
     user: root
     volumes:

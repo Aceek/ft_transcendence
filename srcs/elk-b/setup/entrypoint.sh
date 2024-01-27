@@ -27,6 +27,14 @@ if [ x${ELASTIC_PASSWORD} == x ]; then
           "    dns:\n"\
           "      - kibana\n"\
           "      - localhost\n"\
+          "  - name: logstash\n"\
+          "    dns:\n"\
+          "      - logstash01\n"\
+          "      - localhost\n"\
+          "  - name: filebeat\n"\
+          "    dns:\n"\
+          "      - filebeat01\n"\
+          "      - localhost\n"\
           > config/certs/instances.yml;
           bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
           unzip config/certs/certs.zip -d config/certs;
