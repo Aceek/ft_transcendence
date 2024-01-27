@@ -29,3 +29,4 @@ urllib3==2.1.0
 python-magic==0.4.27
 requests==2.31.0
 channels==3.0.4
+django-debug-toolbar==4.2.0
