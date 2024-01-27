@@ -170,17 +170,19 @@ services:
       retries: 120
 
   metricbeat01:
+    build:
+      context: ./elk-b/metricbeat
+      args:
+        METRICBEAT_VERSION: ${STACK_VERSION}
     depends_on:
       es01:
         condition: service_healthy
       kibana:
         condition: service_healthy
-    image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
     user: root
     volumes:
       - certs:/usr/share/metricbeat/certs
       - metricbeatdata01:/usr/share/metricbeat/data
-      - "./elk-b/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
       - "/proc:/hostfs/proc:ro"
@@ -193,17 +195,19 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
 
   filebeat01:
+    build:
+      context: ./elk-b/filebeat
+      args:
+        FILEBEAT_VERSION: ${STACK_VERSION}
     depends_on:
       es01:
         condition: service_healthy
       kibana:
         condition: service_healthy
-    image: docker.elastic.co/beats/filebeat:${STACK_VERSION}
     user: root
     volumes:
       - certs:/usr/share/filebeat/certs
       - filebeatdata01:/usr/share/filebeat/data
-      - "./elk-b/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     environment:
