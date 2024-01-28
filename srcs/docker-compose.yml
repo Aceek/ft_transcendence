@@ -86,7 +86,6 @@ services:
       - ./elk-b/setup/entrypoint.sh:/entrypoint.sh:ro,Z
       - certs:/usr/share/elasticsearch/config/certs
     user: "0"
-    init: true
     healthcheck:
       test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
       interval: 1s
@@ -94,6 +93,7 @@ services:
       retries: 120
 
   es01:
+    container_name: es01
     depends_on:
       setup:
         condition: service_healthy
@@ -138,6 +138,7 @@ services:
       retries: 120
 
   kibana:
+    container_name: kibana
     depends_on:
       es01:
         condition: service_healthy
@@ -170,6 +171,7 @@ services:
       retries: 120
 
   metricbeat01:
+    container_name: metricbeat01
     build:
       context: ./elk-b/metricbeat
       args:
@@ -195,6 +197,7 @@ services:
       - LOGSTASH_HOSTS=http://logstash01:9600
 
   filebeat01:
+    container_name: filebeat01
     build:
       context: ./elk-b/filebeat
       args:
@@ -218,6 +221,7 @@ services:
       - LOGSTASH_HOSTS=logstash01:5044
 
   logstash01:
+    container_name: logstash01
     depends_on:
       es01:
         condition: service_healthy

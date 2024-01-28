@@ -5,6 +5,21 @@ filebeat.autodiscover:
 
 processors:
 - add_docker_metadata: ~
+# suppress the following containers from being sent to logstash
+# - drop_event:
+#     when:
+#       or:
+#         - equals:
+#             container.name: "logstash01"
+#         - equals:
+#             container.name: "filebeat01"
+#         - equals:
+#             container.name: "metricbeat01"
+#         - equals:
+#             container.name: "kibana"
+#         - equals:
+#             container.name: "es01"
+
 
 output.logstash:
   hosts: ${LOGSTASH_HOSTS}
