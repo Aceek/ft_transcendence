@@ -1,11 +1,40 @@
-console.log('Pong.js is executed!');
-
-document.addEventListener('DOMContentLoaded', function () {
-    var canvas = document.getElementById('pongCanvas');
-    var ctx = canvas.getContext('2d');
+    console.log('Pong.js is executed!');
 
     // Replace WebSocket with API endpoint
-    const apiEndpoint = 'http://localhost:8000/api/move-paddle/';
+    const apiEndpoint = 'http://localhost:8000/api/pong/';
+
+    let gameId;  // Variable to store the game ID
+
+    function sendInitGameRequest() {
+        fetch(apiEndpoint + 'init-game/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                'player1_id': 1,  // Replace with your actual player 1 ID
+                'player2_id': 2,  // Replace with your actual player 2 ID
+            }),
+        })
+        .then(response => response.json())
+        .then(gameState => {
+            // Store the game ID
+            gameId = gameState.game_id;
+
+            // Handle the response if needed
+            console.log(gameState);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Send init-game request when the DOM is loaded
+    sendInitGameRequest();
+    console.log('initgame POST');
+
+    console.log('game loop');
+    
+    var canvas = document.getElementById('pongCanvas');
+    var ctx = canvas.getContext('2d');
 
     // Paddle properties
     var paddleWidth = 10;
@@ -13,28 +42,49 @@ document.addEventListener('DOMContentLoaded', function () {
     var leftPaddleY = (canvas.height - paddleHeight) / 2;
     var rightPaddleY = (canvas.height - paddleHeight) / 2;
 
+    // Throttle function to limit the rate of function invocation
+    function throttle(func, delay) {
+        let lastCallTime = 0;
+    
+        return function (...args) {
+            const now = new Date().getTime();
+    
+            if (now - lastCallTime >= delay) {
+                func(...args);
+                lastCallTime = now;
+            }
+        };
+    }
+    
+    // Throttle handleKeyPress to limit requests
+    const throttledHandleKeyPress = throttle(handleKeyPress, 50);
+    
     // Event listeners for key presses
     document.addEventListener('keydown', function (event) {
-        handleKeyPress(event.key, true);
+        console.log('Key pressed:', event.key);
+        throttledHandleKeyPress(event.key, true);
     });
-
+    
     document.addEventListener('keyup', function (event) {
-        handleKeyPress(event.key, false);
+        console.log('Key released:', event.key);
+        throttledHandleKeyPress(event.key, false);
     });
 
     function handleKeyPress(key, isPressed) {
+        // Map arrow keys to 'up' and 'down'
+        const direction = key === 'ArrowUp' ? 'down' : key === 'ArrowDown' ? 'up' : key;
+
         // Make a POST request to the backend API for paddle movements
-        fetch(apiEndpoint, {
+        fetch(apiEndpoint + `move-paddle/${gameId}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                'game_id': 1,  // Replace with your actual game ID
-                'paddle_left_y': leftPaddleY,  // Send the current position of the left paddle
-                'paddle_right_y': rightPaddleY,  // Send the current position of the right paddle
-                'key': key,
-                'isPressed': isPressed,
+                // 'game_id': gameId,
+                'player_id': 1,
+                'direction': direction,
+                // 'isPressed': isPressed,
             }),
         })
         .then(response => response.json())
@@ -47,35 +97,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to update the game view based on the received game state
     function updateGameView(data) {
-        // Update paddle positions based on server information
-        leftPaddleY = data.leftPaddleY;
-        rightPaddleY = data.rightPaddleY;
-
-        // Draw the updated state
-        draw(data);
+        // Check if the 'gameId' is present
+        if (gameId) {
+            console.log('Fetching game info for game ID:', gameId);
+            // Fetch paddle coordinates for the current game ID
+            fetch(apiEndpoint + `game-info/${gameId}/`)
+                .then(response => response.json())
+                .then(gameInfo => {
+                    console.log('Received game info for game ID:', gameId);
+                    // Check if the 'paddle_coordinates' array is present in the response
+                    if (gameInfo.paddle_coordinates) {
+                        // Update paddle positions based on server information
+                        leftPaddleY = findPaddleY(gameInfo.paddle_coordinates, 1);
+                        rightPaddleY = findPaddleY(gameInfo.paddle_coordinates, 2);
+    
+                        // Print the Y positions of the paddles
+                        console.log('Left Paddle Y:', leftPaddleY);
+                        console.log('Right Paddle Y:', rightPaddleY);
+    
+                        // Draw the updated state
+                        draw(data);
+                    } else {
+                        console.warn('No paddle coordinates found in game info response.');
+                    }
+                })
+                .catch(error => console.error('Error fetching game info:', error));
+        } else {
+            console.warn('No game ID.');
+        }
     }
-	
+    
+    
+    // Helper function to find the paddle Y position for a specific player ID
+    function findPaddleY(paddleCoordinates, playerId) {
+        const playerCoordinates = paddleCoordinates.find(pc => parseInt(pc.player_id) === playerId);
+        return playerCoordinates ? playerCoordinates.paddle_y : 0; // Default to 0 if player not found
+    }
+
 	function draw(data) {
 		// Clear the canvas
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 	
-		// Draw paddles using the updated positions
+		// // Draw paddles using the updated positions
 		drawPaddle(0, leftPaddleY);
 		drawPaddle(canvas.width - paddleWidth, rightPaddleY);
 	
-		// Draw the ball using the updated position
-		drawBall(ballX, ballY);
+		// // Draw the ball using the updated position
+		// drawBall(ballX, ballY);
 	
 		// Draw the white dash line in the middle
 		drawWhiteDashLine();
 	
 		// Draw scores
-		drawScores(data);  // Pass the data parameter to drawScores()
+		// drawScores(data);  // Pass the data parameter to drawScores()
 	
-		// Check if the match is over and display a message
-		if (data.matchOver) {
-			drawGameOverMessage();
-		}
+		// // Check if the match is over and display a message
+		// if (data.matchOver) {
+		// 	drawGameOverMessage();
+		// }
 	}
 
     function drawPaddle(x, y) {
@@ -144,10 +223,34 @@ document.addEventListener('DOMContentLoaded', function () {
 		ctx.fillText(playerWinsText, playerWinsTextX, heightPosition + 70); // Adjust vertical spacing
 	}
 
+    // // Start the game loop
+    // function update() {
+    //     requestAnimationFrame(update);
+    // }
+
     // Start the game loop
-    function update() {
+    let lastTimestamp = 0;
+    function update(timestamp) {
+        // Calculate the time elapsed since the last frame
+        const elapsed = timestamp - lastTimestamp;
+
+        // Control the frame rate (e.g., 60 frames per second)
+        const frameRate = 1000 / 60; // 60 frames per second
+        if (elapsed < frameRate) {
+            requestAnimationFrame(update);
+            return;
+        }
+
+        // Update your game logic here
+
+        // Save the current timestamp for the next frame
+        lastTimestamp = timestamp;
+
+        // Continue the game loop
         requestAnimationFrame(update);
     }
 
+    // Initial call to start the game loop
+    requestAnimationFrame(update);
+
     update();
-});

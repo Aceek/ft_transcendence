@@ -16,8 +16,8 @@ class InitGameView(APIView):
             game = Game.objects.create(player1_id=player1_id, player2_id=player2_id)
 
             # Initialize paddle coordinates for player 1 and player 2
-            PaddleCoordinates.objects.create(game=game, player_id=player1_id, paddle_y=50)
-            PaddleCoordinates.objects.create(game=game, player_id=player2_id, paddle_y=50)
+            PaddleCoordinates.objects.create(game=game, player_id=player1_id, paddle_y=160)
+            PaddleCoordinates.objects.create(game=game, player_id=player2_id, paddle_y=160)
 
             return Response({'game_id': game.id, 'message': 'Game initialized successfully'}, status=status.HTTP_200_OK)
 
@@ -59,9 +59,9 @@ class PaddleMoveView(APIView):
 
             # Increment or decrement paddle_y based on direction
             if direction == 'up':
-                paddle_coordinates.paddle_y += 1
+                paddle_coordinates.paddle_y += 10
             elif direction == 'down':
-                paddle_coordinates.paddle_y -= 1
+                paddle_coordinates.paddle_y -= 10
 
             paddle_coordinates.save()
 
