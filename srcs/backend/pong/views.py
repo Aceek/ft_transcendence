@@ -21,8 +21,8 @@ class PopulateDatabaseView(APIView):
     def post(self, request, *args, **kwargs):
         # Add players to the database
         players_data = [
-            {"player_id": "1", "score": 0},
-            {"player_id": "2", "score": 0},
+            {"player_id": "1"},
+            {"player_id": "2"},
             # Add more players as needed
         ]
 
