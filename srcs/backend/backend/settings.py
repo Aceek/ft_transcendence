@@ -74,11 +74,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -205,3 +207,7 @@ EMAIL_PORT = environ.get("EMAIL_PORT")
 EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
 
 EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
