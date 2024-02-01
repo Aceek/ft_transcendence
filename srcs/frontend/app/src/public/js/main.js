@@ -1,20 +1,25 @@
-const api_url = 'http://localhost:8000/api/';
+import { getLoginPage } from './login.js';
+import { getHomePage } from './home.js';
+import { getRegisterPage } from './register.js';
+import { isAPIConnected } from './ping.js';
 
-async function fetchContent(url) {
-    const response = await fetch(url);
-    const content = await response.json();
-    return content;
+export const api_url = 'http://localhost:8000/api/';
+
+export async function router(path) {
+    if (await isAPIConnected()) {
+        switch (path) {
+            case 'home':
+                getHomePage();
+                break;
+            default:
+                getHomePage();
+                break;
+        }
+    } else if (path === 'register') {
+        getRegisterPage();
+    } else {
+        getLoginPage();
+    }
 }
 
-
-function getLoginPage() {
-    fetch('public/html/login-form.html')
-        .then(response => response.text())
-        .then(template => {
-            document.getElementById('main').innerHTML = template;
-        });
-    //console.log(fetchContent(api_url + 'auth/oauth2/'));
-}
-
-getLoginPage();
-
+router('login')
