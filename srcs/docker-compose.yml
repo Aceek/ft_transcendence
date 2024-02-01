@@ -7,7 +7,7 @@ networks:
 volumes:
   postgres_data:
   certs:
-  esdata01:
+  # esdata01:
   kibanadata:
   metricbeatdata01:
   filebeatdata01:
@@ -95,7 +95,7 @@ services:
       co.elastic.logs/module: elasticsearch
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - esdata01:/usr/share/elasticsearch/data
+      - ./elk-b/esdata01:/usr/share/elasticsearch/data
     ports:
       - ${ES_PORT}:9200
     environment:
