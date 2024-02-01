@@ -49,4 +49,22 @@ if [ x${ELASTIC_PASSWORD} == x ]; then
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
         echo "Setting logstash_system password";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/logstash_system/_password -d "{\"password\":\"${LOGSTASH_INTERNAL_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+
+        # try kibana connection
+        echo "Waiting for Kibana availability";
+
+        until $(curl --output /dev/null --silent --head --fail --insecure https://kibana:5601); do
+            printf 'Waiting for Kibana API...'
+            sleep 5
+        done
+        echo "Kibana is ready. Importing Kibana objects...";
+        
+        sleep 5
+        # import kibana objects
+        curl -k --cacert config/certs/ca/ca.crt \
+        -u elastic:${ELASTIC_PASSWORD} \
+        -X POST "https://kibana:5601/api/saved_objects/_import" \
+        -H 'kbn-xsrf: true' \
+        --form file=@"/saved_objects.ndjson"
+
         echo "All done!";

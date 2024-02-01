@@ -78,6 +78,7 @@ services:
     volumes:
       - ./elk-b/setup/entrypoint.sh:/entrypoint.sh:ro,Z
       - certs:/usr/share/elasticsearch/config/certs
+      - ./elk-b/setup/saved_objects.ndjson:/saved_objects.ndjson:ro,Z
     user: "0"
     healthcheck:
       test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
@@ -166,6 +167,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 120
+
 
   metricbeat01:
     container_name: metricbeat01
