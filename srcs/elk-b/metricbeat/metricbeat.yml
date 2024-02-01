@@ -20,6 +20,10 @@ metricbeat.modules:
   hosts: ${LOGSTASH_HOSTS}
 
 - module: kibana
+  xpack.enabled: true
+  ssl.certificate_authorities: "certs/ca/ca.crt"
+  ssl.certificate: "certs/kibana/kibana.crt"  
+  ssl.key: "certs/kibana/kibana.key"
   metricsets: 
     - stats
   period: 10s
