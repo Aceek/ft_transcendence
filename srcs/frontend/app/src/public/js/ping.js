@@ -5,7 +5,7 @@ export async function isAPIConnected() {
     if (accessToken == null) {
         return Promise.resolve(false);
     }
-    return fetch(api_url + 'auth/ping', {
+    return fetch(api_url + 'auth/ping/', {
         headers: {
             'Authorization': 'Bearer ' + accessToken
         }
