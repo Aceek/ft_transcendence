@@ -50,6 +50,33 @@ if [ x${ELASTIC_PASSWORD} == x ]; then
         echo "Setting logstash_system password";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es01:9200/_security/user/logstash_system/_password -d "{\"password\":\"${LOGSTASH_INTERNAL_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
 
+        # Add ilm policy to elasticsearch
+        echo "Adding ILM policy";
+        curl -X PUT --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} "https://es01:9200/_ilm/policy/logs_policy" -H 'Content-Type: application/json' -d '{
+          "policy": {
+              "phases": {
+              "hot": {
+                  "min_age": "0ms",
+                  "actions": {
+                  "rollover": {
+                      "max_size": "50gb",
+                      "max_age": "30d"
+                  }
+                  }
+              }
+              }
+          }
+          }'
+
+        # Add policy to index
+        echo "Adding policy to index template";
+        curl -X PUT --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} "https://es01:9200/_template/logs_template" -H 'Content-Type: application/json' -d '{
+          "index_patterns": ["dev*"],
+          "settings": {
+            "index.lifecycle.name": "logs_policy",
+            "index.lifecycle.rollover_alias": "dev"
+          }
+        }'
         # try kibana connection
         echo "Waiting for Kibana availability";
 

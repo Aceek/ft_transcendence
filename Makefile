@@ -9,7 +9,7 @@ down:
 re: fclean all
 
 clean:
-	@docker-compose -f $(COMPOSE) down
+	@docker-compose -f $(COMPOSE) down --volumes --remove-orphans
 
 fclean : clean
 	docker rmi $$(docker images -q)
