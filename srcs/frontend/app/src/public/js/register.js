@@ -24,45 +24,33 @@ function passwordMatch() {
     return false;
 }
 
+function displayRegistrationError(errorTag, msg) {
+    let span = document.createElement('span');
+    span.textContent = `${msg}`;
+    errorTag.appendChild(span);
+    errorTag.appendChild(document.createElement('br'));
+    return false;
+}
+
 function passwordValidation() {
     let is_valid = true;
     let password = document.getElementById('password').value;
-    let errorMessage = document.getElementById('password-error-message');
-    errorMessage.innerHTML = '';
+    let errorTag = document.getElementById('password-error-message');
+    errorTag.innerHTML = '';
     if (password.length < 8) {
-        let span = document.createElement('span');
-        span.textContent = '- Password must be at least 8 characters';
-        errorMessage.appendChild(span);
-        errorMessage.appendChild(document.createElement('br'));
-        is_valid = false;
+        is_valid = displayRegistrationError(errorTag, '- Password must be at least 8 characters');
     }
     if (!password.match(/[a-z]/)) {
-        let span = document.createElement('span');
-        span.textContent = '- Password must contain at least one lowercase letter';
-        errorMessage.appendChild(span);
-        errorMessage.appendChild(document.createElement('br'));
-        is_valid = false;
+        is_valid = displayRegistrationError(errorTag, '- Password must contain at least one lowercase letter');
     }
     if (!password.match(/[A-Z]/)) {
-        let span = document.createElement('span');
-        span.textContent = '- Password must contain at least one uppercase letter';
-        errorMessage.appendChild(span);
-        errorMessage.appendChild(document.createElement('br'));
-        is_valid = false;
+        is_valid = displayRegistrationError(errorTag, '- Password must contain at least one uppercase letter');
     }
     if (!password.match(/[0-9]/)) {
-        let span = document.createElement('span');
-        span.textContent = '- Password must contain at least one number';
-        errorMessage.appendChild(span);
-        errorMessage.appendChild(document.createElement('br'));
-        is_valid = false;
+        is_valid = displayRegistrationError(errorTag, '- Password must contain at least one number');
     }
     if (!password.match(/[^a-zA-Z\d]/)) {
-        let span = document.createElement('span');
-        span.textContent = '- Password must contain at least one special character';
-        errorMessage.appendChild(span);
-        errorMessage.appendChild(document.createElement('br'));
-        is_valid = false;
+        is_valid = displayRegistrationError(errorTag, '- Password must contain at least one special character');
     }
     return is_valid;
 }

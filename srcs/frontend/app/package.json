@@ -6,7 +6,8 @@
   "scripts": {
     "server": "browser-sync start --server 'src' --files 'src'",
     "sass": "sass --watch src/public/scss/:src/public/css/",
-    "start": "npm-run-all --parallel sass server"
+    "format": "prettier --write \"src/public/js/**/*.js\"",
+    "start": "npm-run-all --parallel sass server format"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
   "devDependencies": {
     "browser-sync": "^3.0.2",
     "npm-run-all": "^4.1.5",
+    "prettier": "^3.2.4",
     "sass": "^1.70.0"
   }
 }
