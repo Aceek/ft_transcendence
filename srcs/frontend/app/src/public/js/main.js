@@ -1,4 +1,4 @@
-import { getLoginPage } from './login.js';
+import { getLoginPage, checkOAuthCode } from './login.js';
 import { getHomePage } from './home.js';
 import { getRegisterPage } from './register.js';
 import { isAPIConnected } from './ping.js';
@@ -15,6 +15,9 @@ export async function router(path) {
                 getHomePage();
                 break;
         }
+    } else if (await checkOAuthCode()) {
+        router('home');
+        return;
     } else if (path === 'register') {
         getRegisterPage();
     } else {

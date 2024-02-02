@@ -1,4 +1,5 @@
 import { api_url } from './main.js';
+import { remove_url_parameter } from './url.js';
 
 export async function isAPIConnected() {
     var accessToken = localStorage.getItem('accessToken');
@@ -12,12 +13,13 @@ export async function isAPIConnected() {
     })
     .then(response => {
         if (response.status === 200) {
+            remove_url_parameter();
             return true;
         } else {
             if (localStorage.getItem('refreshToken') == null) {
                 return false;
             }
-            fetch(api_url + 'auth/refresh/', {
+            return fetch(api_url + 'auth/refresh/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -26,9 +28,11 @@ export async function isAPIConnected() {
                     refresh: localStorage.getItem('refreshToken'),
                 }),
             })
-            .then(response => {
-                if (response.status === 200) {
-                    localStorage.setItem('accessToken', response.access);
+            .then(response => response.json())
+            .then(data => {
+                if (data.access) {
+                    localStorage.setItem('accessToken', data.access);
+                    remove_url_parameter();
                     return true;
                 } else {
                     return false;
