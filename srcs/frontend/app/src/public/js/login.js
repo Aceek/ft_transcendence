@@ -1,70 +1,70 @@
 import { router, api_url } from "./main.js";
+import {
+  fetchTemplate,
+  addEventListenerById,
+  addEventListenerByClass,
+  postData,
+  setTokensStorage,
+} from "./pageUtils.js";
 
-export function getLoginPage() {
-  fetch("public/html/login-form.html")
-    .then((response) => response.text())
-    .then((template) => {
-      document.getElementById("main").innerHTML = template;
-      document
-        .getElementById("registerLink")
-        .addEventListener("click", function (event) {
-          event.preventDefault();
-          router("register");
-        });
-      let button42 = document.getElementById("42button");
-      fetch(api_url + "auth/oauth2/", {
-        method: "GET",
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const link = data.authorization_url; // replace 'link' with the actual property name in the response
-          button42.addEventListener("click", (event) => {
-            event.preventDefault();
-            window.location.href = link;
-          });
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-      document
-        .querySelector(".card-body")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          var usr_email = document.getElementById("emailField").value;
-          var usr_password = document.getElementById("passwordField").value;
-          if (!usr_email || !usr_password) {
-            var errorMessage = document.getElementById("error-message");
-            errorMessage.textContent = "Please fill out all fields";
-            return;
-          }
-          fetch(api_url + "auth/login/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: usr_email,
-              password: usr_password,
-            }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.refresh) {
-                localStorage.setItem("refreshToken", data.refresh);
-                localStorage.setItem("accessToken", data.access);
-                var errorMessage = document.getElementById("error-message");
-                errorMessage.textContent = "";
-                router("home");
-              } else {
-                var errorMessage = document.getElementById("error-message");
-                errorMessage.textContent = "Invalid email or password";
-              }
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-            });
-        });
+async function fetch42AuthLink() {
+  try {
+    const response = await fetch(api_url + "auth/oauth2/", {
+      method: "GET",
     });
+    const data = await response.json();
+    return data.authorization_url;
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+function getFormData() {
+  let usr_email = document.getElementById("emailField").value;
+  let usr_password = document.getElementById("passwordField").value;
+  return { email: usr_email, password: usr_password };
+}
+
+function handleLoginResponse(response) {
+  let errorMessage = document.getElementById("error-message");
+  if (response.status === 200) {
+    response.json().then((data) => {
+      setTokensStorage(data);
+      errorMessage.textContent = "";
+      router("home");
+    });
+  } else if (response.status === 401) {
+    errorMessage.textContent = "Invalid email or password";
+  } else {
+    errorMessage.textContent = "An error occurred. Please try again later.";
+  }
+}
+
+function addEventListeners() {
+  addEventListenerById("registerLink", "click", function (event) {
+    event.preventDefault();
+    router("register");
+  });
+  addEventListenerById("42button", "click", async function (event) {
+    event.preventDefault();
+    window.location.href = await fetch42AuthLink();
+  });
+  addEventListenerByClass(".card-body", "submit", async function (event) {
+    event.preventDefault();
+    let formData = getFormData();
+    let response = await postData(api_url + "auth/login/", formData);
+    handleLoginResponse(response);
+  });
+}
+
+export async function getLoginPage() {
+  try {
+    const template = await fetchTemplate("public/html/login-form.html");
+    document.getElementById("main").innerHTML = template;
+    addEventListeners();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 export async function checkOAuthCode() {

@@ -7,7 +7,7 @@
     "server": "browser-sync start --server 'src' --files 'src'",
     "sass": "sass --watch src/public/scss/:src/public/css/",
     "format": "prettier --write \"src/public/js/**/*.js\"",
-    "start": "npm-run-all --parallel sass server format"
+    "start": "npm-run-all --parallel sass server"
   },
   "keywords": [],
   "author": "",
