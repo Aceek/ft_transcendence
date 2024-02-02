@@ -53,20 +53,26 @@ if [ x${ELASTIC_PASSWORD} == x ]; then
         # Add ilm policy to elasticsearch
         echo "Adding ILM policy";
         curl -X PUT --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} "https://es01:9200/_ilm/policy/logs_policy" -H 'Content-Type: application/json' -d '{
-          "policy": {
-              "phases": {
-              "hot": {
-                  "min_age": "0ms",
-                  "actions": {
-                  "rollover": {
-                      "max_size": "50gb",
-                      "max_age": "30d"
-                  }
-                  }
-              }
-              }
-          }
-          }'
+        "policy": {
+            "phases": {
+            "hot": {
+                "min_age": "0ms",
+                "actions": {
+                "rollover": {
+                    "max_size": "50gb",
+                    "max_age": "30d"
+                }
+                }
+            },
+            "delete": {
+                "min_age": "90d",
+                "actions": {
+                "delete": {}
+                }
+            }
+            }
+        }
+        }'
 
         # Add policy to index
         echo "Adding policy to index template";
