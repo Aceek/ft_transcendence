@@ -40,6 +40,10 @@ function sendInitGameRequest() {
     .catch(error => console.error('Error:', error));
 }
 
+
+let updateInterval = 200; // Adjust the interval based on your preferences
+let lastUpdate = 0;
+
 function startGameLoop() {
     function update(timestamp) {
         // Clear the canvas
@@ -48,12 +52,46 @@ function startGameLoop() {
         // Draw the game content
         draw();
 
+        // Update paddle position based on arrow keys
+        if (keys.ArrowUp && players[0].paddle_y > 0) {
+            players[0].paddle_y -= paddle.speed; // Adjust the value based on desired speed
+        }
+        if (keys.ArrowDown && players[0].paddle_y < screen.height - paddle.height) {
+            players[0].paddle_y += paddle.speed; // Adjust the value based on desired speed
+        }
+
+        // Send paddle coordinates to API at regular intervals
+        if (timestamp - lastUpdate > updateInterval) {
+            sendPaddleCoordinates();
+            lastUpdate = timestamp;
+        }
+
         // Continue the game loop
         requestAnimationFrame(update);
     }
 
     // Initial call to start the game loop
     requestAnimationFrame(update);
+}
+
+function sendPaddleCoordinates() {
+    // Send a single request with updated paddle coordinates
+    fetch(apiEndpoint + 'update-paddle/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'game_id': gameId,
+            'player_id': 1, // Assuming player 1 for now
+            'paddle_y': players[0].paddle_y,
+        }),
+    })
+    .then(response => response.json())
+    .then(updatedGame => {
+        // Handle any response if needed
+    })
+    .catch(error => console.error('Error updating paddle:', error));
 }
 
 function draw() {
@@ -117,3 +155,22 @@ function drawScores() {
 
 // Send init-game request when the DOM is loaded
 sendInitGameRequest();
+
+
+/*---------------------------------------------------------------------------------*/
+
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+
+let keys = {
+    ArrowUp: false,
+    ArrowDown: false,
+};
+
+function handleKeyDown(event) {
+    keys[event.key] = true;
+}
+
+function handleKeyUp(event) {
+    keys[event.key] = false;
+}

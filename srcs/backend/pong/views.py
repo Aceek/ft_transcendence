@@ -32,28 +32,28 @@ class PopulateDatabaseView(APIView):
         return Response({"message": "Database populated with players"}, status=status.HTTP_201_CREATED)
 
 
-# class GameInfoView(APIView):
-#     def get(self, request, *args, **kwargs):
-#         game_id = self.kwargs.get('game_id')
+class GameInfoView(APIView):
+    def get(self, request, *args, **kwargs):
+        game_id = self.kwargs.get('game_id')
 
-#         try:
-#             # Retrieve game and paddle coordinates for the specified game
-#             game = Game.objects.get(id=game_id)
-#             paddle_coordinates = PaddleCoordinates.objects.filter(game=game)
+        try:
+            # Retrieve game and paddle coordinates for the specified game
+            game = Game.objects.get(id=game_id)
+            paddle_coordinates = PaddleCoordinates.objects.filter(game=game)
 
-#             # Serialize the data
-#             serializer = GameInfoSerializer({
-#                 'game_id': game.id,
-#                 'paddle_coordinates': [{'player_id': pc.player_id, 'paddle_y': pc.paddle_y} for pc in paddle_coordinates]
-#             })
+            # Serialize the data using the GameInfoSerializer
+            serializer = GameInfoSerializer({
+                'game_id': game.id,
+                'paddle_coordinates': [{'player_id': pc.player.player_id, 'paddle_y': pc.paddle_y} for pc in paddle_coordinates]
+            })
 
-#             return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-#         except Game.DoesNotExist:
-#             return Response({'error': 'Game not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Game.DoesNotExist:
+            return Response({'error': 'Game not found'}, status=status.HTTP_404_NOT_FOUND)
 
-#         except Exception as e:
-#             return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class PaddleMoveView(APIView):
 #     def post(self, request, *args, **kwargs):
@@ -80,3 +80,31 @@ class PopulateDatabaseView(APIView):
 
 #         except Exception as e:
 #             return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdatePaddleView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            # Deserialize incoming data
+            serializer = PaddleUpdateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            player_id = serializer.validated_data['player_id']
+            paddle_y = serializer.validated_data['paddle_y']
+
+            # Retrieve player object from the database
+            player = Player.objects.get(player_id=player_id)
+
+            # Update the player's paddle_y attribute
+            player.paddle_y = paddle_y
+            player.save()
+
+            # Serialize updated player data for response
+            player_serializer = PlayerSerializer(player)
+            serialized_data = player_serializer.data
+
+            return Response({'success': True, 'player': serialized_data}, status=status.HTTP_200_OK)
+        except Player.DoesNotExist:
+            return Response({'success': False, 'error': 'Player not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
