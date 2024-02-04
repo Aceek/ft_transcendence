@@ -60,18 +60,18 @@ services:
     volumes:
       - ./nginx:/etc/nginx/conf.d
       - ./frontend/app/src:/usr/share/nginx/html
-      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx/certs:/usr/share/nginx/certs
     depends_on:
       - backend
       - frontend
-      - cert-generator
+      - certs-generator
     networks:
       - transcendence
 
-  cert-generator:
+  certs-generator:
     image: alpine
     volumes:
-      - ./nginx/certs:certs
+      - ./nginx/certs:/certs
     command: >
       /bin/sh -c "
       apk add --no-cache openssl &&
