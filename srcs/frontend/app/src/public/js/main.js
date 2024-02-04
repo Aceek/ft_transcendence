@@ -25,4 +25,4 @@ export async function router(path) {
   }
 }
 
-router("login");
+router("home");
