@@ -98,7 +98,7 @@ function getFormData() {
 function addEventListeners() {
   addEventListenerById("loginLink", "click", (event) => {
     event.preventDefault();
-    router("login");
+    router("/login");
   });
   addEventListenerByClass(".card-body", "submit", async (event) => {
     event.preventDefault();
@@ -108,7 +108,7 @@ function addEventListeners() {
     let formData = getFormData();
     let response = await postData(api_url + "auth/register/", formData);
     if (response.status === 201) {
-      router("login");
+      router("/login");
     }
   });
 }

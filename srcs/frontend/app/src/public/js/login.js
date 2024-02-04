@@ -31,7 +31,7 @@ function handleLoginResponse(response) {
     response.json().then((data) => {
       setTokensStorage(data);
       errorMessage.textContent = "";
-      router("home");
+      router("/home");
     });
   } else if (response.status === 401) {
     errorMessage.textContent = "Invalid email or password";
@@ -43,7 +43,7 @@ function handleLoginResponse(response) {
 function addEventListeners() {
   addEventListenerById("registerLink", "click", function (event) {
     event.preventDefault();
-    router("register");
+    router("/register");
   });
   addEventListenerById("42button", "click", async function (event) {
     event.preventDefault();
