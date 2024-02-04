@@ -210,4 +210,7 @@ EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://localhost:443",
+    "https://localhost",
+
 ]

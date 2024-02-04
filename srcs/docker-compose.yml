@@ -8,7 +8,11 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} " ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} "
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,8 +25,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    # command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-    command: tail -f /dev/null
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    # command: tail -f /dev/null
     volumes:
       - ./backend:/app
     env_file:
@@ -48,6 +52,33 @@ services:
       - /app/node_modules
     command: npm start
 
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./frontend/app/src:/usr/share/nginx/html
+      - ./nginx/certs:/usr/share/nginx/certs
+    depends_on:
+      - backend
+      - frontend
+      - certs-generator
+    networks:
+      - transcendence
+
+  certs-generator:
+    image: alpine
+    volumes:
+      - ./nginx/certs:/certs
+    command: >
+      /bin/sh -c "
+      apk add --no-cache openssl &&
+      if [ ! -f /certs/nginx.crt ]; then
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/nginx.key -out /certs/nginx.crt -subj '/CN=localhost';
+      fi;
+      "
 networks:
   transcendence:
     driver: bridge
