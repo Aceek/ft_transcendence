@@ -1,12 +1,62 @@
-<!-- profile.html -->
-<div class="card">
-    <div class="card-body">
-        <img id="avatar" class="card-img-top img-fluid" alt="User Avatar">
-        <h5 id="username" class="card-title"></h5>
-        <p id="email" class="card-text"></p>
-        <p id="2fa" class="card-text"></p>
-        <h6 class="card-subtitle mb-2 text-muted">Friends</h6>
-        <ul id="friends" class="list-group">
-        </ul>
+<div class="container">
+  <div class="main-body">
+    <div class="row gutters-sm">
+      <div class="col-md">
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-4 col-md-4 col-lg-2">
+                <img id="avatar" src="../images/profile.jpg" alt="Admin" class="rounded-circle" width="150">
+              </div>
+              <div class="col-sm-8 col-md-8 col-lg-10">
+                <div class="mt-3">
+                  <h4 id="username">Default</h4>
+                  <p class="text-secondary mb-1" id="email">Default</p>
+                  <p class="text-secondary mb-1" id="2fa">2FA: No</p>
+                  <button class="btn btn-primary" id="stat_button">Stats</button>
+                  <button class="btn btn-outline-primary" id="edit_button">Account</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+    <hr>
+    <div class="row gutters-sm">
+      <div class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <!-- Ami 1 -->
+              <li class="list-group-item d-flex align-items-center">
+                <img src="../images/profile.jpg" alt="Avatar de l'ami" class="rounded-circle me-3" width="75" height="75">
+                <div>
+                  <strong>ilinhard</strong>
+                  <span class="text-success ms-2">• En ligne</span>
+                  <div class="text-muted">1v1</div>
+                  <div class="text-muted">pong victory : 25</div>
+                  <div class="text-muted">other victory : 10</div>
+                </div>
+              </li>
+              <li class="list-group-item d-flex align-items-center">
+                <img src="../images/profile.jpg" alt="Avatar de l'ami" class="rounded-circle me-3" width="75" height="75">
+                <div>
+                  <strong>ilinhard</strong>
+                  <span class="text-success ms-2">• En ligne</span>
+                  <div class="text-muted">1v1</div>
+                  <div class="text-muted">pong victory : 25</div>
+                  <div class="text-muted">other victory : 10</div>
+                </div>
+              </li>
+              <!-- Répétez pour chaque ami -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+
+
+  </div>
 </div>

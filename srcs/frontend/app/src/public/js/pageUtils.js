@@ -22,11 +22,33 @@ export async function postData(url = "", data = {}) {
   return response;
 }
 
+export async function postDataWithToken(url = "", data = {}) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return response;
+}
+
+export async function getDataWithToken(url = "") {
+    const response = await fetch(url, {
+        method: "GET",
+        headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+    });
+    return response;
+    }
+
 export function fieldsMatch(
   fieldId1,
   fieldId2,
   errorMessageId,
-  errorMessageText,
+  errorMessageText
 ) {
   let field1 = document.getElementById(fieldId1).value;
   let field2 = document.getElementById(fieldId2).value;
