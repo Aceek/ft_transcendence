@@ -32,28 +32,33 @@ class PopulateDatabaseView(APIView):
         return Response({"message": "Database populated with players"}, status=status.HTTP_201_CREATED)
 
 
-class GameInfoView(APIView):
-    def get(self, request, *args, **kwargs):
-        game_id = self.kwargs.get('game_id')
-
+class UpdateGameDataView(APIView):
+    def get(self, request, game_id, *args, **kwargs):
         try:
-            # Retrieve game and paddle coordinates for the specified game
+            # Retrieve the game and ball coordinates based on the game_id
             game = Game.objects.get(id=game_id)
-            paddle_coordinates = PaddleCoordinates.objects.filter(game=game)
+            ball_coordinates = BallCoordinates.objects.get(game=game)
 
-            # Serialize the data using the GameInfoSerializer
-            serializer = GameInfoSerializer({
-                'game_id': game.id,
-                'paddle_coordinates': [{'player_id': pc.player.player_id, 'paddle_y': pc.paddle_y} for pc in paddle_coordinates]
-            })
+            # Retrieve player objects from the game
+            player1 = game.player1
+            player2 = game.player2
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # Serialize player and ball coordinates data for response
+            player1_serializer = PlayerSerializer(player1)
+            player2_serializer = PlayerSerializer(player2)
+
+            response_data = {
+                'p1_y': player1.paddle_y,
+                'p2_y': player2.paddle_y,
+                'b_x': ball_coordinates.x,
+                'b_y': ball_coordinates.y,
+            }
+
+            return Response(response_data, status=status.HTTP_200_OK)
 
         except Game.DoesNotExist:
             return Response({'error': 'Game not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        except Exception as e:
-            return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class PaddleMoveView(APIView):
 #     def post(self, request, *args, **kwargs):
