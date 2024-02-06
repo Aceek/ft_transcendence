@@ -8,7 +8,7 @@ export function addEventListenerByClass(className, event, handler) {
 
 export async function fetchTemplate(url) {
   const response = await fetch(url);
-  return response.text();
+  return await response.text();
 }
 
 export async function postData(url = "", data = {}) {
@@ -22,9 +22,9 @@ export async function postData(url = "", data = {}) {
   return response;
 }
 
-export async function postDataWithToken(url = "", data = {}) {
+export async function requestDataWithToken(url = "", data = {}, method = "POST") {
   const response = await fetch(url, {
-    method: "POST",
+    method: method,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
@@ -35,14 +35,14 @@ export async function postDataWithToken(url = "", data = {}) {
 }
 
 export async function getDataWithToken(url = "") {
-    const response = await fetch(url, {
-        method: "GET",
-        headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-    });
-    return response;
-    }
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
+  });
+  return response;
+}
 
 export function fieldsMatch(
   fieldId1,
@@ -64,4 +64,20 @@ export function fieldsMatch(
 export function setTokensStorage(data) {
   localStorage.setItem("refreshToken", data.refresh);
   localStorage.setItem("accessToken", data.access);
+}
+
+export function loadProfileCss(url) {
+  const head = document.head;
+  const existingLink = Array.from(head.querySelectorAll("link")).find(
+    (link) => link.href === url
+  );
+
+  if (!existingLink) {
+    const link = document.createElement("link");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    link.href = url;
+
+    head.appendChild(link);
+  }
 }

@@ -1,5 +1,10 @@
 import { api_url } from "../main.js";
-import { getDataWithToken } from "../pageUtils.js";
+import {
+  getDataWithToken,
+  fetchTemplate,
+  loadProfileCss,
+  requestDataWithToken,
+} from "../pageUtils.js";
 
 async function getProfile() {
   const urlProfile = api_url + "users/profile/me";
@@ -11,80 +16,104 @@ async function getProfile() {
   return data;
 }
 
-async function getGameHistory() {
-  const urlHistory = api_url + "history/me";
-  const response = await getDataWithToken(urlHistory);
+// async function getGameHistory() {
+//   const urlHistory = api_url + "history/me";
+//   const response = await getDataWithToken(urlHistory);
+//   if (!response.ok) {
+//     throw new Error("Failed to get game history");
+//   }
+//   const history = await response.json();
+//   return history;
+// }
+
+async function getFriendList() {
+  const url = api_url + "users/friends";
+  const response = await getDataWithToken(url);
   if (!response.ok) {
-    throw new Error("Failed to get game history");
+    throw new Error("Failed to get friend list");
   }
-  const history = await response.json();
-  return history;
+  const data = await response.json();
+  return data;
 }
 
-function formatGameHistory(history, profile) {
-  return history
-    .map((game) => {
-      const date = new Date(game.date).toLocaleString();
-      const opponent =
-        game.user1 === profile.username ? game.user2 : game.user1;
-      const result = game.winner === profile.username ? "Won" : "Lost";
-      return `<li>${date}: ${opponent} - ${result}</li>`;
+// function formatGameHistory(history, profile) {
+//   return history
+//     .map((game) => {
+//       const date = new Date(game.date).toLocaleString();
+//       const opponent =
+//         game.user1 === profile.username ? game.user2 : game.user1;
+//       const result = game.winner === profile.username ? "Won" : "Lost";
+//       return `<li>${date}: ${opponent} - ${result}</li>`;
+//     })
+//     .join("");
+// }
+
+function injectFriendList(friendList) {
+  const friendListContainer = document.getElementById("friendsList");
+  friendListContainer.innerHTML = friendList
+    .map((friend) => {
+      return `
+      <li class="list-group-item d-flex align-items-center">
+        <img src="${friend.avatar || "../images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
+        <div>
+          <strong>${friend.username}</strong>
+          <span class="text-success ms-2">• En ligne</span>
+        </div>
+      </li>
+    `;
     })
     .join("");
 }
 
-function loadProfileCss() {
-  const head = document.head;
-  const link = document.createElement("link");
+function injectUserInfo(profile) {
+  const avatarElement = document.getElementById("avatar");
+  const usernameElement = document.getElementById("username");
+  const emailElement = document.getElementById("email");
+  const twofaElement = document.getElementById("2fa");
 
-  link.type = "text/css";
-  link.rel = "stylesheet";
-  link.href = "public/css/profile.css";
-
-  head.appendChild(link);
+  avatarElement.src = profile.avatar || "../images/profile.jpg";
+  usernameElement.value = profile.username;
+  emailElement.value = profile.email;
+  twofaElement.textContent = `2FA: ${profile.is2FA ? "Yes" : "No"}`;
 }
 
-// export async function displayProfile() {
-//   try {
-//     loadProfileCss();
-//     const profile = await getProfile();
-//     const history = await getGameHistory();
-
-//     const response = await fetch("public/html/profile.html");
-//     const profileBlock = await response.text();
-
-//     document.getElementById("main").innerHTML = profileBlock;
-
-//     document.getElementById("avatar").src = profile.avatar;
-//     document.getElementById("username").textContent = profile.username;
-//     document.getElementById("email").textContent = profile.email;
-//     document.getElementById("2fa").textContent = profile.is_2fa_enabled
-//       ? "2FA is enabled"
-//       : "2FA is not enabled";
-//     document.getElementById("friends").innerHTML = profile.friends
-//       .map((friend) => `<li>${friend}</li>`)
-//       .join("");
-//     document.getElementById("history").innerHTML = formatGameHistory(
-//       history,
-//       profile
-//     );
-//   } catch (error) {
-//     console.error("Error:", error);
-//   }
-// }
-
-
-
-// realy simple function that display html profile page
 export async function displayProfile() {
-  loadProfileCss();
+  loadProfileCss("public/css/profile.css");
   try {
-    fetch("public/html/profile.html")
-      .then((response) => response.text())
-      .then((data) => {
-        document.getElementById("main").innerHTML = data;
-      });
+    const profileHtml = await fetchTemplate("public/html/profile.html");
+    document.getElementById("main").innerHTML = profileHtml;
+    const profile = await getProfile();
+    const friendList = await getFriendList();
+    injectFriendList(friendList);
+    injectUserInfo(profile);
+    handleSubmit(profile);
   } catch (error) {
     console.error("Error:", error);
   }
+}
+
+async function handleSubmit(profile) {
+  document
+    .getElementById("submit_button")
+    .addEventListener("click", async function () {
+      const newValue = document.getElementById("username").value;
+
+      try {
+        const response = await requestDataWithToken(
+          api_url + "users/profile/update",
+          { username: newValue },
+          "PATCH"
+        );
+
+        if (response.status === 200) {
+          console.log("Modification réussie !");
+          document.getElementById("username").value = newValue;
+        } else {
+          console.error("Erreur lors de la modification");
+          document.getElementById("username").value = profile.username;
+        }
+      } catch (error) {
+        console.error("Error :", error);
+      }
+    });
 }

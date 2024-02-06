@@ -65,25 +65,35 @@ class CustomUserFriendView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-# Create a new retrieve view to get the user's friends where i found eatch friend by id and return the user's friends
-class RetrieveUserFriendsView(RetrieveAPIView):
+class ListUserFriendsView(ListAPIView):
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        user = self.request.user
-        friend_ids = user.friends.all()  # Liste d'ID d'amis
+    def get_queryset(self):
+        return list(self.request.user.friends.all())
 
-        friends_data = []
-        for friend_id in friend_ids:
-            try:
-                friend = CustomUser.objects.get(id=friend_id)
-                serializer = self.serializer_class(friend)
-                friends_data.append(serializer.data)
-            except CustomUser.DoesNotExist:
-                # Gérer le cas où l'ami n'existe pas
-                pass
 
-        return Response(friends_data, status=status.HTTP_200_OK)
+
+
+
+# class RetrieveUserFriendsView(RetrieveAPIView):
+#     serializer_class = CustomUserSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def retrieve(self, request, *args, **kwargs):
+#         user = self.request.user
+#         friend_ids = user.friends.all()  # Liste d'ID d'amis
+
+#         friends_data = []
+#         for friend_id in friend_ids:
+#             try:
+#                 friend = CustomUser.objects.get(id=friend_id)
+#                 serializer = self.serializer_class(friend)
+#                 friends_data.append(serializer.data)
+#             except CustomUser.DoesNotExist:
+#                 # Gérer le cas où l'ami n'existe pas
+#                 pass
+
+#         return Response(friends_data, status=status.HTTP_200_OK)
 
 
