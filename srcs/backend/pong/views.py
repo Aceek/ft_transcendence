@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import *
 from .serializers import *
-from .game_logic import initialize_game
+from .game_logic import *
 
 class InitGameView(APIView):
     def post(self, request, *args, **kwargs):
@@ -16,6 +16,33 @@ class InitGameView(APIView):
 
         # Return the response with the JSON data
         return Response(result, status=status_code)
+    
+class StartGameView(APIView):
+    def post(self, request, *args, **kwargs):
+        game_id = request.data.get('game_id')
+
+        if not game_id:
+            return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Retrieve the game object from the database
+        game = get_object_or_404(Game, id=game_id)
+
+        # Check if the game is not already started
+        # if game.is_started:
+        #     return Response({'error': 'Game has already started'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Call the start_game_function with the game object
+        start_game(game)
+
+        # Update the game status to indicate that it has started
+        # game.is_started = True
+        # game.save()
+
+        # # Serialize the game data for response
+        # serializer = GameSerializer(game)
+        # response_data = serializer.data
+
+        # return Response(response_data, status=status.HTTP_200_OK)
 
 class PopulateDatabaseView(APIView):
     def post(self, request, *args, **kwargs):
@@ -35,57 +62,25 @@ class PopulateDatabaseView(APIView):
 class UpdateGameDataView(APIView):
     def get(self, request, game_id, *args, **kwargs):
         try:
-            # Retrieve the game and ball coordinates based on the game_id
-            game = Game.objects.get(id=game_id)
-            ball_coordinates = BallCoordinates.objects.get(game=game)
-
-            # Retrieve player objects from the game
-            player1 = game.player1
-            player2 = game.player2
-
-            # Serialize player and ball coordinates data for response
-            player1_serializer = PlayerSerializer(player1)
-            player2_serializer = PlayerSerializer(player2)
+            # Retrieve the game, ball coordinates, and related player data in a single query
+            game_data = Game.objects.select_related('player1', 'player2', 'ball_coordinates').values(
+                'player1__paddle_y',
+                'player2__paddle_y',
+                'ball_coordinates__x',
+                'ball_coordinates__y',
+            ).get(id=game_id)
 
             response_data = {
-                'p1_y': player1.paddle_y,
-                'p2_y': player2.paddle_y,
-                'b_x': ball_coordinates.x,
-                'b_y': ball_coordinates.y,
+                'p1_y': game_data['player1__paddle_y'],
+                'p2_y': game_data['player2__paddle_y'],
+                'b_x': game_data['ball_coordinates__x'],
+                'b_y': game_data['ball_coordinates__y'],
             }
 
             return Response(response_data, status=status.HTTP_200_OK)
 
         except Game.DoesNotExist:
             return Response({'error': 'Game not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
-# class PaddleMoveView(APIView):
-#     def post(self, request, *args, **kwargs):
-#         game_id = kwargs.get('game_id')  # Access the game_id from URL parameters
-#         player_id = request.data.get('player_id')
-#         direction = request.data.get('direction')  # 'up' or 'down'
-
-#         try:
-#             # Retrieve the specific paddle coordinates
-#             paddle_coordinates = get_object_or_404(PaddleCoordinates, game_id=game_id, player_id=player_id)
-
-#             # Increment or decrement paddle_y based on direction
-#             if direction == 'up':
-#                 paddle_coordinates.paddle_y += 10
-#             elif direction == 'down':
-#                 paddle_coordinates.paddle_y -= 10
-
-#             paddle_coordinates.save()
-
-#             return Response({'message': 'Paddle coordinates updated successfully'}, status=status.HTTP_200_OK)
-
-#         except PaddleCoordinates.DoesNotExist:
-#             return Response({'error': 'Paddle coordinates not found'}, status=status.HTTP_404_NOT_FOUND)
-
-#         except Exception as e:
-#             return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class UpdatePaddleView(APIView):
     def post(self, request, *args, **kwargs):
@@ -113,3 +108,30 @@ class UpdatePaddleView(APIView):
             return Response({'success': False, 'error': 'Player not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# class PaddleMoveView(APIView):
+#     def post(self, request, *args, **kwargs):
+#         game_id = kwargs.get('game_id')  # Access the game_id from URL parameters
+#         player_id = request.data.get('player_id')
+#         direction = request.data.get('direction')  # 'up' or 'down'
+
+#         try:
+#             # Retrieve the specific paddle coordinates
+#             paddle_coordinates = get_object_or_404(PaddleCoordinates, game_id=game_id, player_id=player_id)
+
+#             # Increment or decrement paddle_y based on direction
+#             if direction == 'up':
+#                 paddle_coordinates.paddle_y += 10
+#             elif direction == 'down':
+#                 paddle_coordinates.paddle_y -= 10
+
+#             paddle_coordinates.save()
+
+#             return Response({'message': 'Paddle coordinates updated successfully'}, status=status.HTTP_200_OK)
+
+#         except PaddleCoordinates.DoesNotExist:
+#             return Response({'error': 'Paddle coordinates not found'}, status=status.HTTP_404_NOT_FOUND)
+
+#         except Exception as e:
+#             return Response({'error': f'An error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

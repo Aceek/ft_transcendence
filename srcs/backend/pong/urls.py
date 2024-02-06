@@ -9,5 +9,6 @@ urlpatterns = [
     # path('move-paddle/<int:game_id>/', PaddleMoveView.as_view(), name='move_paddle'),
     path('update-paddle/', UpdatePaddleView.as_view(), name='update_paddle'),
     path('update-game-data/<int:game_id>/', UpdateGameDataView.as_view(), name='update_game_data'),
+    path('start-game/', StartGameView.as_view(), name='start_game'),
 ]
 

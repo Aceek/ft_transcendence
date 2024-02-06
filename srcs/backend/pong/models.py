@@ -17,7 +17,7 @@ class Game(models.Model):
     ball = models.OneToOneField('BallCoordinates', on_delete=models.CASCADE, null=True, blank=True, related_name='game_ball')
 
     def __str__(self):
-        return f"Game {self.id}"
+        return f"Game {self.id} (Created at: {self.created_at}, Player 1: {self.player1}, Player 2: {self.player2}, Ball: {self.ball})"
 
 class BallCoordinates(models.Model):
     game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name='ball_coordinates')

@@ -34,8 +34,12 @@ function sendInitGameRequest() {
 
         console.log(game);
 
+        startGame(gameId);
         // Start the game loop after initializing the game
-        startGameLoop();
+        setTimeout(() => {
+            // Start the game loop after initializing the game
+            startGameLoop();
+        }, 1000); // Adjust the delay time in milliseconds (e.g., 1000 for 1 second)
     })
     .catch(error => console.error('Error:', error));
 }
@@ -55,14 +59,16 @@ function startGameLoop() {
         // Update paddle position based on arrow keys
         if (keys.ArrowUp && players[0].paddle_y > 0) {
             players[0].paddle_y -= paddle.speed; // Adjust the value based on desired speed
+            sendPaddleCoordinates();
         }
         if (keys.ArrowDown && players[0].paddle_y < screen.height - paddle.height) {
             players[0].paddle_y += paddle.speed; // Adjust the value based on desired speed
+            sendPaddleCoordinates();
         }
 
         // Send paddle coordinates to API at regular intervals
         if (timestamp - lastUpdate > updateInterval) {
-            sendPaddleCoordinates();
+            getGameData();
             lastUpdate = timestamp;
         }
 
@@ -92,6 +98,39 @@ function sendPaddleCoordinates() {
         // Handle any response if needed
     })
     .catch(error => console.error('Error updating paddle:', error));
+}
+
+function getGameData() {
+    fetch(apiEndpoint + 'update-game-data/' + gameId + '/')
+        .then(response => response.json())
+        .then(gameData => {
+            // Update game state with received data
+            // players[0].paddle_y = gameData.p1_y;
+            players[1].paddle_y = gameData.p2_y;
+            ball.x = gameData.b_x;
+            ball.y = gameData.b_y;
+
+            // Print received game data for debugging
+            console.log('Received Game Data:', gameData);
+        })
+        .catch(error => console.error('Error getting game data:', error));
+}
+
+function startGame(gameId) {
+    // Call the API endpoint to start the game
+    fetch(apiEndpoint + 'start-game/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            'game_id': gameId,
+        }),
+    })
+    .then(response => response.json())
+    .catch(error => {
+        console.error('Error starting the game:', error);
+    });
 }
 
 function draw() {
