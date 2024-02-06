@@ -5,8 +5,8 @@ from PIL import Image
 
 import re
 
-MAX_WIDTH = 450
-MAX_HEIGHT = 450
+MAX_WIDTH = 1920
+MAX_HEIGHT = 1080
 MIN_WIDTH = 100
 MIN_HEIGHT = 100
 

@@ -22,15 +22,31 @@ export async function postData(url = "", data = {}) {
   return response;
 }
 
-export async function requestDataWithToken(url = "", data = {}, method = "POST") {
-  const response = await fetch(url, {
-    method: method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-    },
-    body: JSON.stringify(data),
+export async function requestDataWithToken(url = "", data, method = "") {
+  const token = localStorage.getItem("accessToken");
+  const headers = new Headers({
+    Authorization: `Bearer ${token}`,
   });
+
+  let requestOptions = {
+    method: method,
+    headers: headers,
+  };
+
+  if (method === "POST" || method === "PATCH" || method === "PUT") {
+    if (data instanceof FormData) {
+      requestOptions.body = data;
+    } else {
+      headers.append("Content-Type", "application/json");
+      requestOptions.body = JSON.stringify(data);
+    }
+  }
+
+  const response = await fetch(url, requestOptions);
+  // print response error 
+  if (!response.ok) {
+    console.error("Error:", response);
+  }
   return response;
 }
 

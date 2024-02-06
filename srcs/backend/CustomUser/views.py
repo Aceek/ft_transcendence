@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from .services import remove_friend
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveAPIView, UpdateAPIView, ListAPIView
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class CustomUserListView(ListAPIView):
@@ -28,6 +29,7 @@ class CustomUserUpdateView(UpdateAPIView):
 
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
 
     def get_object(self):
         return self.request.user
@@ -71,29 +73,4 @@ class ListUserFriendsView(ListAPIView):
 
     def get_queryset(self):
         return list(self.request.user.friends.all())
-
-
-
-
-
-# class RetrieveUserFriendsView(RetrieveAPIView):
-#     serializer_class = CustomUserSerializer
-#     permission_classes = [IsAuthenticated]
-
-#     def retrieve(self, request, *args, **kwargs):
-#         user = self.request.user
-#         friend_ids = user.friends.all()  # Liste d'ID d'amis
-
-#         friends_data = []
-#         for friend_id in friend_ids:
-#             try:
-#                 friend = CustomUser.objects.get(id=friend_id)
-#                 serializer = self.serializer_class(friend)
-#                 friends_data.append(serializer.data)
-#             except CustomUser.DoesNotExist:
-#                 # Gérer le cas où l'ami n'existe pas
-#                 pass
-
-#         return Response(friends_data, status=status.HTTP_200_OK)
-
 
