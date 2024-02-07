@@ -6,12 +6,17 @@ from CustomUser.models import CustomUser
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import F
+
+
+class CustomPageNumberPagination(PageNumberPagination):
+    page_size = 5
 
 
 class MatchHistoryView(ListAPIView):
     serializer_class = MatchHistorySerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         user_id = self.kwargs.get("user_id")
@@ -19,7 +24,10 @@ class MatchHistoryView(ListAPIView):
             user = get_object_or_404(CustomUser, id=user_id)
         else:
             user = self.request.user
-        return MatchHistory.objects.filter(Q(user1=user) | Q(user2=user))
+        queryset = MatchHistory.objects.filter(Q(user1=user) | Q(user2=user)).order_by(
+            F("date").desc()
+        )
+        return queryset
 
 
 class StatsView(ListAPIView):

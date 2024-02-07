@@ -1,80 +1,22 @@
 import { api_url } from "../main.js";
+import { fetchTemplate, loadProfileCss } from "../pageUtils.js";
 import {
-  getDataWithToken,
-  fetchTemplate,
-  loadProfileCss,
-  requestDataWithToken,
-} from "../pageUtils.js";
+  sendUpdateRequest,
+  injectFriendList,
+  injectUserInfo,
+  prepareUpdateData,
+  printConfirmationMessage,
+  injectHistoryList,
+  currentHistoryPage,
+} from "./profileUtils.js";
+import { getProfile } from "./getProfile.js";
 
-async function getProfile() {
-  const urlProfile = api_url + "users/profile/me";
-  const response = await getDataWithToken(urlProfile);
-  if (!response.ok) {
-    throw new Error("Failed to get profile");
-  }
-  const data = await response.json();
-  return data;
-}
-
-// async function getGameHistory() {
-//   const urlHistory = api_url + "history/me";
-//   const response = await getDataWithToken(urlHistory);
-//   if (!response.ok) {
-//     throw new Error("Failed to get game history");
-//   }
-//   const history = await response.json();
-//   return history;
-// }
-
-async function getFriendList() {
-  const url = api_url + "users/friends";
-  const response = await getDataWithToken(url);
-  if (!response.ok) {
-    throw new Error("Failed to get friend list");
-  }
-  const data = await response.json();
-  return data;
-}
-
-// function formatGameHistory(history, profile) {
-//   return history
-//     .map((game) => {
-//       const date = new Date(game.date).toLocaleString();
-//       const opponent =
-//         game.user1 === profile.username ? game.user2 : game.user1;
-//       const result = game.winner === profile.username ? "Won" : "Lost";
-//       return `<li>${date}: ${opponent} - ${result}</li>`;
-//     })
-//     .join("");
-// }
-
-function injectFriendList(friendList) {
-  const friendListContainer = document.getElementById("friendsList");
-  friendListContainer.innerHTML = friendList
-    .map((friend) => {
-      return `
-      <li class="list-group-item d-flex align-items-center">
-        <img src="${friend.avatar || "../images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
-        <div>
-          <strong>${friend.username}</strong>
-          <span class="text-success ms-2">• En ligne</span>
-        </div>
-      </li>
-    `;
-    })
-    .join("");
-}
-
-function injectUserInfo(profile) {
-  const avatarElement = document.getElementById("avatar");
-  const usernameElement = document.getElementById("username");
-  const emailElement = document.getElementById("email");
-  const twofaElement = document.getElementById("2fa");
-
-  avatarElement.src = profile.avatar || "../images/profile.jpg";
-  usernameElement.value = profile.username;
-  emailElement.value = profile.email;
-  twofaElement.textContent = `2FA: ${profile.is2FA ? "Yes" : "No"}`;
+async function attachSubmitListener(profile) {
+  document
+    .getElementById("submit_button")
+    .addEventListener("click", async () => {
+      await handleSubmit(profile);
+    });
 }
 
 export async function displayProfile() {
@@ -83,79 +25,83 @@ export async function displayProfile() {
     const profileHtml = await fetchTemplate("public/html/profile.html");
     document.getElementById("main").innerHTML = profileHtml;
     const profile = await getProfile();
-    const friendList = await getFriendList();
     injectUserInfo(profile);
-    injectFriendList(friendList);
-    eventListeners(profile);
+    await injectFriendList();
+    await injectHistoryList(currentHistoryPage);
+    attachSubmitListener(profile);
+    changeAvatar(profile);
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-async function eventListeners(profile) {
-  handleSubmit(profile);
-  changeAvatar(profile);
+function updateProfileAndPrintMessages(profile, dataToUpdate, fields) {
+  fields.forEach((field) => {
+    const isNewEmail = field === "email" && dataToUpdate["new_email"];
+    if (dataToUpdate[field] || isNewEmail) {
+      const value = document.getElementById(field).value;
+      if (field !== "email") profile[field] = value;
+      let message = "";
+      if (field === "email") {
+        message = "Verifié votre nouveau mail pour confirmer le changement.";
+      } else if (field === "username") {
+        message = "Nom d'utilisateur modifié avec succès.";
+      }
+      if (message) printConfirmationMessage(message, "submit_button");
+    }
+  });
 }
 
 async function handleSubmit(profile) {
-  document
-    .getElementById("submit_button")
-    .addEventListener("click", async function () {
-      const newValue = document.getElementById("username").value;
+  const fields = ["username", "email"];
+  const dataToUpdate = prepareUpdateData(profile, fields);
 
-      if (newValue !== profile.username) {
-        try {
-          const response = await requestDataWithToken(
-            api_url + "users/profile/update",
-            { username: newValue },
-            "PATCH"
-          );
+  if (Object.keys(dataToUpdate).length === 0) return;
 
-          if (response.status === 200) {
-            console.log("Username modification réussie !");
-            document.getElementById("username").value = newValue;
-            profile.username = newValue;
-          } else {
-            console.error("Erreur lors de la modification de l'username.");
-            document.getElementById("username").value = profile.username;
-          }
-        } catch (error) {
-          console.error("Error :", error);
-        }
-      }
-    });
+  const updateSuccess = await sendUpdateRequest(
+    api_url + "users/profile/update",
+    dataToUpdate
+  );
+
+  if (updateSuccess) {
+    console.log("Mise à jour réussie !");
+    updateProfileAndPrintMessages(profile, dataToUpdate, fields);
+  } else {
+    console.error("Erreur lors de la mise à jour.");
+    document.getElementById("username").value = profile.username;
+    document.getElementById("email").value = profile.email;
+  }
 }
 
+function updateAvatarImage(file) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    document.getElementById("avatar").src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
-async function changeAvatar(profile) {
-  const avatarUpload = document.getElementById("avatarUpload");
-  avatarUpload.addEventListener("change", async function () {
-    const file = avatarUpload.files[0];
+export async function changeAvatar(profile) {
+  document
+    .getElementById("avatarUpload")
+    .addEventListener("change", async function () {
+      const file = this.files[0];
 
-    if (file) {
+      if (!file) return;
+
       const formData = new FormData();
       formData.append("avatar", file);
 
-      try {
-        const response = await requestDataWithToken(
-          api_url + "users/profile/update",
-          formData,
-          "PATCH"
-        );
+      const updateSuccess = await sendUpdateRequest(
+        api_url + "users/profile/update",
+        formData
+      );
 
-        if (response.status === 200) {
-          console.log("Avatar modification réussie !");
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            document.getElementById("avatar").src = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          console.error("Erreur lors de la modification de l'avatar.");
-        }
-      } catch (error) {
-        console.error("Error :", error);
+      if (updateSuccess) {
+        console.log("Avatar modification réussie !");
+        updateAvatarImage(file);
+      } else {
+        console.error("Erreur lors de la modification de l'avatar.");
       }
-    }
-  });
+    });
 }

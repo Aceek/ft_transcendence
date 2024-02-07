@@ -46,6 +46,7 @@ export async function requestDataWithToken(url = "", data, method = "") {
   return response;
 }
 
+
 export async function getDataWithToken(url = "") {
   const response = await fetch(url, {
     method: "GET",

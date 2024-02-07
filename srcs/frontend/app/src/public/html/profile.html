@@ -5,14 +5,13 @@
         <div class="card">
           <div class="card-body">
             <div class="row">
-              <div class="col-sm-4 col-md-4 col-lg-3">
-                <img id="avatar" src="../images/profile.jpg" alt="Admin" class="rounded-circle" width="150">
+              <div class="col-sm-4 col-md-4 col-lg-3 mx-auto text-center">
                 <form>
                   <div class="input-group mb-3">
-                    <label class="input-group-text" for="avatarUpload">Choisir un fichier</label>
-                    <input type="file" class="form-control form-control-auto" id="avatarUpload" accept="image/*"
-                      style="display: none;">
+                    <input type="file" class="form-control form-control-auto" id="avatarUpload" accept="image/*">
                   </div>
+                </form>
+                <img id="avatar" src="../images/profile.jpg" alt="Admin" class="rounded-circle" width="150">
               </div>
               <div class="col-sm-8 col-md-8 col-lg-9">
                 <form id="profile-form">
@@ -46,7 +45,17 @@
           </div>
         </div>
       </div>
+      <div class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <ul id="gameHistory" class="list-group list-group-flush">
+              <!-- Inject History here -->
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
+
 
 
 
