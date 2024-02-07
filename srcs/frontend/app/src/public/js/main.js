@@ -1,9 +1,11 @@
 import { getLoginPage, checkOAuthCode } from "./login.js";
 import { getHomePage } from "./home.js";
 import { getRegisterPage } from "./register.js";
-import { isAPIConnected } from "./ping.js";
+import { isAPIConnected } from "./networkUtils.js";
 
 export const api_url = "http://localhost:8000/api/";
+
+export const credentialsOption = "include";
 
 export async function router(path) {
   if (!path) {

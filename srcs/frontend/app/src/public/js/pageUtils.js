@@ -1,3 +1,5 @@
+import { credentialsOption } from "./main.js";
+
 export function addEventListenerById(id, event, handler) {
   document.getElementById(id).addEventListener(event, handler);
 }
@@ -14,6 +16,7 @@ export async function fetchTemplate(url) {
 export async function postData(url = "", data = {}) {
   const response = await fetch(url, {
     method: "POST",
+    credentials: credentialsOption,
     headers: {
       "Content-Type": "application/json",
     },

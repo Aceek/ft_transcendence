@@ -1,4 +1,4 @@
-import { router, api_url } from "./main.js";
+import { router, api_url, credentialsOption } from "./main.js";
 import {
   fetchTemplate,
   addEventListenerById,
@@ -28,11 +28,8 @@ function getFormData() {
 function handleLoginResponse(response) {
   let errorMessage = document.getElementById("error-message");
   if (response.status === 200) {
-    response.json().then((data) => {
-      setTokensStorage(data);
-      errorMessage.textContent = "";
-      router("/home");
-    });
+    errorMessage.textContent = "";
+    router("/home");
   } else if (response.status === 401) {
     errorMessage.textContent = "Invalid email or password";
   } else {
@@ -73,22 +70,15 @@ export async function checkOAuthCode() {
 
   if (code) {
     urlParams.delete("code");
+    urlParams.delete;
     const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
     window.history.replaceState({}, document.title, newUrl);
     return fetch(api_url + "auth/oauth2/" + `?code=${code}`, {
       method: "GET",
+      credentials: credentialsOption,
     })
       .then((response) => {
-        if (response.status === 200) {
-          return response.json();
-        } else {
-          throw new Error("Failed to authenticate");
-        }
-      })
-      .then((data) => {
-        localStorage.setItem("refreshToken", data.refresh);
-        localStorage.setItem("accessToken", data.access);
-        return true;
+        return response.status === 200;
       })
       .catch((error) => {
         console.error(error);
