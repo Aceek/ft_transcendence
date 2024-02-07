@@ -61,20 +61,6 @@ class LoginSerializer(EmailTokenObtainSerializer):
         return data
 
 
-class LogoutSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
-
-    def validate(self, attrs):
-        self.token = attrs["refresh"]
-        return attrs
-
-    def save(self, **kwargs):
-        try:
-            RefreshToken(self.token).blacklist()
-        except Exception as e:
-            raise serializers.ValidationError(str(e))
-
-
 class User42Serializer(serializers.Serializer):
     login = serializers.CharField()
     email = serializers.EmailField()
@@ -85,16 +71,19 @@ class User42Serializer(serializers.Serializer):
         )
         if created:
             user.set_unusable_password()
-            username = validated_data["login"]
-            while get_user_model().objects.filter(username=username).exists():
-                username = get_random_string(
-                    length=randint(6, 20),
-                    allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789_-.",
-                )
-            user.username = username
+            user.username = self.generate_username(validated_data["login"])
             user.is_active = True
             user.save()
         return user
+
+    def generate_username(self, login):
+        username = login
+        while get_user_model().objects.filter(username=username).exists():
+            username = get_random_string(
+                length=randint(6, 20),
+                allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789_-.",
+            )
+        return username
 
 
 class OAuth42Serializer(serializers.Serializer):
@@ -110,27 +99,41 @@ class OAuth42Serializer(serializers.Serializer):
     def validate(self, attrs):
         code = attrs.get("code")
         if code:
-            token = self.exchange_code(code)
-            user_data = self.query_42_api(token)
-            serializer = User42Serializer(data=user_data)
-            if serializer.is_valid():
-                user = serializer.save()
-                if user.is_2fa_enabled:
-                    instance_2fa = initiate_2fa(self.user)
-                    return {
-                        "detail": "2FA code sent to your email.",
-                        "2FA": f"{instance_2fa.token}",
-                    }
-                refresh = RefreshToken.for_user(user)
-                token_data = {
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
-                }
-                return token_data
-            else:
-                raise serializers.ValidationError(serializer.errors)
+            return self.handle_code_validation(code)
         else:
             return self.get_authorization_url()
+
+    def handle_code_validation(self, code):
+        token = self.exchange_code(code)
+        user_data = self.query_42_api(token)
+        return self.handle_user_data_validation(user_data)
+
+    def handle_user_data_validation(self, user_data):
+        serializer = User42Serializer(data=user_data)
+        if serializer.is_valid():
+            return self.handle_user_creation(serializer)
+        else:
+            raise serializers.ValidationError(serializer.errors)
+
+    def handle_user_creation(self, serializer):
+        user = serializer.save()
+        if user.is_2fa_enabled:
+            return self.handle_2fa(user)
+        return self.generate_token_data(user)
+
+    def handle_2fa(self, user):
+        instance_2fa = initiate_2fa(user)
+        return {
+            "detail": "2FA code sent to your email.",
+            "2FA": f"{instance_2fa.token}",
+        }
+
+    def generate_token_data(self, user):
+        refresh = RefreshToken.for_user(user)
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
 
     def get_authorization_url(self):
         authorization_url, state = self.oauth.authorization_url(

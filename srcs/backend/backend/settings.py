@@ -41,7 +41,7 @@ SPECTACULAR_SETTINGS = {
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'authentication.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
        'rest_framework.permissions.IsAuthenticated',
@@ -208,9 +208,10 @@ EMAIL_HOST_USER = environ.get("EMAIL_HOST_USER")
 
 EMAIL_HOST_PASSWORD = environ.get("EMAIL_HOST_PASSWORD")
 
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://localhost:443",
     "https://localhost",
-
 ]
