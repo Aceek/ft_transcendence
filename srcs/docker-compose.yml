@@ -61,6 +61,7 @@ services:
       - ./nginx:/etc/nginx/conf.d
       - ./frontend/app/src:/usr/share/nginx/html
       - ./nginx/certs:/usr/share/nginx/certs
+      - ./backend/media:/usr/share/nginx/media
     depends_on:
       - backend
       - frontend

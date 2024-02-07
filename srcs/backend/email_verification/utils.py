@@ -7,9 +7,10 @@ from os import environ
 from .models import TwoFactorEmailModel
 
 
-def send_verification_email(user):
-    if not user or not user.email or user.is_active:
+def send_verification_email(user, new_email):
+    if not user or not user.email:
         return
+    mail = new_email if new_email else user.email
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     domain = environ.get("DOMAIN")
@@ -20,7 +21,7 @@ def send_verification_email(user):
     message = (
         f"Cliquez sur ce lien pour vérifier votre adresse e-mail : {verification_link}"
     )
-    recipient_list = [user.email]
+    recipient_list = [mail]
 
     send_mail(subject, message, None, recipient_list, fail_silently=False)
 

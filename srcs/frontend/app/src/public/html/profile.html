@@ -1,0 +1,54 @@
+<div class="container">
+  <div class="main-body">
+    <div class="row gutters-sm">
+      <div class="col-md">
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-4 col-md-4 col-lg-3">
+                <img id="avatar" src="../images/profile.jpg" alt="Admin" class="rounded-circle" width="150">
+                <form>
+                  <div class="input-group mb-3">
+                    <label class="input-group-text" for="avatarUpload">Choisir un fichier</label>
+                    <input type="file" class="form-control form-control-auto" id="avatarUpload" accept="image/*"
+                      style="display: none;">
+                  </div>
+              </div>
+              <div class="col-sm-8 col-md-8 col-lg-9">
+                <form id="profile-form">
+                  <div class="input-group mb-3">
+                    <span class="input-group-text">Username</span>
+                    <input type="text" class="form-control" id="username" value="Default">
+                  </div>
+                  <div class="input-group mb-3">
+                    <span class="input-group-text">Email</span>
+                    <input type="text" class="form-control" id="email" value="Default">
+                  </div>
+                  <button class="btn btn-primary" id="submit_button" type="button">Save</button>
+                  <p class="text-secondary mb-1" id="2fa">2FA: No</p>
+                  <button class="btn btn-primary" id="stat_button">Stats</button>
+                  <button class="btn btn-outline-primary" id="edit_account_button">Account</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="row gutters-sm">
+      <div class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <ul id="friendsList" class="list-group list-group-flush">
+              <!-- Inject Friend here -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+  </div>
+</div>

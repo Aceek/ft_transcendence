@@ -10,7 +10,7 @@ export function addEventListenerByClass(className, event, handler) {
 
 export async function fetchTemplate(url) {
   const response = await fetch(url);
-  return response.text();
+  return await response.text();
 }
 
 export async function postData(url = "", data = {}) {
@@ -25,11 +25,45 @@ export async function postData(url = "", data = {}) {
   return response;
 }
 
+export async function requestDataWithToken(url = "", data, method = "") {
+  const token = localStorage.getItem("accessToken");
+  const headers = new Headers({
+    Authorization: `Bearer ${token}`,
+  });
+
+  let requestOptions = {
+    method: method,
+    headers: headers,
+  };
+
+  if (method === "POST" || method === "PATCH" || method === "PUT") {
+    if (data instanceof FormData) {
+      requestOptions.body = data;
+    } else {
+      headers.append("Content-Type", "application/json");
+      requestOptions.body = JSON.stringify(data);
+    }
+  }
+
+  const response = await fetch(url, requestOptions);
+  return response;
+}
+
+export async function getDataWithToken(url = "") {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
+  });
+  return response;
+}
+
 export function fieldsMatch(
   fieldId1,
   fieldId2,
   errorMessageId,
-  errorMessageText,
+  errorMessageText
 ) {
   let field1 = document.getElementById(fieldId1).value;
   let field2 = document.getElementById(fieldId2).value;
@@ -45,4 +79,20 @@ export function fieldsMatch(
 export function setTokensStorage(data) {
   localStorage.setItem("refreshToken", data.refresh);
   localStorage.setItem("accessToken", data.access);
+}
+
+export function loadProfileCss(url) {
+  const head = document.head;
+  const existingLink = Array.from(head.querySelectorAll("link")).find(
+    (link) => link.href === url
+  );
+
+  if (!existingLink) {
+    const link = document.createElement("link");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    link.href = url;
+
+    head.appendChild(link);
+  }
 }

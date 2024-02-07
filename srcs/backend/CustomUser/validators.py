@@ -5,8 +5,8 @@ from PIL import Image
 
 import re
 
-MAX_WIDTH = 450
-MAX_HEIGHT = 450
+MAX_WIDTH = 1920
+MAX_HEIGHT = 1080
 MIN_WIDTH = 100
 MIN_HEIGHT = 100
 
@@ -36,11 +36,11 @@ def validate_image_size(value):
         raise ValidationError("La taille du fichier ne doit pas dépasser 3 Mo.")
 
 
-def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png"]):
+def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png", "image/webp"]):
     mime_type, _ = mimetypes.guess_type(value.name)
     if mime_type not in allowed_mime_types:
         raise ValidationError(
-            "Le type MIME de l'image n'est pas pris en charge. (jpeg, png))"
+            "Le type MIME de l'image n'est pas pris en charge. (jpeg, png, webp))"
         )
 
 
@@ -58,8 +58,8 @@ def validate_image_dimensions(value):
         )
 
 
-def validate_image_ext(value, allowed_formats=["jpeg", "png"]):
+def validate_image_ext(value, allowed_formats=["jpeg", "png", "webp"]):
     image_extension = value.name.split(".")[-1].lower()
 
     if image_extension not in allowed_formats:
-        raise ValidationError("L'extension du fichier n'est pas autorisée. (jpeg, png)")
+        raise ValidationError("L'extension du fichier n'est pas autorisée. (jpeg, png, webp)")

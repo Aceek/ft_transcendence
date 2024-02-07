@@ -55,7 +55,7 @@ AUTH_USER_MODEL = "CustomUser.CustomUser"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # URL publique pour accéder aux fichiers médias
-MEDIA_URL = "/media/"
+MEDIA_URL = "https://localhost/media/"
 
 # Application definition
 
