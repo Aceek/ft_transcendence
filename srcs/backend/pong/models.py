@@ -1,6 +1,6 @@
 # models.py
 from django.db import models
-from .game_config import INITIAL_PADDLE_Y, INITIAL_BALL_X, INITIAL_BALL_Y
+from .game_config import INITIAL_PADDLE_Y, INITIAL_BALL_X, INITIAL_BALL_Y, BALL_SPEED_X, BALL_SPEED_Y
 
 class Player(models.Model):
     player_id = models.CharField(max_length=50, unique=True)
@@ -23,6 +23,8 @@ class BallCoordinates(models.Model):
     game = models.OneToOneField(Game, on_delete=models.CASCADE, related_name='ball_coordinates')
     x = models.IntegerField(default=INITIAL_BALL_X)
     y = models.IntegerField(default=INITIAL_BALL_Y)
+    speed_x = models.FloatField(default=BALL_SPEED_X)
+    speed_y = models.FloatField(default=BALL_SPEED_Y)
 
     def __str__(self):
         return f"BallCoordinates for Game {self.game.id}"

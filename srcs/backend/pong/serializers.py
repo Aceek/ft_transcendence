@@ -15,7 +15,7 @@ class PaddleUpdateSerializer(serializers.Serializer):
 class BallCoordinatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = BallCoordinates
-        fields = ['x', 'y']
+        fields = ['x', 'y', 'speed_x', 'speed_y']
 
 class GameSerializer(serializers.ModelSerializer):
     player1 = PlayerSerializer()
@@ -39,7 +39,7 @@ class GameSerializer(serializers.ModelSerializer):
         return {'width': PADDLE_WIDTH, 'height': PADDLE_HEIGHT, 'speed': PADDLE_SPEED}
 
     def get_ball(self, obj):
-        return {'width': BALL_WIDTH, 'height': BALL_HEIGHT, 'speed': BALL_SPEED, 'x': obj.ball_coordinates.x, 'y': obj.ball_coordinates.y}
+        return {'width': BALL_WIDTH, 'height': BALL_HEIGHT, 'speed_x': obj.ball_coordinates.speed_x, 'speed_y': obj.ball_coordinates.speed_y, 'x': obj.ball_coordinates.x, 'y': obj.ball_coordinates.y}
 
     def get_players(self, obj):
         return [

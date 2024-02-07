@@ -45,16 +45,34 @@ function sendInitGameRequest() {
 }
 
 
-let updateInterval = 200; // Adjust the interval based on your preferences
+let updateInterval = 100; // Adjust the interval based on your preferences
 let lastUpdate = 0;
+let lastTimestamp = 0;
+let interpolationDuration = 16;
 
 function startGameLoop() {
     function update(timestamp) {
+        // Calculate the time elapsed since the last update
+        const deltaTime = timestamp - lastTimestamp;
+        lastTimestamp = timestamp;
+        
         // Clear the canvas
         ctx.clearRect(0, 0, screen.width, screen.height);
 
         // Draw the game content
         draw();
+
+        // Calculate the target position of the ball
+        const targetX = ball.x + ball.speed_x * (deltaTime / 1000); // Convert deltaTime to seconds
+        const targetY = ball.y + ball.speed_y * (deltaTime / 1000); // Convert deltaTime to seconds
+
+        // Interpolate between current and target positions
+        const interpolatedX = interpolate(ball.x, targetX, deltaTime, interpolationDuration);
+        const interpolatedY = interpolate(ball.y, targetY, deltaTime, interpolationDuration);
+
+        // Update ball position
+        ball.x = interpolatedX;
+        ball.y = interpolatedY;
 
         // Update paddle position based on arrow keys
         if (keys.ArrowUp && players[0].paddle_y > 0) {
@@ -77,7 +95,13 @@ function startGameLoop() {
     }
 
     // Initial call to start the game loop
+    let lastTimestamp = performance.now(); // Initialize lastTimestamp
     requestAnimationFrame(update);
+}
+
+function interpolate(start, end, elapsedTime, duration) {
+    // Linear interpolation function
+    return start + (end - start) * (elapsedTime / duration);
 }
 
 function sendPaddleCoordinates() {
