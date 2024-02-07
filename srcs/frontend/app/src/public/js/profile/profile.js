@@ -126,7 +126,6 @@ async function handleSubmit(profile) {
     });
 }
 
-// change avatar function base on <input type="file" class="form-control form-control-auto" id="avatarUpload" accept="image/*"
 
 async function changeAvatar(profile) {
   const avatarUpload = document.getElementById("avatarUpload");

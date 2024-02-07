@@ -45,8 +45,6 @@ class VerifyEmailSerializer(serializers.Serializer):
                 or not user
             ):
                 raise serializers.ValidationError("Invalid verification link.")
-            if user.is_active:
-                raise serializers.ValidationError("Account already activated.")
         except Exception:
             raise serializers.ValidationError("Invalid verification link.")
         return attrs
@@ -55,5 +53,7 @@ class VerifyEmailSerializer(serializers.Serializer):
         uid = force_str(urlsafe_base64_decode(self.validated_data["uid"]))
         user = get_user_model().objects.get(pk=uid)
         user.is_active = True
+        user.email = user.new_email if user.new_email else user.email
+        user.new_email = None
         user.save()
         return user

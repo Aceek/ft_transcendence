@@ -11,6 +11,7 @@ class CustomUser(AbstractUser):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     email = models.EmailField(unique=True)
+    new_email = models.EmailField(unique=True, null=True, blank=True)
     username = models.CharField(
         max_length=20, unique=True, validators=[validate_username]
     )

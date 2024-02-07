@@ -7,7 +7,6 @@ from rest_framework.permissions import IsAuthenticated
 from .services import remove_friend
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveAPIView, UpdateAPIView, ListAPIView
-from rest_framework.parsers import MultiPartParser, FormParser
 
 
 class CustomUserListView(ListAPIView):
