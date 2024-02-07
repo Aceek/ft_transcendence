@@ -77,7 +77,7 @@ INSTALLED_APPS = [
 
 	"pong",
     "corsheaders",
-	# 'channels',
+	"channels",
 ]
 
 MIDDLEWARE = [
