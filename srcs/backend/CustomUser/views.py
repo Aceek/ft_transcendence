@@ -29,7 +29,6 @@ class CustomUserUpdateView(UpdateAPIView):
 
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
-    parser_classes = (MultiPartParser, FormParser)
 
     def get_object(self):
         return self.request.user

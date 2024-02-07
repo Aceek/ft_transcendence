@@ -4,7 +4,8 @@ import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./ping.js";
 import { displayProfile } from "./profile/profile.js";
 
-export const api_url = "http://localhost:8000/api/";
+// export const api_url = "http://localhost:8000/api/";
+export const api_url = "https://localhost/api/";
 
 export async function router() {
   const path = window.location.pathname;

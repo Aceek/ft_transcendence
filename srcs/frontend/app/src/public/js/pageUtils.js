@@ -43,10 +43,6 @@ export async function requestDataWithToken(url = "", data, method = "") {
   }
 
   const response = await fetch(url, requestOptions);
-  // print response error 
-  if (!response.ok) {
-    console.error("Error:", response);
-  }
   return response;
 }
 
