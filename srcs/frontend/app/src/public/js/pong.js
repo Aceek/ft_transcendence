@@ -1,37 +1,44 @@
-console.log('Pong.js is executed!');
+    console.log('Pong.js is executed!');
 
-document.addEventListener('DOMContentLoaded', function () {
+//----------------------INITIALIZATION-----------------------------------------
+
+// document.addEventListener('DOMContentLoaded', function () {
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
     var socket = new WebSocket('ws://localhost:8000/ws/pong/');
+    var currentState = null;
+    var previousState = null;
+    var interpolationRatio = 0.0;
+
+
+//----------------------WEBSOCKET-----------------------------------------
+
+    console.log('socket!');
 
     socket.onopen = function(event) {
         console.log('WebSocket connection opened:', event);
     };
-    
+
     socket.onmessage = function(event) {
         console.log('WebSocket message received:', event.data);
         // Rest of the code...
     };
+
+    socket.onmessage = function (event) {
+        var data = JSON.parse(event.data);
     
-    socket.onclose = function(event) {
-        console.log('WebSocket connection closed:', event);
+        if (data.type === 'game.init') {
+            initializeGame(data);
+        } else if (data.type === 'game.update') {
+            handleGameUpdate(data);
+        }
     };
 
-    // Paddle properties
-    var paddleWidth = 10;
-    var paddleHeight = 80;
-    var leftPaddleY = (canvas.height - paddleHeight) / 2;
-    var rightPaddleY = (canvas.height - paddleHeight) / 2;
-
-    // Ball properties
-    var ballSize = 10;
-    var ballX = canvas.width / 2;
-    var ballY = canvas.height / 2;
-
-    // Scores
-    var leftPlayerScore = 0;
-    var rightPlayerScore = 0;
+    socket.onclose = function(event) {
+            console.log('WebSocket connection closed:', event);
+    };
+    
+//----------------------KEYEVENT-----------------------------------------
 
     // Event listeners for key presses
     document.addEventListener('keydown', function (event) {
@@ -51,65 +58,142 @@ document.addEventListener('DOMContentLoaded', function () {
         }));
     }
 
-    socket.onmessage = function (event) {
-        var data = JSON.parse(event.data);
+//----------------------DATA INITALIZATION---------------------------------------
 
-        if (data.type === 'game.update') {
-            handleGameUpdate(data);
-        }
+    var game = {
+        paddle: {
+            width: 0,
+            height: 0
+        },
+        ball: {
+            size: 0,
+            x: 0,
+            y: 0
+        },
+        players: {
+            left: {
+                paddleY: 0,
+                score: 0
+            },
+            right: {
+                paddleY: 0,
+                score: 0
+            }
+        },
+        matchOver: false,
     };
 
-	function handleGameUpdate(data) {
-		// Update paddle positions based on server information
-		leftPaddleY = data.leftPaddleY;
-		rightPaddleY = data.rightPaddleY;
-	
-		// Update ball position based on server information
-		ballX = data.ballPosition.x;
-		ballY = data.ballPosition.y;
-	
-		// Update scores
-		leftPlayerScore = data.leftPlayerScore;
-		rightPlayerScore = data.rightPlayerScore;
-	
-		// Log the value of matchOver
-		console.log('Match Over:', data.matchOver);
-	
-		// Draw the updated state
-		draw(data);  // Pass the data parameter to draw()
-	}
-	
-	function draw(data) {
+    function initializeGame(data) {
+        // Initialize the game state using the received data
+        game.paddle.width = data.paddleWidth;
+        game.paddle.height = data.paddleHeight;
+        game.ball.size = data.ballSize;
+        game.players.left.paddleY = data.initialLeftPaddleY;
+        game.players.right.paddleY = data.initialRightPaddleY;
+        game.ball.x = data.initialBallPosition.x;
+        game.ball.y = data.initialBallPosition.y;
+        game.players.left.score = data.initialLeftPlayerScore;
+        game.players.right.score = data.initialRightPlayerScore;
+        game.matchOver = data.matchOver;
+    }
+
+//----------------------GAME UPDATE-----------------------------------------
+
+    function handleGameUpdate(data) {
+        // Update paddle positions based on server information
+        game.players.left.paddleY = data.leftPaddleY;
+        game.players.right.paddleY = data.rightPaddleY;
+
+        // Update ball position based on server information
+        game.ball.x = data.ball.x;
+        game.ball.y = data.ball.y;
+
+        // Update scores
+        game.players.left.score = data.leftPlayerScore;
+        game.players.right.score = data.rightPlayerScore;
+    }
+    
+//----------------------GAME LOOP-----------------------------------------
+    
+    // Main game loop
+    function mainLoop() {
+        // updateInterpolationRatio();
+        // updateGame();
+        draw();
+        requestAnimationFrame(mainLoop);
+    }
+
+    // Function to update interpolation ratio
+    function updateInterpolationRatio() {
+        if (previousState && currentState) {
+            var currentTime = Date.now();
+            var previousTime = previousState.timestamp;
+            var currentStateTime = currentState.timestamp;
+            interpolationRatio = (currentTime - previousTime) / (currentStateTime - previousTime);
+        }
+    }
+
+    // Function to update the game state
+    function updateGame() {
+        if (currentState) {
+            // Update the game state based on the current state
+            // and interpolated values between the previous and current states
+            // Example: Interpolate paddle positions, ball position, etc.
+            // Update paddle positions
+            if (previousState) {
+                // Interpolate paddle positions between previous and current states
+                leftPaddleY = interpolate(previousState.leftPaddleY, currentState.leftPaddleY);
+                rightPaddleY = interpolate(previousState.rightPaddleY, currentState.rightPaddleY);
+            } else {
+                // Set initial paddle positions
+                leftPaddleY = currentState.leftPaddleY;
+                rightPaddleY = currentState.rightPaddleY;
+            }
+
+            // Other game state updates...
+        }
+    }
+
+    function interpolate(prevValue, curValue) {
+        return prevValue + (curValue - prevValue) * interpolationRatio;
+    }
+
+    // Start the main game loop
+    mainLoop();
+
+//----------------------DRAWING-----------------------------------------
+
+	function draw() {
 		// Clear the canvas
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 	
 		// Draw paddles using the updated positions
-		drawPaddle(0, leftPaddleY);
-		drawPaddle(canvas.width - paddleWidth, rightPaddleY);
+		drawPaddle(0,  game.players.left.paddleY);
+		drawPaddle(canvas.width - game.paddle.width,  game.players.right.paddleY);
 	
 		// Draw the ball using the updated position
-		drawBall(ballX, ballY);
+		drawBall(game.ball.x, game.ball.y);
 	
 		// Draw the white dash line in the middle
 		drawWhiteDashLine();
 	
 		// Draw scores
-		drawScores(data);  // Pass the data parameter to drawScores()
+		drawScores();  // Pass the data parameter to drawScores()
 	
 		// Check if the match is over and display a message
-		if (data.matchOver) {
+		if (game.matchOver) {
 			drawGameOverMessage();
 		}
 	}
 
     function drawPaddle(x, y) {
         ctx.fillStyle = '#fff';
-        ctx.fillRect(x, y, paddleWidth, paddleHeight);
+        ctx.fillRect(x, y, game.paddle.width, game.paddle.height);
     }
 
     function drawBall(x, y) {
         ctx.fillStyle = '#fff';
-        ctx.fillRect(x - ballSize / 2, y - ballSize / 2, ballSize, ballSize);
+        ctx.fillRect(x - game.ball.size / 2, y - game.ball.size / 2, game.ball.size, game.ball.size);
     }
 
     function drawWhiteDashLine() {
@@ -128,17 +212,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Calculate the position for scores in the top center
         var middleDashLineX = canvas.width / 2;
-        var scoreTextWidth = ctx.measureText(leftPlayerScore).width;
+        var scoreTextWidth = ctx.measureText(game.players.left.score).width;
         var distanceFromDashLine = 30;
 
         // Set the height position in relation to the canvas height
         var heightPosition = canvas.height / 6;
 
         // Draw left player's score
-        ctx.fillText(leftPlayerScore, middleDashLineX - scoreTextWidth - distanceFromDashLine, heightPosition);
+        ctx.fillText(game.players.left.score, middleDashLineX - scoreTextWidth - distanceFromDashLine, heightPosition);
 
         // Draw right player's score
-        ctx.fillText(rightPlayerScore, middleDashLineX + distanceFromDashLine, heightPosition);
+        ctx.fillText(game.players.right.score, middleDashLineX + distanceFromDashLine, heightPosition);
     }
 
 	function drawGameOverMessage() {
@@ -161,17 +245,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		ctx.font = '50px "Geo", sans-serif';
 	
 		// Calculate the position for the player winning message centered from the dash line
-		var playerWinsText = 'Player ' + (leftPlayerScore > rightPlayerScore ? 'Left' : 'Right') + ' Wins!';
+		var playerWinsText = 'Player ' + (game.players.left.score > game.players.left.right ? 'Left' : 'Right') + ' Wins!';
 		var playerWinsTextWidth = ctx.measureText(playerWinsText).width;
 		var playerWinsTextX = middleDashLineX - playerWinsTextWidth / 2;
 	
 		ctx.fillText(playerWinsText, playerWinsTextX, heightPosition + 70); // Adjust vertical spacing
 	}
-
-    // Start the game loop
-    function update() {
-        requestAnimationFrame(update);
-    }
-
-    update();
-});
+// });
