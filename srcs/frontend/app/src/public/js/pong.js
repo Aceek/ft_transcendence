@@ -1,6 +1,9 @@
-    console.log('Pong.js is executed!');
+//----------------------TODO-----------------------------------------
+//make the paddle mvt local
+//interpolation for ball movement
 
 //----------------------INITIALIZATION-----------------------------------------
+    console.log('Pong.js is executed!');
 
 // document.addEventListener('DOMContentLoaded', function () {
     var canvas = document.getElementById('pongCanvas');
@@ -111,8 +114,16 @@
         // Update scores
         game.players.left.score = data.leftPlayerScore;
         game.players.right.score = data.rightPlayerScore;
+
+        // Update game state
+        updateGameState(data);
     }
     
+    function updateGameState(data) {
+        previousState = currentState;
+        currentState = data;
+    }
+
 //----------------------GAME LOOP-----------------------------------------
     
     // Main game loop
@@ -139,18 +150,44 @@
             // Update the game state based on the current state
             // and interpolated values between the previous and current states
             // Example: Interpolate paddle positions, ball position, etc.
-            // Update paddle positions
+            
+            // Interpolate paddle positions
             if (previousState) {
-                // Interpolate paddle positions between previous and current states
-                leftPaddleY = interpolate(previousState.leftPaddleY, currentState.leftPaddleY);
-                rightPaddleY = interpolate(previousState.rightPaddleY, currentState.rightPaddleY);
+                console.log('Interpolating paddle positions...');
+                console.log('Previous left paddle Y:', previousState.leftPaddleY);
+                console.log('Current left paddle Y:', currentState.leftPaddleY);
+                console.log('Previous right paddle Y:', previousState.rightPaddleY);
+                console.log('Current right paddle Y:', currentState.rightPaddleY);
+    
+                game.players.left.paddleY = interpolate(previousState.leftPaddleY, currentState.leftPaddleY);
+                game.players.right.paddleY = interpolate(previousState.rightPaddleY, currentState.rightPaddleY);
+    
+                // Interpolate ball position
+                console.log('Interpolating ball position...');
+                console.log('Previous ball X:', previousState.ball.x);
+                console.log('Current ball X:', currentState.ball.x);
+                console.log('Previous ball Y:', previousState.ball.y);
+                console.log('Current ball Y:', currentState.ball.y);
+    
+                game.ball.x = interpolate(previousState.ball.x, currentState.ball.x);
+                game.ball.y = interpolate(previousState.ball.y, currentState.ball.y);
             } else {
                 // Set initial paddle positions
-                leftPaddleY = currentState.leftPaddleY;
-                rightPaddleY = currentState.rightPaddleY;
+                console.log('Setting initial positions...');
+                console.log('Current left paddle Y:', currentState.leftPaddleY);
+                console.log('Current right paddle Y:', currentState.rightPaddleY);
+    
+                game.players.left.paddleY = currentState.leftPaddleY;
+                game.players.right.paddleY = currentState.rightPaddleY;
+    
+                // Set initial ball position
+                console.log('Setting initial ball position...');
+                console.log('Current ball X:', currentState.ball.x);
+                console.log('Current ball Y:', currentState.ball.y);
+    
+                game.ball.x = currentState.ball.x;
+                game.ball.y = currentState.ball.y;
             }
-
-            // Other game state updates...
         }
     }
 
