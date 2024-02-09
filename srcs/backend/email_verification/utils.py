@@ -7,7 +7,7 @@ from os import environ
 from .models import TwoFactorEmailModel
 
 
-def send_verification_email(user, new_email):
+def send_verification_email(user, new_email=None):
     if not user or not user.email:
         return
     mail = new_email if new_email else user.email

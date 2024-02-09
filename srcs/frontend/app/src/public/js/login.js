@@ -4,7 +4,7 @@ import {
   addEventListenerById,
   addEventListenerByClass,
   postData,
-  setTokensStorage,
+  changeUrlHistory
 } from "./pageUtils.js";
 
 async function fetch42AuthLink() {
@@ -69,10 +69,7 @@ export async function checkOAuthCode() {
   const code = urlParams.get("code");
 
   if (code) {
-    urlParams.delete("code");
-    urlParams.delete;
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-    window.history.replaceState({}, document.title, newUrl);
+    changeUrlHistory("/");
     return fetch(api_url + "auth/oauth2/" + `?code=${code}`, {
       method: "GET",
       credentials: credentialsOption,

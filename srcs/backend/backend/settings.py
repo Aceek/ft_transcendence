@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from os import environ
+from datetime import timedelta
 import os
 
 
@@ -215,3 +216,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://localhost:443",
     "https://localhost",
 ]
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}

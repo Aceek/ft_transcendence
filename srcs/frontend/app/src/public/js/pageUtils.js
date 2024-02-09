@@ -96,3 +96,10 @@ export function loadProfileCss(url) {
     head.appendChild(link);
   }
 }
+
+export function changeUrlHistory(pathname) {
+    const url = new URL(window.location.href);
+    url.pathname = pathname;
+    url.search = '';
+    history.pushState({}, '', url);
+}
