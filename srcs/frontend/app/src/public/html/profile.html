@@ -13,20 +13,20 @@
                 </form>
                 <img id="avatar" src="../images/profile.jpg" alt="Admin" class="rounded-circle" width="150">
               </div>
-              <div class="col-sm-8 col-md-8 col-lg-9">
+              <div id ="profileDiv" class="col-sm-8 col-md-8 col-lg-9">
                 <form id="profile-form">
                   <div class="input-group mb-3">
                     <span class="input-group-text">Username</span>
                     <input type="text" class="form-control" id="username" value="Default">
                   </div>
-                  <div class="input-group mb-3">
+                  <div id="emailDiv" class="input-group mb-3">
                     <span class="input-group-text">Email</span>
                     <input type="text" class="form-control" id="email" value="Default">
                   </div>
                   <button class="btn btn-primary" id="submit_button" type="button">Save</button>
                   <p class="text-secondary mb-1" id="2fa">2FA: No</p>
                   <button class="btn btn-primary" id="stat_button">Stats</button>
-                  <button class="btn btn-outline-primary" id="edit_account_button">Account</button>
+                  <button class="btn btn-outline-primary" id="editAccountButton">Account</button>
                 </form>
               </div>
             </div>
@@ -36,7 +36,7 @@
     </div>
     <hr>
     <div class="row gutters-sm">
-      <div class="col-md-12 col-lg-6">
+      <div id ="friends-list-col" class="col-md-12 col-lg-6">
         <div class="card mb-3">
           <div class="card-body">
             <ul id="friendsList" class="list-group list-group-flush">

@@ -3,6 +3,7 @@ import { getHomePage } from "./home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./ping.js";
 import { displayProfile } from "./profile/profile.js";
+import { displayFriendsProfile } from "./profile/profileFriends.js";
 
 // export const api_url = "http://localhost:8000/api/";
 export const api_url = "https://localhost/api/";
@@ -10,9 +11,19 @@ export const api_url = "https://localhost/api/";
 export async function router() {
   const path = window.location.pathname;
 
+  const profileRegex = /^\/profile\/([a-zA-Z0-9_-]+)$/;
+  const match = path.match(profileRegex);
+
   console.log(`Navigating to path: ${path}`);
 
   if (await isAPIConnected()) {
+    if (match) {
+      console.log("Loading profile page");
+      const UID = match[1];
+      console.log('UID:', UID)
+      displayFriendsProfile(UID);
+      return;
+    }
     switch (path) {
       case "/home":
         console.log("Loading home page");

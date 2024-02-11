@@ -7,9 +7,9 @@ import {
   prepareUpdateData,
   printConfirmationMessage,
   injectHistoryList,
-  currentHistoryPage,
 } from "./profileUtils.js";
 import { getProfile } from "./getProfile.js";
+
 
 async function attachSubmitListener(profile) {
   document
@@ -20,14 +20,14 @@ async function attachSubmitListener(profile) {
 }
 
 export async function displayProfile() {
-  loadProfileCss("public/css/profile.css");
+  loadProfileCss("/public/css/profile.css");
   try {
-    const profileHtml = await fetchTemplate("public/html/profile.html");
+    const profileHtml = await fetchTemplate("/public/html/profile.html");
     document.getElementById("main").innerHTML = profileHtml;
     const profile = await getProfile();
     injectUserInfo(profile);
     await injectFriendList();
-    await injectHistoryList(currentHistoryPage);
+    await injectHistoryList();
     attachSubmitListener(profile);
     changeAvatar(profile);
   } catch (error) {
@@ -49,7 +49,7 @@ function updateProfileAndPrintMessages(profile, dataToUpdate, fields) {
       }
       if (message) printConfirmationMessage(message, "submit_button");
     }
-  });
+  });7
 }
 
 async function handleSubmit(profile) {

@@ -59,7 +59,7 @@ function addEventListeners() {
 
 export async function getLoginPage() {
   try {
-    const template = await fetchTemplate("public/html/login-form.html");
+    const template = await fetchTemplate("/public/html/login-form.html");
     document.getElementById("main").innerHTML = template;
     addEventListeners();
   } catch (error) {

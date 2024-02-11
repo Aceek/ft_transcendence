@@ -115,7 +115,7 @@ function addEventListeners() {
 
 export async function getRegisterPage() {
   try {
-    const template = await fetchTemplate("public/html/register-form.html");
+    const template = await fetchTemplate("/public/html/register-form.html");
     document.getElementById("main").innerHTML = template;
     addEventListeners();
   } catch (error) {

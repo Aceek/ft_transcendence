@@ -1,12 +1,29 @@
 import { requestDataWithToken } from "../pageUtils.js";
 import { getGameHistory, getFriendList } from "./getProfile.js";
 
+const historyContext = {
+  currentPage: 1,
+  updatePage: function (page, UID = null) {
+    this.currentPage = page;
+    injectHistoryList(this.currentPage, UID);
+  },
+};
+
+const friendContext = {
+  currentPage: 1,
+  updatePage: function (page, UID = null) {
+    this.currentPage = page;
+    injectFriendList(this.currentPage, UID);
+  },
+};
+
 export async function sendUpdateRequest(url, data, method = "PATCH") {
   try {
     const response = await requestDataWithToken(url, data, method);
     if (response.status === 200) {
       return true;
     } else {
+      console.error(response.statusText);
       return false;
     }
   } catch (error) {
@@ -15,10 +32,10 @@ export async function sendUpdateRequest(url, data, method = "PATCH") {
   }
 }
 
-export async function injectFriendList() {
-  const friendList = await getFriendList();
+export async function injectFriendList(page, UID = null) {
+  const friendList = await getFriendList(page, UID);
   const friendListContainer = document.getElementById("friendsList");
-  friendListContainer.innerHTML = friendList
+  friendListContainer.innerHTML = friendList.results
     .map((friend) => {
       return `
       <li class="list-group-item d-flex align-items-center">
@@ -31,12 +48,11 @@ export async function injectFriendList() {
     `;
     })
     .join("");
+  addPrevNextButtons(friendList, friendListContainer, friendContext);
 }
 
-export let currentHistoryPage = 1;
-
-export async function injectHistoryList(page) {
-  const historyList = await getGameHistory(page);
+export async function injectHistoryList(page, UID = null) {
+  const historyList = await getGameHistory(page, UID);
   const historyListContainer = document.getElementById("gameHistory");
   historyListContainer.innerHTML = historyList.results
     .map((match) => {
@@ -58,37 +74,33 @@ export async function injectHistoryList(page) {
     `;
     })
     .join("");
-  addPrevNextButtons(historyList, historyListContainer, injectHistoryList);
+  addPrevNextButtons(historyList, historyListContainer, historyContext, UID);
 }
 
-function addPrevNextButtons(dataList, ListContainer, injectListFunction) {
-  const createButton = (text, onClickFunction, disabled) => {
+function addPrevNextButtons(dataList, container, context, UID = null) {
+    const createButton = (text, onClickFunction) => {
     const button = document.createElement("button");
+    button.classList.add("button-container");
     button.textContent = text;
     button.className = "btn btn-primary button-spacing";
     button.onclick = onClickFunction;
-    button.disabled = disabled;
     return button;
   };
 
-  const prevButton = createButton("Précédent", () => {
-    if (dataList.prevPage) {
-      currentHistoryPage--;
-      injectListFunction(currentHistoryPage);
-    }
-  }, !dataList.prevPage);
+  if (dataList.prevPage) {
+    const prevButton = createButton("Précédent", () => {
+      context.updatePage(context.currentPage - 1, UID);
+    });
+    container.appendChild(prevButton);
+  }
 
-  const nextButton = createButton("Suivant", () => {
-    if (dataList.nextPage) {
-      currentHistoryPage++;
-      injectListFunction(currentHistoryPage);
-    }
-  }, !dataList.nextPage);
-
-  ListContainer.appendChild(prevButton);
-  ListContainer.appendChild(nextButton);
+  if (dataList.nextPage) {
+    const nextButton = createButton("Suivant", () => {
+      context.updatePage(context.currentPage + 1, UID);
+    });
+    container.appendChild(nextButton);
+  }
 }
-
 
 export function injectUserInfo(profile) {
   const avatarElement = document.getElementById("avatar");
@@ -130,15 +142,3 @@ export function printConfirmationMessage(
     messageElement.remove();
   }, 9000);
 }
-
-// function formatGameHistory(history, profile) {
-//   return history
-//     .map((game) => {
-//       const date = new Date(game.date).toLocaleString();
-//       const opponent =
-//         game.user1 === profile.username ? game.user2 : game.user1;
-//       const result = game.winner === profile.username ? "Won" : "Lost";
-//       return `<li>${date}: ${opponent} - ${result}</li>`;
-//     })
-//     .join("");
-// }
