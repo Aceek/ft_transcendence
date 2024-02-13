@@ -1,4 +1,4 @@
-from .models import Stats, MatchHistory
+from .models import Stats, MatchHistory, EloHistory
 from .serializers import StatsSerializer, MatchHistorySerializer
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
@@ -37,7 +37,16 @@ class StatsView(ListAPIView):
     def get_queryset(self):
         user_id = self.kwargs.get("user_id")
         user = self.get_user(user_id) if user_id else self.request.user
-        return Stats.objects.filter(user=user)
+        stats = self.get_stats(user)
+        elo_history = self.get_elo_history(user)
+        stats.elo_history = elo_history
+        return [stats]
 
     def get_user(self, user_id):
         return get_object_or_404(CustomUser, id=user_id)
+
+    def get_stats(self, user):
+        return get_object_or_404(Stats, user=user)
+
+    def get_elo_history(self, user):
+        return EloHistory.objects.filter(user=user).order_by("-created_at")[:10]

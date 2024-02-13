@@ -1,5 +1,6 @@
 import { requestDataWithToken } from "../pageUtils.js";
 import { getGameHistory, getFriendList } from "./getProfile.js";
+import { createButtonFriend } from "./profileFriends.js";
 
 const historyContext = {
   currentPage: 1,
@@ -9,7 +10,7 @@ const historyContext = {
   },
 };
 
-const friendContext = {
+export const friendContext = {
   currentPage: 1,
   updatePage: function (page, UID = null) {
     this.currentPage = page;
@@ -32,22 +33,43 @@ export async function sendUpdateRequest(url, data, method = "PATCH") {
   }
 }
 
+export function onclickFunctionDeleteContainer(container) {
+  container.remove();
+}
+
 export async function injectFriendList(page, UID = null) {
   const friendList = await getFriendList(page, UID);
   const friendListContainer = document.getElementById("friendsList");
-  friendListContainer.innerHTML = friendList.results
-    .map((friend) => {
-      return `
-      <li class="list-group-item d-flex align-items-center">
+  friendListContainer.innerHTML = "";
+  const friendListTitle = document.getElementById("friendListTitle");
+  friendListTitle.textContent = "Friend List"
+
+  await friendList.results.forEach(async (friend) => {
+    const listItem = document.createElement("li");
+    listItem.className =
+      "list-group-item d-flex align-items-center justify-content-between";
+
+    listItem.innerHTML = `
+      <div class="friend-info d-flex align-items-center">
         <img src="${friend.avatar || "../images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
-          <strong>${friend.username}</strong>
+          <a href="/profile/${friend.id}"><strong>${friend.username}</strong></a>
           <span class="text-success ms-2">• En ligne</span>
         </div>
-      </li>
+      </div>
     `;
-    })
-    .join("");
+    const removeButton = await createButtonFriend(
+      friend.id,
+      "users/remove_friends",
+      () => {
+        onclickFunctionDeleteContainer(listItem);
+      }
+    );
+    removeButton.textContent = "Remove";
+    removeButton.classList.add("btn-danger");
+    listItem.appendChild(removeButton);
+    friendListContainer.appendChild(listItem);
+  });
   addPrevNextButtons(friendList, friendListContainer, friendContext);
 }
 
@@ -78,7 +100,7 @@ export async function injectHistoryList(page, UID = null) {
 }
 
 function addPrevNextButtons(dataList, container, context, UID = null) {
-    const createButton = (text, onClickFunction) => {
+  const createButton = (text, onClickFunction) => {
     const button = document.createElement("button");
     button.classList.add("button-container");
     button.textContent = text;

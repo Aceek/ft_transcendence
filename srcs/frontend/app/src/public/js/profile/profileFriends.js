@@ -20,7 +20,11 @@ export async function displayFriendsProfile(UID) {
   }
 }
 
-async function createButtonAddFriend(userUID, url = "users/profile/update") {
+export async function createButtonFriend(
+  userUID,
+  url = "users/profile/update",
+  onButtonClick = null
+) {
   const friendButton = document.createElement("button");
   friendButton.id = "addFriendButton";
   friendButton.classList.add("button-container");
@@ -36,9 +40,10 @@ async function createButtonAddFriend(userUID, url = "users/profile/update") {
       );
       if (updateSuccess) {
         console.log("Ami ajouté / supprimé avec succès");
+        if (onButtonClick) onButtonClick();
         friendButton.remove();
       } else {
-        console.log("Erreur lors de l'ajout / suppresion de l'ami");
+        console.error("Erreur lors de l'ajout / suppresion de l'ami");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -57,15 +62,25 @@ async function addFriendsButton(userUID) {
     const friendsList = await getFriendList(0);
     const profileDiv = document.getElementById("profileDiv");
     if (friendsList.results.some((friends) => friends.id === userUID)) {
-      const friendButton = await createButtonAddFriend(
+      const friendButton = await createButtonFriend(
         userUID,
-        "users/remove_friends"
+        "users/remove_friends",
+        () => {
+          addFriendsButton(userUID);
+        }
       );
       friendButton.textContent = "Remove";
+      friendButton.classList.add("btn-danger");
       profileDiv.appendChild(friendButton);
       return;
     } else {
-      const friendButton = await createButtonAddFriend(userUID);
+      const friendButton = await createButtonFriend(
+        userUID,
+        "users/profile/update",
+        () => {
+          addFriendsButton(userUID);
+        }
+      );
       profileDiv.appendChild(friendButton);
     }
   } catch (error) {
@@ -90,4 +105,6 @@ function ajusterInterfaceProfil() {
   editAccountButton.remove();
   const twofaElement = document.getElementById("2fa");
   twofaElement.remove();
+  const gameHistoryDiv = document.getElementById("gameHistoryDiv");
+  gameHistoryDiv.className = "col-md12 col-lg-12";
 }

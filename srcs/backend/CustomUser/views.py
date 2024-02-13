@@ -19,7 +19,17 @@ class CustomUserListView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CustomUser.objects.all()
+        """
+        Optionally restricts the returned users to a given user,
+        by filtering against a `search` query parameter in the URL.
+        """
+        queryset = CustomUser.objects.all()
+        search_query = self.request.query_params.get("search", None)
+
+        if search_query is not None:
+            queryset = queryset.filter(username__icontains=search_query)
+
+        return queryset
 
 
 class CustomUserUpdateView(UpdateAPIView):
@@ -72,13 +82,21 @@ class CustomPageNumberPagination(PageNumberPagination):
 
 
 class ListUserFriendsView(ListAPIView):
+    """
+    List all friends base on authenticated user or user_id
+    """
+
     serializer_class = CustomUserSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
-        if (self.kwargs.get("user_id")):
-            return list(get_object_or_404(CustomUser, id=self.kwargs.get("user_id")).friends.all())
+        if self.kwargs.get("user_id"):
+            return list(
+                get_object_or_404(
+                    CustomUser, id=self.kwargs.get("user_id")
+                ).friends.all()
+            )
         return list(self.request.user.friends.all())
 
     def paginate_queryset(self, queryset):

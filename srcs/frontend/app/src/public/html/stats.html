@@ -1,0 +1,21 @@
+<div id="statsProfile" class="row gutters-sm">
+  <div class="col-md-12 col-lg-6">
+    <div class="card mb-3">
+      <div id="summary" class="summary-container"></div>
+    </div>
+  </div>
+  <div class="col-md-12 col-lg-6">
+    <div class="card mb-3">
+      <select id="chartSelector" class="form-select mb-3">
+        <option value="elo">ELO Chart</option>
+        <option value="winLossRatio" selected>Win/Loss Ratio Chart</option>
+        <option value="winLose">Win/Lose Chart</option>
+      </select>
+      <div id="chartContainer" class="chart-container">
+        <canvas id="eloChart" style="display: none;"></canvas>
+        <canvas id="winLossRatioChart"></canvas>
+        <canvas id="winLoseChart" style="display: none;"></canvas>
+      </div>
+    </div>
+  </div>
+</div>

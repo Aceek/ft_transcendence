@@ -9,6 +9,8 @@ import {
   injectHistoryList,
 } from "./profileUtils.js";
 import { getProfile } from "./getProfile.js";
+import { injectFriendsSearsh } from "./searchFriends.js";
+import { displayStats } from "./stats/stats.js";
 
 
 async function attachSubmitListener(profile) {
@@ -17,6 +19,13 @@ async function attachSubmitListener(profile) {
     .addEventListener("click", async () => {
       await handleSubmit(profile);
     });
+
+  document
+    .getElementById("statsButton")
+    .addEventListener("click", async () => {
+      await displayStats();      
+    });
+
 }
 
 export async function displayProfile() {
@@ -28,6 +37,7 @@ export async function displayProfile() {
     injectUserInfo(profile);
     await injectFriendList();
     await injectHistoryList();
+    injectFriendsSearsh();
     attachSubmitListener(profile);
     changeAvatar(profile);
   } catch (error) {
@@ -49,7 +59,7 @@ function updateProfileAndPrintMessages(profile, dataToUpdate, fields) {
       }
       if (message) printConfirmationMessage(message, "submit_button");
     }
-  });7
+  });
 }
 
 async function handleSubmit(profile) {

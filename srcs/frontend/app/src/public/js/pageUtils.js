@@ -22,10 +22,15 @@ export async function postData(url = "", data = {}) {
   return response;
 }
 
-export async function requestDataWithToken(url = "", data, method = "") {
+export async function requestDataWithToken(url = "", data, method = "GET") {
   const token = localStorage.getItem("accessToken");
+  if (!token) {
+    throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
+  }
+
   const headers = new Headers({
     Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json", // Défini par défaut
   });
 
   let requestOptions = {
@@ -33,19 +38,27 @@ export async function requestDataWithToken(url = "", data, method = "") {
     headers: headers,
   };
 
-  if (method === "POST" || method === "PATCH" || method === "PUT") {
-    if (data instanceof FormData) {
-      requestOptions.body = data;
-    } else {
-      headers.append("Content-Type", "application/json");
-      requestOptions.body = JSON.stringify(data);
-    }
+  if (
+    (method === "POST" || method === "PATCH" || method === "PUT") &&
+    !(data instanceof FormData)
+  ) {
+    requestOptions.body = JSON.stringify(data);
+  } else if (data instanceof FormData) {
+    headers.delete("Content-Type");
+    requestOptions.body = data;
   }
 
-  const response = await fetch(url, requestOptions);
-  return response;
+  try {
+    const response = await fetch(url, requestOptions);
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Erreur lors de la requête:", error.message);
+    throw error;
+  }
 }
-
 
 export async function getDataWithToken(url = "") {
   const response = await fetch(url, {
