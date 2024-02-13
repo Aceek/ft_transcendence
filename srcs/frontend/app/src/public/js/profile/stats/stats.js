@@ -4,6 +4,8 @@ import {
   requestDataWithToken,
 } from "../../pageUtils.js";
 import { api_url } from "../../main.js";
+import { displayProfile } from "../profile.js";
+import { displayFriendsProfile } from "../profileFriends.js";
 
 export async function displayStats(userUID = null) {
   await fetchTemplate("/public/html/stats.html")
@@ -14,6 +16,7 @@ export async function displayStats(userUID = null) {
       await loadScript("https://cdn.jsdelivr.net/npm/chart.js");
       try {
         const statsData = await fetchData(userUID);
+        await displayListenProfileButton();
         displaySummary(statsData[0]);
         displayEloChart(statsData);
         displayWinLoseChart(statsData);
@@ -31,6 +34,20 @@ export async function displayStats(userUID = null) {
     });
 }
 
+async function displayListenProfileButton(userUID = null) {
+  const profileButton = document.getElementById("profileButton");
+  profileButton.addEventListener("click", async () => {
+    if (userUID) {
+      await displayFriendsProfile(userUID);
+    } else {
+      await displayProfile();
+    }
+  });
+  profileButton.disabled = false;
+
+  const statsButton = document.getElementById("statsButton");
+  statsButton.disabled = true;
+}
 
 async function displaySummary(data) {
   try {

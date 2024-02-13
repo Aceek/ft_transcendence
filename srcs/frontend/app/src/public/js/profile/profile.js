@@ -1,4 +1,4 @@
-import { api_url } from "../main.js";
+import { api_url, router } from "../main.js";
 import { fetchTemplate, loadProfileCss } from "../pageUtils.js";
 import {
   sendUpdateRequest,
@@ -12,7 +12,6 @@ import { getProfile } from "./getProfile.js";
 import { injectFriendsSearsh } from "./searchFriends.js";
 import { displayStats } from "./stats/stats.js";
 
-
 async function attachSubmitListener(profile) {
   document
     .getElementById("submit_button")
@@ -20,12 +19,25 @@ async function attachSubmitListener(profile) {
       await handleSubmit(profile);
     });
 
-  document
-    .getElementById("statsButton")
-    .addEventListener("click", async () => {
-      await displayStats();      
-    });
+  const statsButton = document.getElementById("statsButton");
+  statsButton.addEventListener("click", async () => {
+    await displayStats();
+    // await router("/profile/stats");
+  });
+  statsButton.disabled = false;
 
+  const profileButton = document.getElementById("profileButton");
+  profileButton.disabled = true;
+}
+
+async function attachLinkListener() {
+  const profileLinks = document.querySelectorAll(".profile-link");
+  profileLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      const uid = link.getAttribute("data-uid");
+      router("/profile/" + uid);
+    });
+  });
 }
 
 export async function displayProfile() {
@@ -36,6 +48,7 @@ export async function displayProfile() {
     const profile = await getProfile();
     injectUserInfo(profile);
     await injectFriendList();
+    attachLinkListener();
     await injectHistoryList();
     injectFriendsSearsh();
     attachSubmitListener(profile);
