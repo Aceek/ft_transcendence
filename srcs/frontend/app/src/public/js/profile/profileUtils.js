@@ -41,7 +41,6 @@ export function onclickFunctionDeleteContainer(container) {
 async function attachLinkListener() {
   const profileLinks = document.querySelectorAll(".profile-link");
   profileLinks.forEach((link) => {
-    console.log(link);
     link.addEventListener("click", () => {
       const uid = link.getAttribute("data-uid");
       router("/profile/" + uid);

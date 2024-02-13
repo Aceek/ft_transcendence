@@ -18,15 +18,14 @@ export async function displayFriendsProfile(UID) {
     addFriendsButton(profile.id);
   } catch (error) {
     console.error("Error:", error);
-    // router("/home"); // redirect to 404 page
+    router("/home"); // redirect to 404 page
   }
 }
 
 async function eventListenerButtonStats(userUID = null) {
   const statsButton = document.getElementById("statsButton");
   statsButton.addEventListener("click", async () => {
-  await displayStats(userUID);
-  // await router("/profile/" + userUID + "/stats");
+  await router("/profile/" + userUID + "/stats");
   });
   statsButton.disabled = false;
 }

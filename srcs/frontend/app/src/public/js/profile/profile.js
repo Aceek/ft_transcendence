@@ -21,8 +21,8 @@ async function attachSubmitListener(profile) {
 
   const statsButton = document.getElementById("statsButton");
   statsButton.addEventListener("click", async () => {
-    await displayStats();
-    // await router("/profile/stats");
+    // await displayStats();
+    await router("/profile/stats");
   });
   statsButton.disabled = false;
 

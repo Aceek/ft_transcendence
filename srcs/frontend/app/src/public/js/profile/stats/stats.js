@@ -3,11 +3,17 @@ import {
   loadProfileCss,
   requestDataWithToken,
 } from "../../pageUtils.js";
-import { api_url } from "../../main.js";
+import { api_url, router } from "../../main.js";
 import { displayProfile } from "../profile.js";
-import { displayFriendsProfile } from "../profileFriends.js";
+
+async function verifyDOMProfileLoaded() {
+  if (!document.getElementById("mainContainerProfile")) {
+    await displayProfile();
+  }
+}
 
 export async function displayStats(userUID = null) {
+  await verifyDOMProfileLoaded();
   await fetchTemplate("/public/html/stats.html")
     .then(async (statsDivString) => {
       const friendHistoryDiv = document.getElementById("friendHistoryDiv");
@@ -19,7 +25,7 @@ export async function displayStats(userUID = null) {
         await displayListenProfileButton(userUID);
         displaySummary(statsData[0]);
         displayEloChart(statsData);
-        displayWinLoseChart(statsData);
+      displayWinLoseChart(statsData);
         displayWinLossRatioChart(statsData);
         addEventListenerForSelectorValue();
       } catch (error) {
@@ -38,9 +44,9 @@ async function displayListenProfileButton(userUID = null) {
   const profileButton = document.getElementById("profileButton");
   profileButton.addEventListener("click", async () => {
     if (userUID) {
-      await displayFriendsProfile(userUID);
+      router(`/profile/${userUID}`);
     } else {
-      await displayProfile();
+      router("/profile");
     }
   });
   profileButton.disabled = false;
