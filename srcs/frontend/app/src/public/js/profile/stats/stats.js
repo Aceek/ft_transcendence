@@ -16,7 +16,7 @@ export async function displayStats(userUID = null) {
       await loadScript("https://cdn.jsdelivr.net/npm/chart.js");
       try {
         const statsData = await fetchData(userUID);
-        await displayListenProfileButton();
+        await displayListenProfileButton(userUID);
         displaySummary(statsData[0]);
         displayEloChart(statsData);
         displayWinLoseChart(statsData);

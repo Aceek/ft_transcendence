@@ -1,3 +1,4 @@
+import { router } from "../main.js";
 import { requestDataWithToken } from "../pageUtils.js";
 import { getGameHistory, getFriendList } from "./getProfile.js";
 import { createButtonFriend } from "./profileFriends.js";
@@ -37,41 +38,16 @@ export function onclickFunctionDeleteContainer(container) {
   container.remove();
 }
 
-// export async function injectFriendList(page, UID = null) {
-//   const friendList = await getFriendList(page, UID);
-//   const friendListContainer = document.getElementById("friendsList");
-//   friendListContainer.innerHTML = "";
-//   const friendListTitle = document.getElementById("friendListTitle");
-//   friendListTitle.textContent = "Friend List"
-
-//   await friendList.results.forEach(async (friend) => {
-//     const listItem = document.createElement("li");
-//     listItem.className =
-//       "list-group-item d-flex align-items-center justify-content-between";
-
-//     listItem.innerHTML = `
-//       <div class="friend-info d-flex align-items-center">
-//         <img src="${friend.avatar || "../images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
-//         <div>
-//           <a href="/profile/${friend.id}"><strong>${friend.username}</strong></a>
-//           <span class="text-success ms-2">• En ligne</span>
-//         </div>
-//       </div>
-//     `;
-//     const removeButton = await createButtonFriend(
-//       friend.id,
-//       "users/remove_friends",
-//       () => {
-//         onclickFunctionDeleteContainer(listItem);
-//       }
-//     );
-//     removeButton.textContent = "Remove";
-//     removeButton.classList.add("btn-danger");
-//     listItem.appendChild(removeButton);
-//     friendListContainer.appendChild(listItem);
-//   });
-//   addPrevNextButtons(friendList, friendListContainer, friendContext);
-// }
+async function attachLinkListener() {
+  const profileLinks = document.querySelectorAll(".profile-link");
+  profileLinks.forEach((link) => {
+    console.log(link);
+    link.addEventListener("click", () => {
+      const uid = link.getAttribute("data-uid");
+      router("/profile/" + uid);
+    });
+  });
+}
 
 export async function injectFriendList(page, UID = null) {
   const friendList = await getFriendList(page, UID);
@@ -107,6 +83,7 @@ export async function injectFriendList(page, UID = null) {
     listItem.appendChild(removeButton);
     friendListContainer.appendChild(listItem);
   });
+  attachLinkListener();
   addPrevNextButtons(friendList, friendListContainer, friendContext);
 }
 

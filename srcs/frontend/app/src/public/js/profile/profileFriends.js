@@ -25,8 +25,8 @@ export async function displayFriendsProfile(UID) {
 async function eventListenerButtonStats(userUID = null) {
   const statsButton = document.getElementById("statsButton");
   statsButton.addEventListener("click", async () => {
-  // await displayStats(userUID);
-  await router("/profile/" + userUID + "/stats");
+  await displayStats(userUID);
+  // await router("/profile/" + userUID + "/stats");
   });
   statsButton.disabled = false;
 }
@@ -119,4 +119,6 @@ function ajusterInterfaceProfil() {
   twofaElement.remove();
   const gameHistoryDiv = document.getElementById("gameHistoryDiv");
   gameHistoryDiv.className = "col-md12 col-lg-12";
+  const profileButton = document.getElementById("profileButton");
+  profileButton.disabled = true;
 }

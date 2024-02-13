@@ -30,16 +30,6 @@ async function attachSubmitListener(profile) {
   profileButton.disabled = true;
 }
 
-async function attachLinkListener() {
-  const profileLinks = document.querySelectorAll(".profile-link");
-  profileLinks.forEach((link) => {
-    link.addEventListener("click", () => {
-      const uid = link.getAttribute("data-uid");
-      router("/profile/" + uid);
-    });
-  });
-}
-
 export async function displayProfile() {
   loadProfileCss("/public/css/profile.css");
   try {
@@ -48,7 +38,6 @@ export async function displayProfile() {
     const profile = await getProfile();
     injectUserInfo(profile);
     await injectFriendList();
-    attachLinkListener();
     await injectHistoryList();
     injectFriendsSearsh();
     attachSubmitListener(profile);

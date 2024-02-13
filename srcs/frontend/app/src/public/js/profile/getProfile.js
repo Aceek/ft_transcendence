@@ -19,7 +19,6 @@ export async function getFriendList(page = 1) {
   if (page === 0) {
     url = `${api_url}users/friends`;
   }
-  console.log('url:', url)
   const response = await getDataWithToken(url);
   if (!response.ok) {
     throw new Error("Failed to get friend list");
