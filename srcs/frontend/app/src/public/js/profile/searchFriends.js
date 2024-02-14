@@ -35,7 +35,7 @@ async function displayUsersInSearch(usersInSearch) {
 
     listItem.innerHTML = `
       <div class="friend-info d-flex align-items-center">
-        <img src="${user.avatar || "../images/profile.jpg"}" alt="Avatar de ${user.username}" class="rounded-circle me-3" width="75" height="75">
+        <img src="${user.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${user.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
           <a href="/profile/${user.id}"><strong>${user.username}</strong></a>
           <span class="text-success ms-2">• En ligne</span>

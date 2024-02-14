@@ -5,15 +5,20 @@ import {
 } from "../../pageUtils.js";
 import { api_url, router } from "../../main.js";
 import { displayProfile } from "../profile.js";
+import { displayFriendsProfile } from "../profileFriends.js";
 
-async function verifyDOMProfileLoaded() {
+async function verifyDOMProfileLoaded(userUID = null) {
   if (!document.getElementById("mainContainerProfile")) {
-    await displayProfile();
+    if (userUID) {
+      await displayFriendsProfile(userUID);
+    } else {
+      await displayProfile();
+    }
   }
 }
 
 export async function displayStats(userUID = null) {
-  await verifyDOMProfileLoaded();
+  await verifyDOMProfileLoaded(userUID);
   await fetchTemplate("/public/html/stats.html")
     .then(async (statsDivString) => {
       const friendHistoryDiv = document.getElementById("friendHistoryDiv");
@@ -25,7 +30,7 @@ export async function displayStats(userUID = null) {
         await displayListenProfileButton(userUID);
         displaySummary(statsData[0]);
         displayEloChart(statsData);
-      displayWinLoseChart(statsData);
+        displayWinLoseChart(statsData);
         displayWinLossRatioChart(statsData);
         addEventListenerForSelectorValue();
       } catch (error) {

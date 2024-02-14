@@ -3,7 +3,6 @@ import { getProfile, getFriendList } from "./getProfile.js";
 import { injectUserInfo, injectHistoryList } from "./profileUtils.js";
 import { loadProfileCss, fetchTemplate } from "../pageUtils.js";
 import { sendUpdateRequest } from "./profileUtils.js";
-import { displayStats } from "./stats/stats.js";
 
 export async function displayFriendsProfile(UID) {
   loadProfileCss("/public/css/profile.css");
@@ -11,11 +10,11 @@ export async function displayFriendsProfile(UID) {
     const profileHtml = await fetchTemplate("/public/html/profile.html");
     document.getElementById("main").innerHTML = profileHtml;
     const profile = await getProfile(UID);
-    eventListenerButtonStats(UID);
     injectUserInfo(profile);
     await injectHistoryList(1, UID);
+    await eventListenerButtonStats(UID);
     ajusterInterfaceProfil();
-    addFriendsButton(profile.id);
+    await addFriendsButton(profile.id);
   } catch (error) {
     console.error("Error:", error);
     router("/home"); // redirect to 404 page
@@ -25,11 +24,10 @@ export async function displayFriendsProfile(UID) {
 async function eventListenerButtonStats(userUID = null) {
   const statsButton = document.getElementById("statsButton");
   statsButton.addEventListener("click", async () => {
-  await router("/profile/" + userUID + "/stats");
+    await router("/profile/" + userUID + "/stats");
   });
   statsButton.disabled = false;
 }
-
 
 export async function createButtonFriend(
   userUID,

@@ -62,7 +62,7 @@ export async function injectFriendList(page, UID = null) {
 
     listItem.innerHTML = `
       <div class="friend-info d-flex align-items-center">
-        <img src="${friend.avatar || "../images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
+        <img src="${friend.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
           <span class="profile-link" data-uid="${friend.id}"><strong>${friend.username}</strong></span>
           <span class="text-success ms-2">• En ligne</span>
@@ -143,7 +143,7 @@ export function injectUserInfo(profile) {
   const emailElement = document.getElementById("email");
   const twofaElement = document.getElementById("2fa");
 
-  avatarElement.src = profile.avatar || "../images/profile.jpg";
+  avatarElement.src = profile.avatar || "/public/images/profile.jpg";
   usernameElement.value = profile.username;
   emailElement.value = profile.email;
   twofaElement.textContent = `2FA: ${profile.is2FA ? "Yes" : "No"}`;

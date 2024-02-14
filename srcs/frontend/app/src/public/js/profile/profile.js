@@ -10,25 +10,6 @@ import {
 } from "./profileUtils.js";
 import { getProfile } from "./getProfile.js";
 import { injectFriendsSearsh } from "./searchFriends.js";
-import { displayStats } from "./stats/stats.js";
-
-async function attachSubmitListener(profile) {
-  document
-    .getElementById("submit_button")
-    .addEventListener("click", async () => {
-      await handleSubmit(profile);
-    });
-
-  const statsButton = document.getElementById("statsButton");
-  statsButton.addEventListener("click", async () => {
-    // await displayStats();
-    await router("/profile/stats");
-  });
-  statsButton.disabled = false;
-
-  const profileButton = document.getElementById("profileButton");
-  profileButton.disabled = true;
-}
 
 export async function displayProfile() {
   loadProfileCss("/public/css/profile.css");
@@ -40,11 +21,28 @@ export async function displayProfile() {
     await injectFriendList();
     await injectHistoryList();
     injectFriendsSearsh();
-    attachSubmitListener(profile);
-    changeAvatar(profile);
+    await attachSubmitListener(profile);
+    await changeAvatar(profile);
   } catch (error) {
     console.error("Error:", error);
   }
+}
+
+async function attachSubmitListener(profile) {
+  document
+    .getElementById("submit_button")
+    .addEventListener("click", async () => {
+      await handleSubmit(profile);
+    });
+
+  const statsButton = document.getElementById("statsButton");
+  statsButton.addEventListener("click", async () => {
+    await router("/profile/stats");
+  });
+  statsButton.disabled = false;
+
+  const profileButton = document.getElementById("profileButton");
+  profileButton.disabled = true;
 }
 
 function updateProfileAndPrintMessages(profile, dataToUpdate, fields) {
