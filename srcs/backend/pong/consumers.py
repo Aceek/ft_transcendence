@@ -134,7 +134,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if paddle_movement['up']:
             paddle_movement['y'] = max(0, paddle_movement['y'] - self.paddle_speed)
         elif paddle_movement['down']:
-            paddle_movement['y'] = min(320 - self.paddle_height, paddle_movement['y'] + self.paddle_speed)
+            paddle_movement['y'] = min(400 - self.paddle_height, paddle_movement['y'] + self.paddle_speed)
 
 #-------------------------------GAME UPDATE-----------------------------
         
@@ -168,9 +168,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Check for collisions with paddles
         if (
             (self.ball['x'] - self.ball_size/2 < self.paddle_width and
-             self.left_paddle['y'] < self.ball['y'] < self.left_paddle['y'] + self.paddle_height) or
+             self.left_paddle['y'] - self.ball_size/2 < self.ball['y'] < self.left_paddle['y'] + self.paddle_height + self.ball_size/2) or
             (self.ball['x'] + self.ball_size/2 > self.canvas_width - self.paddle_width and
-             self.right_paddle['y'] < self.ball['y'] < self.right_paddle['y'] + self.paddle_height)
+             self.right_paddle['y'] - self.ball_size/2 < self.ball['y'] < self.right_paddle['y'] + self.paddle_height + self.ball_size/2)
         ):
             self.handle_paddle_collision()
 
