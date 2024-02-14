@@ -103,7 +103,6 @@ async function fetchData(userUID) {
     if (userUID) {
       url = api_url + "stats/" + `${userUID}`;
     }
-    console.log(url);
     const response = await requestDataWithToken(url);
     const data = await response.json();
     return data;
@@ -127,7 +126,7 @@ async function displayWinLossRatioChart(data) {
         datasets: [
           {
             label: "Ratio de Victoires/Défaites",
-            data: [ratio, 1 - ratio], // Utilise le ratio de victoires et complète à 1 avec les défaites
+            data: [ratio, 1 - ratio],
             backgroundColor: [
               "rgba(54, 162, 235, 0.6)",
               "rgba(255, 99, 132, 0.6)",

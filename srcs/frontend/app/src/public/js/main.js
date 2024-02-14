@@ -10,17 +10,21 @@ import { displayStats } from "./profile/stats/stats.js";
 export const api_url = "https://localhost/api/";
 
 window.addEventListener("popstate", (event) => {
-  router(window.location.pathname);
+  router(window.location.pathname, false);
 });
 
-export async function router(path) {
+export async function router(path, updateHistory = true) {
   if (!path) {
     path = window.location.pathname;
   }
 
   console.log(`Navigating to path: ${path}`);
 
-  history.pushState(null, "", path);
+  if (updateHistory) {
+    history.pushState(null, "", path);
+  }
+
+  // console.log("historic  =  ", history);
 
   if (await isAPIConnected()) {
     handleAuthenticatedRoutes(path);
