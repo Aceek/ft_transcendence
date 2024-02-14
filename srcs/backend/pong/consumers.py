@@ -34,7 +34,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.ball_launched = False
         self.last_update_time = time.time()
         self.match_over = False
-        self.left_paddle_y = self.right_paddle_y = INITIAL_PADDLE_Y
+        self.left_paddle = {'up': False, 'down': False, 'y': INITIAL_PADDLE_Y}
+        self.right_paddle = {'up': False, 'down': False, 'y': INITIAL_PADDLE_Y}
         self.ball = {
             'x': INITIAL_BALL_X,
             'y': INITIAL_BALL_Y,
@@ -47,13 +48,13 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
 
-        game_data = {
+        game_init_data = {
             'type': 'game.init',
             'paddleWidth': self.paddle_width,
             'paddleHeight': self.paddle_height,
             'ballSize': self.ball_size,
-            'initialLeftPaddleY': self.left_paddle_y,
-            'initialRightPaddleY': self.right_paddle_y,
+            'initialLeftPaddleY': self.left_paddle['y'],
+            'initialRightPaddleY': self.right_paddle['y'],
             'initialBallPosition': self.ball,
             'initialLeftPlayerScore': self.left_player_score,
             'initialRightPlayerScore': self.right_player_score,
@@ -61,7 +62,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         }
 
         # Send the game initialization data to the frontend
-        await self.send(json.dumps(game_data))
+        await self.send(json.dumps(game_init_data))
 
         # Start the game loop
         self.ball_launched = True
@@ -89,6 +90,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             current_time = time.time()
             delta_time = current_time - last_update_time
 
+            # Print delta time for debugging
+            # print("Delta Time:", delta_time)
+
             # Update ball position based on game mechanics
             self.update_ball_position(delta_time)
 
@@ -112,20 +116,25 @@ class GameConsumer(AsyncWebsocketConsumer):
 #-------------------------------PADLLE MOVEMENT-----------------------------
 
     async def handle_paddle_movement(self, data, delta_time):
-        key, is_pressed = data['key'], data['isPressed']
-        self.update_paddle_positions(key, is_pressed)
+        left_paddle_state = data['leftPaddleState']
+        right_paddle_state = data['rightPaddleState']
+
+        self.update_paddle_position(self.left_paddle, left_paddle_state)
+        self.update_paddle_position(self.right_paddle, right_paddle_state)
+        
         self.ball_launched = True
         await self.send_game_update(delta_time)
 
-    def update_paddle_positions(self, key, is_pressed):
-        # Update paddle coordinates based on key and is_pressed
-        update_left_paddle = key == 'w' or key == 's'
-        update_right_paddle = key == 'ArrowUp' or key == 'ArrowDown'
+    def update_paddle_position(self, paddle_movement, paddle_state):
+        # Update movement flags based on paddle state
+        paddle_movement['up'] = paddle_state['up']
+        paddle_movement['down'] = paddle_state['down']
 
-        if update_left_paddle:
-            self.left_paddle_y = max(0, min(320, self.left_paddle_y + (-1 if key == 'w' else 1) * self.paddle_speed))
-        elif update_right_paddle:
-            self.right_paddle_y = max(0, min(320, self.right_paddle_y + (-1 if key == 'ArrowUp' else 1) * self.paddle_speed))
+        # Update paddle position based on movement flags
+        if paddle_movement['up']:
+            paddle_movement['y'] = max(0, paddle_movement['y'] - self.paddle_speed)
+        elif paddle_movement['down']:
+            paddle_movement['y'] = min(320 - self.paddle_height, paddle_movement['y'] + self.paddle_speed)
 
 #-------------------------------GAME UPDATE-----------------------------
         
@@ -133,8 +142,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.update_ball_position(delta_time)
         await self.send(text_data=json.dumps({
             'type': 'game.update',
-            'leftPaddleY': self.left_paddle_y,
-            'rightPaddleY': self.right_paddle_y,
+            'leftPaddleY': self.left_paddle['y'],
+            'rightPaddleY': self.right_paddle['y'],
             'ball': self.ball,
             'leftPlayerScore': self.left_player_score,
             'rightPlayerScore': self.right_player_score,
@@ -159,9 +168,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Check for collisions with paddles
         if (
             (self.ball['x'] - self.ball_size/2 < self.paddle_width and
-             self.left_paddle_y < self.ball['y'] < self.left_paddle_y + self.paddle_height) or
+             self.left_paddle['y'] < self.ball['y'] < self.left_paddle['y'] + self.paddle_height) or
             (self.ball['x'] + self.ball_size/2 > self.canvas_width - self.paddle_width and
-             self.right_paddle_y < self.ball['y'] < self.right_paddle_y + self.paddle_height)
+             self.right_paddle['y'] < self.ball['y'] < self.right_paddle['y'] + self.paddle_height)
         ):
             self.handle_paddle_collision()
 

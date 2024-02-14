@@ -9,10 +9,6 @@
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
     var socket = new WebSocket('ws://localhost:8000/ws/pong/');
-    var currentState = null;
-    var previousState = null;
-    var interpolationRatio = 0.0;
-
 
 //----------------------WEBSOCKET-----------------------------------------
 
@@ -41,23 +37,47 @@
             console.log('WebSocket connection closed:', event);
     };
     
-//----------------------KEYEVENT-----------------------------------------
+//----------------------EVENT LISTENERS-----------------------------------------
+
+    let leftPaddleState = {
+        up: false,
+        down: false
+    };
+
+    let rightPaddleState = {
+        up: false,
+        down: false
+    };
 
     // Event listeners for key presses
     document.addEventListener('keydown', function (event) {
+        console.log("Key down:", event.key);
         handleKeyPress(event.key, true);
     });
 
     document.addEventListener('keyup', function (event) {
+        console.log("Key up:", event.key);
         handleKeyPress(event.key, false);
     });
 
     function handleKeyPress(key, isPressed) {
-        // Send WebSocket message for paddle movements
+        // Update the corresponding paddle state based on the pressed key
+        if (key === 'w') {
+            leftPaddleState.up = isPressed;
+        } else if (key === 's') {
+            leftPaddleState.down = isPressed;
+        } else if (key === 'ArrowUp') {
+            rightPaddleState.up = isPressed;
+        } else if (key === 'ArrowDown') {
+            rightPaddleState.down = isPressed;
+        }
+
+        // Send WebSocket messages for paddle movements
+        console.log("Sending paddle movements:", leftPaddleState, rightPaddleState);
         socket.send(JSON.stringify({
             'message': 'paddle_movement',
-            'key': key,
-            'isPressed': isPressed,
+            'leftPaddleState': leftPaddleState,
+            'rightPaddleState': rightPaddleState
         }));
     }
 
@@ -114,85 +134,14 @@
         // Update scores
         game.players.left.score = data.leftPlayerScore;
         game.players.right.score = data.rightPlayerScore;
-
-        // Update game state
-        updateGameState(data);
-    }
-    
-    function updateGameState(data) {
-        previousState = currentState;
-        currentState = data;
     }
 
 //----------------------GAME LOOP-----------------------------------------
     
     // Main game loop
     function mainLoop() {
-        // updateInterpolationRatio();
-        // updateGame();
         draw();
         requestAnimationFrame(mainLoop);
-    }
-
-    // Function to update interpolation ratio
-    function updateInterpolationRatio() {
-        if (previousState && currentState) {
-            var currentTime = Date.now();
-            var previousTime = previousState.timestamp;
-            var currentStateTime = currentState.timestamp;
-            interpolationRatio = (currentTime - previousTime) / (currentStateTime - previousTime);
-        }
-    }
-
-    // Function to update the game state
-    function updateGame() {
-        if (currentState) {
-            // Update the game state based on the current state
-            // and interpolated values between the previous and current states
-            // Example: Interpolate paddle positions, ball position, etc.
-            
-            // Interpolate paddle positions
-            if (previousState) {
-                console.log('Interpolating paddle positions...');
-                console.log('Previous left paddle Y:', previousState.leftPaddleY);
-                console.log('Current left paddle Y:', currentState.leftPaddleY);
-                console.log('Previous right paddle Y:', previousState.rightPaddleY);
-                console.log('Current right paddle Y:', currentState.rightPaddleY);
-    
-                game.players.left.paddleY = interpolate(previousState.leftPaddleY, currentState.leftPaddleY);
-                game.players.right.paddleY = interpolate(previousState.rightPaddleY, currentState.rightPaddleY);
-    
-                // Interpolate ball position
-                console.log('Interpolating ball position...');
-                console.log('Previous ball X:', previousState.ball.x);
-                console.log('Current ball X:', currentState.ball.x);
-                console.log('Previous ball Y:', previousState.ball.y);
-                console.log('Current ball Y:', currentState.ball.y);
-    
-                game.ball.x = interpolate(previousState.ball.x, currentState.ball.x);
-                game.ball.y = interpolate(previousState.ball.y, currentState.ball.y);
-            } else {
-                // Set initial paddle positions
-                console.log('Setting initial positions...');
-                console.log('Current left paddle Y:', currentState.leftPaddleY);
-                console.log('Current right paddle Y:', currentState.rightPaddleY);
-    
-                game.players.left.paddleY = currentState.leftPaddleY;
-                game.players.right.paddleY = currentState.rightPaddleY;
-    
-                // Set initial ball position
-                console.log('Setting initial ball position...');
-                console.log('Current ball X:', currentState.ball.x);
-                console.log('Current ball Y:', currentState.ball.y);
-    
-                game.ball.x = currentState.ball.x;
-                game.ball.y = currentState.ball.y;
-            }
-        }
-    }
-
-    function interpolate(prevValue, curValue) {
-        return prevValue + (curValue - prevValue) * interpolationRatio;
     }
 
     // Start the main game loop
