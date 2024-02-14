@@ -25,6 +25,7 @@ export async function displayProfile() {
     await changeAvatar(profile);
   } catch (error) {
     console.error("Error:", error);
+    router("/home"); // redirect to 404 page
   }
 }
 

@@ -42,6 +42,7 @@ export async function displayStats(userUID = null) {
     })
     .catch((error) => {
       console.error("Error:", error);
+      router("/home");
     });
 }
 

@@ -24,8 +24,6 @@ export async function router(path, updateHistory = true) {
     history.pushState(null, "", path);
   }
 
-  // console.log("historic  =  ", history);
-
   if (await isAPIConnected()) {
     handleAuthenticatedRoutes(path);
   } else {

@@ -5,6 +5,17 @@ body{
   background-color: #e2e8f0;    
 }
 
+.profile-link {
+  color: #007bff;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.profile-link:hover {
+  color: #0056b3;
+  text-decoration: none;
+}
+
 h3 {
   color: RGB(13, 110, 253);
   font-size: 1.2em;
