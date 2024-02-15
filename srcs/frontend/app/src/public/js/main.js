@@ -5,6 +5,7 @@ import { isAPIConnected } from "./ping.js";
 import { displayProfile } from "./profile/profile.js";
 import { displayFriendsProfile } from "./profile/profileFriends.js";
 import { displayStats } from "./profile/stats/stats.js";
+import { injectNavBar } from "./navbar.js";
 
 // export const api_url = "http://localhost:8000/api/";
 export const api_url = "https://localhost/api/";
@@ -25,6 +26,7 @@ export async function router(path, updateHistory = true) {
   }
 
   if (await isAPIConnected()) {
+    await injectNavBar();
     handleAuthenticatedRoutes(path);
   } else {
     handleUnauthenticatedRoutes(path);
