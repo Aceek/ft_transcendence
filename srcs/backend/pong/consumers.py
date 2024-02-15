@@ -2,6 +2,7 @@ import json
 import random
 import asyncio
 import time
+import math
 
 from .game_config import *
 from .models import Player, Game, BallCoordinates
@@ -168,9 +169,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Check for collisions with paddles
         if (
             (self.ball['x'] - self.ball_size/2 < self.paddle_width and
-             self.left_paddle['y'] - self.ball_size/2 < self.ball['y'] < self.left_paddle['y'] + self.paddle_height + self.ball_size/2) or
+             self.left_paddle['y'] < self.ball['y'] < self.left_paddle['y'] + self.paddle_height) or
             (self.ball['x'] + self.ball_size/2 > self.canvas_width - self.paddle_width and
-             self.right_paddle['y'] - self.ball_size/2 < self.ball['y'] < self.right_paddle['y'] + self.paddle_height + self.ball_size/2)
+             self.right_paddle['y'] < self.ball['y'] < self.right_paddle['y'] + self.paddle_height)
         ):
             self.handle_paddle_collision()
 
@@ -182,7 +183,24 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.handle_wall_collision()
 
     def handle_paddle_collision(self):
-        self.ball['speedX'] *= -1
+        # Determine which paddle was hit
+        if self.ball['x'] < self.canvas_width / 2:
+            paddle = self.left_paddle
+            direction = 1
+        else:
+            paddle = self.right_paddle
+            direction = -1
+
+        # Calculate the relative position of the collision point on the paddle
+        relative_collision_position = (self.ball['y'] - paddle['y']) / self.paddle_height
+
+        # Calculate the new angle of the ball's trajectory based on the relative position
+        angle = (relative_collision_position - 0.5) * math.pi / 2
+
+        # Update the ball's speed components based on the new angle
+        speed_magnitude = math.sqrt(self.ball['speedX'] ** 2 + self.ball['speedY'] ** 2)
+        self.ball['speedX'] = speed_magnitude * math.cos(angle) * direction
+        self.ball['speedY'] = speed_magnitude * math.sin(angle) * direction
 
     def handle_wall_collision(self):
         self.ball['speedY'] *= -1
