@@ -26,19 +26,15 @@ export async function postData(url = "", data = {}) {
 }
 
 export async function requestDataWithToken(url = "", data, method = "GET") {
-  const token = localStorage.getItem("accessToken");
-  if (!token) {
-    throw new Error("Aucun token d'accès trouvé. Veuillez vous reconnecter.");
-  }
 
   const headers = new Headers({
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json", // Défini par défaut
+    "Content-Type": "application/json",
   });
 
   let requestOptions = {
     method: method,
     headers: headers,
+    credentials: credentialsOption,
   };
 
   if (
@@ -46,9 +42,12 @@ export async function requestDataWithToken(url = "", data, method = "GET") {
     !(data instanceof FormData)
   ) {
     requestOptions.body = JSON.stringify(data);
+    console.log("requestOptions", requestOptions);
+
   } else if (data instanceof FormData) {
     headers.delete("Content-Type");
     requestOptions.body = data;
+    console.log("requestOptions", requestOptions);
   }
 
   try {
@@ -66,9 +65,7 @@ export async function requestDataWithToken(url = "", data, method = "GET") {
 export async function getDataWithToken(url = "") {
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-    },
+    credentials: credentialsOption,
   });
   return response;
 }
