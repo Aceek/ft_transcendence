@@ -1,7 +1,8 @@
-import { fetchTemplate } from "./pageUtils.js";
+import { fetchTemplate, loadProfileCss } from "./pageUtils.js";
 import { router } from "./main.js";
 
 export async function injectNavBar() {
+  loadProfileCss("/public/css/navbar.css");
   if (document.getElementById("navbar")) {
     console.log("La barre de navigation est déjà chargée.");
     return;
@@ -10,7 +11,6 @@ export async function injectNavBar() {
     const navbarDivString = await fetchTemplate("/public/html/navbar.html");
     document.body.insertAdjacentHTML("afterbegin", navbarDivString);
     addEventListenerToNavLinks();
-    updateActiveLink();
     window.addEventListener("hashchange", updateActiveLink);
     window.addEventListener("popstate", updateActiveLink);
   } catch (error) {
@@ -25,13 +25,12 @@ async function addEventListenerToNavLinks() {
     link.addEventListener("click", (event) => {
       event.preventDefault();
       const path = link.getAttribute("href");
-      updateActiveLink(path);
       router(path);
     });
   });
 }
 
-function updateActiveLink(currentPath = window.location.pathname) {
+export function updateActiveLink(currentPath = window.location.pathname) {
   const navLinks = document.querySelectorAll(".nav-link");
 
   navLinks.forEach((link) => {

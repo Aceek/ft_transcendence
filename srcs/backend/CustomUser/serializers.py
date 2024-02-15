@@ -19,6 +19,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "email"]
 
     def update(self, instance, validated_data):
+        """_summary_
+            override the update method to handle the new_email and friends fields
+
+        Args:
+            instance (_type_): CustomUser instance
+            validated_data (_type_): after validation, the data to update
+
+        Returns:
+            _type_: call the super update method who will update the instance
+        """
         new_email = validated_data.pop("new_email", None)
         if new_email:
             instance.new_email = new_email

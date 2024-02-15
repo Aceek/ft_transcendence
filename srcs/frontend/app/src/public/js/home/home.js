@@ -1,11 +1,11 @@
-import { changeUrlHistory, addEventListenerById } from "./pageUtils.js";
-import { router } from "./main.js";
+import { changeUrlHistory, addEventListenerById, loadProfileCss } from "../pageUtils.js";
+import { router } from "../main.js";
 
 
 function addEventListeners() {
-    addEventListenerById("profile-btn", "click", function (event) {
+    addEventListenerById("play-button", "click", function (event) {
         event.preventDefault();
-        router("/profile");
+        router("/play");
     });
 }
 
@@ -14,6 +14,7 @@ export function getHomePage() {
     .then((response) => response.text())
     .then((template) => {
       document.getElementById("main").innerHTML = template;
+      loadProfileCss("/public/css/home.css")
       addEventListeners();
       changeUrlHistory("/home");
     });

@@ -5,12 +5,17 @@ from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
 from os import environ
 from .models import TwoFactorEmailModel
+from CustomUser.models import CustomUser
 
 
-def send_verification_email(user, new_email):
-    """
-    Field new_email is optional. If it is not provided, the user's email will be used.
-    Send an email to the user with a link to verify their email address.
+def send_verification_email(user: CustomUser, new_email: str = None):
+    """_summary_
+        Field new_email is optional. If it is not provided, the user's email will be used.
+        Send an email to the user with a link to verify their email address.
+
+    Args:
+        user (CustomUser): _description_
+        new_email (str, optional): U can precise new_email to change default mail. Defaults to None.
     """
     if not user or not user.email:
         return
@@ -30,7 +35,15 @@ def send_verification_email(user, new_email):
     send_mail(subject, message, None, recipient_list, fail_silently=False)
 
 
-def initiate_2fa(user):
+def initiate_2fa(user: CustomUser):
+    """_summary_
+        Create and send a 2FA token to the user's email.
+    Args:
+        user (CustomUser): user to send 2FA token to
+
+    Returns:
+        TwoFactorEmailModel: instance of TwoFactorEmailModel
+    """
     instance_2fa = TwoFactorEmailModel.objects.create(user=user)
     instance_2fa.send_two_factor_email()
     return instance_2fa

@@ -26,7 +26,6 @@ export async function postData(url = "", data = {}) {
 }
 
 export async function requestDataWithToken(url = "", data, method = "GET") {
-
   const headers = new Headers({
     "Content-Type": "application/json",
   });
@@ -43,7 +42,6 @@ export async function requestDataWithToken(url = "", data, method = "GET") {
   ) {
     requestOptions.body = JSON.stringify(data);
     console.log("requestOptions", requestOptions);
-
   } else if (data instanceof FormData) {
     headers.delete("Content-Type");
     requestOptions.body = data;
@@ -94,23 +92,24 @@ export function setTokensStorage(data) {
 
 export function loadProfileCss(url) {
   const head = document.head;
-  const existingLink = Array.from(head.querySelectorAll("link")).find(
-    (link) => link.href === url
+  const existingLink = Array.from(head.querySelectorAll("link")).find((link) =>
+    link.href.includes(url)
   );
 
-  if (!existingLink) {
+
+  // if (!existingLink) {
     const link = document.createElement("link");
     link.type = "text/css";
     link.rel = "stylesheet";
     link.href = url;
 
     head.appendChild(link);
-  }
+  // }
 }
 
 export function changeUrlHistory(pathname) {
-    const url = new URL(window.location.href);
-    url.pathname = pathname;
-    url.search = '';
-    history.pushState({}, '', url);
+  const url = new URL(window.location.href);
+  url.pathname = pathname;
+  url.search = "";
+  history.pushState({}, "", url);
 }

@@ -1,0 +1,16 @@
+body{
+  color: #1a202c;
+  background-color: #e2e8f0;
+
+}
+
+.custom-btn {
+  min-width: 250px;
+  min-height: 150px;
+  font-size: xx-large;
+
+}
+
+.custom-btn:hover {
+  background-color: #0056b3;
+}

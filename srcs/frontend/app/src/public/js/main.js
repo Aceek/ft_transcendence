@@ -1,11 +1,11 @@
 import { getLoginPage, checkOAuthCode } from "./login.js";
-import { getHomePage } from "./home.js";
+import { getHomePage } from "./home/home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./networkUtils.js";
 import { displayProfile } from "./profile/profile.js";
 import { displayFriendsProfile } from "./profile/profileFriends.js";
 import { displayStats } from "./profile/stats/stats.js";
-import { injectNavBar } from "./navbar.js";
+import { injectNavBar, updateActiveLink } from "./navbar.js";
 
 // export const api_url = "http://localhost:8000/api/";
 export const api_url = "https://localhost/api/";
@@ -60,10 +60,12 @@ async function handleAuthenticatedRoutes(path) {
         await displayProfile();
         break;
       default:
+        path = "/home";
         console.log("Path not found, loading default page");
         getHomePage();
     }
   }
+  updateActiveLink(path);
 }
 
 async function handleUnauthenticatedRoutes(path) {
