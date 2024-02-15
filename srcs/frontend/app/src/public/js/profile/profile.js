@@ -31,9 +31,23 @@ export async function displayProfile() {
 
 async function attachSubmitListener(profile) {
   document
-    .getElementById("submit_button")
-    .addEventListener("click", async () => {
-      await handleSubmit(profile);
+    .getElementById("username")
+    .addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        await handleSubmit(profile);
+      }
+      console.log("Form submitted");
+    });
+
+  document
+    .getElementById("email")
+    .addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        await handleSubmit(profile);
+      }
+      console.log("Form submitted");
     });
 
   const statsButton = document.getElementById("statsButton");
@@ -58,7 +72,7 @@ function updateProfileAndPrintMessages(profile, dataToUpdate, fields) {
       } else if (field === "username") {
         message = "Nom d'utilisateur modifié avec succès.";
       }
-      if (message) printConfirmationMessage(message, "submit_button");
+      if (message) printConfirmationMessage(message);
     }
   });
 }

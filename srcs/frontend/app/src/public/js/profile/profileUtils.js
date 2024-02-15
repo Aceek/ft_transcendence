@@ -163,17 +163,19 @@ export function prepareUpdateData(profile, fields) {
 
 export function printConfirmationMessage(
   texte = "Veuillez vérifier votre nouvelle adresse email pour confirmer le changement.",
-  fieldId = "submit_button"
+  fieldId = "emailDiv"
 ) {
-  const messageElement = document.createElement("span");
+  const messageElement = document.createElement("div");
   messageElement.id = "ConfirmationMessage" + fieldId;
   messageElement.innerText = texte;
   messageElement.style.color = "green";
   messageElement.style.marginLeft = "10px";
   const emailInput = document.getElementById(fieldId);
-  emailInput.parentNode.insertBefore(messageElement, emailInput.nextSibling);
+  // emailInput.parentNode.insertBefore(messageElement, emailInput.nextSibling);
+  emailInput.insertAdjacentElement("afterend", messageElement);
+
 
   setTimeout(() => {
     messageElement.remove();
-  }, 9000);
+  }, 5000);
 }
