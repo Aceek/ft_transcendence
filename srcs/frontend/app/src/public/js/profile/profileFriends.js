@@ -98,8 +98,6 @@ async function addFriendsButton(userUID) {
 }
 
 function ajusterInterfaceProfil() {
-  const submitButton = document.getElementById("submit_button");
-  submitButton.remove();
   const username = document.getElementById("username");
   username.disabled = true;
   const emailDiv = document.getElementById("emailDiv");
