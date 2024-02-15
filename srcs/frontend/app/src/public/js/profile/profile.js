@@ -35,6 +35,7 @@ async function attachSubmitListener(profile) {
     .addEventListener("keydown", async function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
+        await handleSubmit(profile);
       }
       console.log("Form submitted");
     });
@@ -44,14 +45,9 @@ async function attachSubmitListener(profile) {
     .addEventListener("keydown", async function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
+        await handleSubmit(profile);
       }
       console.log("Form submitted");
-    });
-
-  document
-    .getElementById("submit_button")
-    .addEventListener("click", async () => {
-      await handleSubmit(profile);
     });
 
   const statsButton = document.getElementById("statsButton");
@@ -76,7 +72,7 @@ function updateProfileAndPrintMessages(profile, dataToUpdate, fields) {
       } else if (field === "username") {
         message = "Nom d'utilisateur modifié avec succès.";
       }
-      if (message) printConfirmationMessage(message, "submit_button");
+      if (message) printConfirmationMessage(message);
     }
   });
 }
