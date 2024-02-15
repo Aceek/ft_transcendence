@@ -31,6 +31,24 @@ export async function displayProfile() {
 
 async function attachSubmitListener(profile) {
   document
+    .getElementById("username")
+    .addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+      }
+      console.log("Form submitted");
+    });
+
+  document
+    .getElementById("email")
+    .addEventListener("keydown", async function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+      }
+      console.log("Form submitted");
+    });
+
+  document
     .getElementById("submit_button")
     .addEventListener("click", async () => {
       await handleSubmit(profile);
