@@ -7,7 +7,7 @@ from os import environ
 from .models import TwoFactorEmailModel
 
 
-def send_verification_email(user, new_email):
+def send_verification_email(user, new_email=None):
     """
     Field new_email is optional. If it is not provided, the user's email will be used.
     Send an email to the user with a link to verify their email address.
