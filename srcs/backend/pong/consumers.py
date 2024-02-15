@@ -3,6 +3,7 @@ import random
 import asyncio
 import time
 import math
+import socket
 
 from .game_config import *
 from .models import Player, Game, BallCoordinates
@@ -46,8 +47,22 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 #-------------------------------WEBSOCKET CONNECTION-------------------------
 
+    def get_local_ip(self):
+        # Create a socket object
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # Connect to an external server
+            s.connect(('8.8.8.8', 80))
+            # Get the local IP address
+            local_ip = s.getsockname()[0]
+        finally:
+            s.close()
+        return local_ip
+    
     async def connect(self):
         await self.accept()
+
+        local_ip = self.get_local_ip()
 
         game_init_data = {
             'type': 'game.init',
@@ -60,6 +75,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             'initialLeftPlayerScore': self.left_player_score,
             'initialRightPlayerScore': self.right_player_score,
             'matchOver': self.match_over,
+            'localIP': local_ip,
         }
 
         # Send the game initialization data to the frontend

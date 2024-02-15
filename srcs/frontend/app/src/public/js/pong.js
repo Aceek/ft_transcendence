@@ -28,6 +28,7 @@
     
         if (data.type === 'game.init') {
             initializeGame(data);
+            console.log(data.localIP);
         } else if (data.type === 'game.update') {
             handleGameUpdate(data);
         }
@@ -104,6 +105,7 @@
             }
         },
         matchOver: false,
+        localIP: 0,
     };
 
     function initializeGame(data) {
@@ -118,6 +120,7 @@
         game.players.left.score = data.initialLeftPlayerScore;
         game.players.right.score = data.initialRightPlayerScore;
         game.matchOver = data.matchOver;
+        game.localIP = data.localIP;
     }
 
 //----------------------GAME UPDATE-----------------------------------------
