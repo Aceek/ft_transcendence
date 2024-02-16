@@ -115,44 +115,44 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 ASGI_APPLICATION = 'pong.routing.application'
 
+# #maybe CORS not needed
+# IP_ADDRESS = environ.get("IP_ADDRESS")
 
-IP_ADDRESS = environ.get("IP_ADDRESS")
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     f"http://{IP_ADDRESS}:3000",
+# ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    f"http://{IP_ADDRESS}:3000",
-]
+# CORS_ALLOW_HEADERS = [
+#     'access-control-allow-origin',
+#     'content-type',
+#     'accept',
+#     'authorization',  # Add support for authorization headers
+#     'sec-websocket-extensions',  # Required for WebSocket handshake
+#     'sec-websocket-version',  # Required for WebSocket handshake
+# ]
 
-CORS_ALLOW_HEADERS = [
-    'access-control-allow-origin',
-    'content-type',
-    'accept',
-    'authorization',  # Add support for authorization headers
-    'sec-websocket-extensions',  # Required for WebSocket handshake
-    'sec-websocket-version',  # Required for WebSocket handshake
-]
+# CORS_ALLOW_METHODS = [
+#     'DELETE',
+#     'GET',
+#     'OPTIONS',
+#     'PATCH',
+#     'POST',
+#     'PUT',
+#     'HEAD',  # Add support for HEAD method
+# ]
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-    'HEAD',  # Add support for HEAD method
-]
-
-if DEBUG:
-    INTERNAL_IPS = [
-        # ...
-        '127.0.0.1',
-        # ...
-    ]
-    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-    INSTALLED_APPS += ['debug_toolbar']
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
-    }
+# if DEBUG:
+#     INTERNAL_IPS = [
+#         # ...
+#         '127.0.0.1',
+#         # ...
+#     ]
+#     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+#     INSTALLED_APPS += ['debug_toolbar']
+#     DEBUG_TOOLBAR_CONFIG = {
+#         'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
+#     }
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
