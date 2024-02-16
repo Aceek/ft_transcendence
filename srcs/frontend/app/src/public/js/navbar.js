@@ -1,5 +1,6 @@
 import { fetchTemplate, loadProfileCss } from "./pageUtils.js";
 import { router } from "./main.js";
+import { getProfile } from "./profile/getProfile.js";
 
 export async function injectNavBar() {
   loadProfileCss("/public/css/navbar.css");
@@ -10,6 +11,8 @@ export async function injectNavBar() {
   try {
     const navbarDivString = await fetchTemplate("/public/html/navbar.html");
     document.body.insertAdjacentHTML("afterbegin", navbarDivString);
+    const profile = await getProfile();
+    injectAvatarOnNavbar(profile);
     addEventListenerToNavLinks();
     window.addEventListener("hashchange", updateActiveLink);
     window.addEventListener("popstate", updateActiveLink);
@@ -28,6 +31,11 @@ async function addEventListenerToNavLinks() {
       router(path);
     });
   });
+}
+
+function injectAvatarOnNavbar(profile) {
+  const avatar = document.getElementById("navbarAvatar");
+  avatar.src = profile.avatar || "/public/images/profile.jpg";
 }
 
 export function updateActiveLink(currentPath = window.location.pathname) {

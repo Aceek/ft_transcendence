@@ -102,6 +102,7 @@ function updateAvatarImage(file) {
   const reader = new FileReader();
   reader.onload = function (e) {
     document.getElementById("avatar").src = e.target.result;
+    if (navbarAvatar) navbarAvatar.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
