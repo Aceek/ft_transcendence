@@ -5,6 +5,14 @@ from rest_framework import status
 from .models import *
 from .serializers import *
 from .game_logic import *
+from os import environ
+from django.http import JsonResponse
+
+def get_ip_address(request):
+    ip_address = environ.get("IP_ADDRESS")
+    print('Retrieved IP Address:', ip_address)  # Add print statement
+    return JsonResponse({'ip_address': ip_address})
+
 
 class InitGameView(APIView):
     def post(self, request, *args, **kwargs):

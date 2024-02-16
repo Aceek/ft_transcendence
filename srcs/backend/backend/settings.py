@@ -28,7 +28,8 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ.get("DEBUG_VAR")
 
-ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
+# ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
+ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", "172.18.0.4", ""]
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
@@ -114,14 +115,21 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 ASGI_APPLICATION = 'pong.routing.application'
 
+
+IP_ADDRESS = environ.get("IP_ADDRESS")
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    f"http://{IP_ADDRESS}:3000",
 ]
 
 CORS_ALLOW_HEADERS = [
     'access-control-allow-origin',
     'content-type',
     'accept',
+    'authorization',  # Add support for authorization headers
+    'sec-websocket-extensions',  # Required for WebSocket handshake
+    'sec-websocket-version',  # Required for WebSocket handshake
 ]
 
 CORS_ALLOW_METHODS = [
@@ -131,6 +139,7 @@ CORS_ALLOW_METHODS = [
     'PATCH',
     'POST',
     'PUT',
+    'HEAD',  # Add support for HEAD method
 ]
 
 if DEBUG:
