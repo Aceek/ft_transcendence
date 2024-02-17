@@ -40,8 +40,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-    # command: tail -f /dev/null
+    # command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    # command : uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --reload
+    command: tail -f /dev/null
     volumes:
       - ./backend:/app
     env_file:
@@ -49,8 +50,14 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      db:
-        condition: service_healthy
+      - db
+      - redis
+    networks:
+      - transcendence
+
+  redis:
+    container_name: redis
+    image: redis:alpine
     networks:
       - transcendence
 

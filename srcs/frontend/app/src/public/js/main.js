@@ -6,6 +6,8 @@ import { displayProfile } from "./profile/profile.js";
 import { displayFriendsProfile } from "./profile/profileFriends.js";
 import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
+import { displayMatchmaking } from "./matchmaking/matchamking.js";
+import { displayRoom } from "./room/room.js";
 
 // export const api_url = "http://localhost:8000/api/";
 export const api_url = "https://localhost/api/";
@@ -34,18 +36,32 @@ export async function router(path, updateHistory = true) {
   }
 }
 
-async function handleAuthenticatedRoutes(path) {
+async function matchRegex(path) {
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
+  const roomMatch = path.match(/^\/room\/([a-zA-Z0-9_-]+)$/);
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
     console.log("Loading profile stats page with UID:", UID);
     await displayStats(UID);
+    return true;
   } else if (profileMatch) {
     const UID = profileMatch[1];
     console.log("Loading profile page with UID:", UID);
     await displayFriendsProfile(UID);
+    return true;
+  } else if (roomMatch) {
+    const roomID = roomMatch[1];
+    console.log("Loading room page with roomID:", roomID);
+    await displayRoom(roomID);
+    return true;
+  }
+  return false;
+}
+
+async function handleAuthenticatedRoutes(path) {
+  if (await matchRegex(path)) {
   } else {
     switch (path) {
       case "/home":
@@ -58,6 +74,10 @@ async function handleAuthenticatedRoutes(path) {
       case "/profile":
         console.log("Loading personal profile page");
         await displayProfile();
+        break;
+      case "/matchmaking":
+        console.log("Loading matchmaking page");
+        await displayMatchmaking();
         break;
       default:
         path = "/home";
