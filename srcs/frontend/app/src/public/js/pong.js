@@ -1,11 +1,7 @@
-//----------------------TODO-----------------------------------------
-//make the paddle mvt local
-//interpolation for ball movement
+//----------------------INITIALIZATION------------------------------------
 
-//----------------------INITIALIZATION-----------------------------------------
-console.log('Pong.js is executed!');
+    console.log('Pong.js is executed!');
 
-// document.addEventListener('DOMContentLoaded', function () {
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
     const hostname = window.location.hostname;
@@ -14,15 +10,12 @@ console.log('Pong.js is executed!');
 
 //----------------------WEBSOCKET-----------------------------------------
 
-    console.log('socket!');
-
     socket.onopen = function(event) {
         console.log('WebSocket connection opened:', event);
     };
 
     socket.onmessage = function(event) {
         console.log('WebSocket message received:', event.data);
-        // Rest of the code...
     };
 
     socket.onmessage = function (event) {
@@ -242,4 +235,3 @@ console.log('Pong.js is executed!');
 	
 		ctx.fillText(playerWinsText, playerWinsTextX, heightPosition + 70); // Adjust vertical spacing
 	}
-// });

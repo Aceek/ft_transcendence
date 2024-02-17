@@ -5,13 +5,12 @@ import time
 import math
 import socket
 
-from .game_config import *
-from .models import Player, Game, BallCoordinates
-
-from asyncio import sleep
+# from asyncio import sleep
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.shortcuts import get_object_or_404
+
+from .game_config import *
 
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -139,7 +138,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.update_paddle_position(self.left_paddle, left_paddle_state)
         self.update_paddle_position(self.right_paddle, right_paddle_state)
         
-        self.ball_launched = True
         await self.send_game_update(delta_time)
 
     def update_paddle_position(self, paddle_movement, paddle_state):
@@ -177,7 +175,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         self.check_collisions()
         self.check_scoring()
-
 
 #-------------------------------GAME MECHANICS-----------------------------------
 
@@ -240,9 +237,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     def check_game_over(self):
         # Check if any player has reached the maximum score (10)
-        if self.left_player_score == self.score_limit or self.right_player_score == self.score_limit:
+        if (self.left_player_score == self.score_limit or 
+            self.right_player_score == self.score_limit):
             # Set match_over to True
             self.match_over = True
+            self.ball_launched = False
         else:
             # Continue the game
             self.reset_ball()
@@ -255,12 +254,3 @@ class GameConsumer(AsyncWebsocketConsumer):
             'speedX': random.choice([-self.ball_speed_range, self.ball_speed_range]),
             'speedY': random.choice([-self.ball_speed_range, self.ball_speed_range]),
         }
-
-        # Stop the ball temporarily
-        self.ball_launched = False
-
-        # Wait for a moment before launching the ball again
-        sleep(10)
-
-        # Launch the ball
-        self.ball_launched = True

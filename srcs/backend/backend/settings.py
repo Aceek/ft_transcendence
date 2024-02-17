@@ -29,7 +29,7 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 DEBUG = environ.get("DEBUG_VAR")
 
 # ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
-ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", "172.18.0.4", ""]
+ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
@@ -115,59 +115,6 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 ASGI_APPLICATION = 'pong.routing.application'
 
-# #maybe CORS not needed
-# IP_ADDRESS = environ.get("IP_ADDRESS")
-
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     f"http://{IP_ADDRESS}:3000",
-# ]
-
-# CORS_ALLOW_HEADERS = [
-#     'access-control-allow-origin',
-#     'content-type',
-#     'accept',
-#     'authorization',  # Add support for authorization headers
-#     'sec-websocket-extensions',  # Required for WebSocket handshake
-#     'sec-websocket-version',  # Required for WebSocket handshake
-# ]
-
-# CORS_ALLOW_METHODS = [
-#     'DELETE',
-#     'GET',
-#     'OPTIONS',
-#     'PATCH',
-#     'POST',
-#     'PUT',
-#     'HEAD',  # Add support for HEAD method
-# ]
-
-# if DEBUG:
-#     INTERNAL_IPS = [
-#         # ...
-#         '127.0.0.1',
-#         # ...
-#     ]
-#     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
-#     INSTALLED_APPS += ['debug_toolbar']
-#     DEBUG_TOOLBAR_CONFIG = {
-#         'SHOW_TOOLBAR_CALLBACK': lambda _request: DEBUG
-#     }
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": environ.get("POSTGRES_DB"),
-#         "USER": environ.get("POSTGRES_USER"),
-#         "PASSWORD": environ.get("POSTGRES_PASSWORD"),
-#         "HOST": environ.get("POSTGRES_HOST"),
-#         "PORT": environ.get("POSTGRES_PORT"),
-#     }
-# }
-
 # dev database
 DATABASES = {
     "default": {
@@ -175,7 +122,6 @@ DATABASES = {
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

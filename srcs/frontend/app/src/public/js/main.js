@@ -17,7 +17,7 @@ function getLoginPage() {
 }
 
 function getPongGamePage() {
-    fetch('public/html/pong_game.html')
+    fetch('public/html/pong.html')
         .then(response => response.text())
         .then(template => {
             document.getElementById('main').innerHTML = template;
