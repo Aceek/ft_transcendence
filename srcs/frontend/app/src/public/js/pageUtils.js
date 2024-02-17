@@ -113,3 +113,19 @@ export function changeUrlHistory(pathname) {
   url.search = "";
   history.pushState({}, "", url);
 }
+
+export function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${url}"]`);
+    if (existingScript) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.body.appendChild(script);
+  });
+}

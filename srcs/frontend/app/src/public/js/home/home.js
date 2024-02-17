@@ -1,4 +1,4 @@
-import { changeUrlHistory, addEventListenerById, loadProfileCss } from "../pageUtils.js";
+import { changeUrlHistory, addEventListenerById, loadProfileCss, loadScript } from "../pageUtils.js";
 import { router } from "../main.js";
 
 
@@ -18,4 +18,5 @@ export function getHomePage() {
       addEventListeners();
       changeUrlHistory("/home");
     });
+
 }

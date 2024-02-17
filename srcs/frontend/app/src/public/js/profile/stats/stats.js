@@ -2,6 +2,7 @@ import {
   fetchTemplate,
   loadProfileCss,
   requestDataWithToken,
+  loadScript,
 } from "../../pageUtils.js";
 import { api_url, router } from "../../main.js";
 import { displayProfile } from "../profile.js";
@@ -221,18 +222,4 @@ function displayEloChart(data) {
   });
 }
 
-function loadScript(url) {
-  return new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(`script[src="${url}"]`);
-    if (existingScript) {
-      resolve();
-      return;
-    }
 
-    const script = document.createElement("script");
-    script.src = url;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.body.appendChild(script);
-  });
-}
