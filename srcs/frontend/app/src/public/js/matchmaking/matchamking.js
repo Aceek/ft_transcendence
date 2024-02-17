@@ -23,19 +23,19 @@ async function addEventListenerForMatchmakingButton() {
 }
 
 async function initiateMatchmaking() {
-  // const roomName = prompt("Enter a room name:");
-  const roomName = "test";
-  const ws = new WebSocket(
-    `wss://${window.location.host}/ws/matchmaking/${roomName}/`
-
-  );
+  const ws = new WebSocket(`wss://${window.location.host}/ws/matchmaking/`);
   ws.onopen = () => {
     console.log("WebSocket connected");
-    ws.send(JSON.stringify({'message': 'Hello from client'}));
+    ws.send(JSON.stringify({ message: "Hello from client" }));
   };
 
-  ws.onmessage = (event) => {
-    console.log("Received message from server:", event.data);
+  ws.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    if (data.message === "Match found") {
+      if (data.room_url) {
+        router(data.room_url);
+      }
+    }
   };
 
   ws.onclose = () => {

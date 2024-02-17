@@ -29,12 +29,10 @@ class JwtAuthMiddlewareInstance:
     async def __call__(self, receive, send):
         headers = dict(self.scope["headers"])
         cookies = headers.get(b"cookie", b"").decode("utf-8")
-        for cookie in cookies.split('; '):
-            if cookie.startswith('access_token='):
-                raw_token = cookie.split('=')[1]
+        for cookie in cookies.split("; "):
+            if cookie.startswith("access_token="):
+                raw_token = cookie.split("=")[1]
                 break
-
-        print(raw_token)
 
         if raw_token:
             user = await get_user_from_jwt(raw_token)
