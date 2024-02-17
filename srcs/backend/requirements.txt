@@ -27,3 +27,6 @@ sqlparse==0.4.4
 typing_extensions==4.9.0
 uritemplate==4.1.1
 urllib3==2.1.0
+python-magic==0.4.27
+requests==2.31.0
+channels==3.0.4

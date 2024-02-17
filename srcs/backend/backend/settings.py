@@ -29,6 +29,7 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ.get("DEBUG_VAR")
 
+# ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
 ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
 
 # DRF Spectacular settings
@@ -61,32 +62,35 @@ MEDIA_URL = "https://localhost/media/"
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
     "CustomUser",
     "authentication",
     "email_verification",
     "stats",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
     "drf_spectacular",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    'corsheaders',
+	"pong",
+    "corsheaders",
+	"channels",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -109,20 +113,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": environ.get("POSTGRES_DB"),
-#         "USER": environ.get("POSTGRES_USER"),
-#         "PASSWORD": environ.get("POSTGRES_PASSWORD"),
-#         "HOST": environ.get("POSTGRES_HOST"),
-#         "PORT": environ.get("POSTGRES_PORT"),
-#     }
-# }
+ASGI_APPLICATION = 'pong.routing.application'
 
 # dev database
 DATABASES = {
@@ -131,7 +122,6 @@ DATABASES = {
         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

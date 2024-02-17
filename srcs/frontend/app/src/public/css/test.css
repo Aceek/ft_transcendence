@@ -1,34 +1,53 @@
 .btn {
-  width: 100%; }
-  .btn .btn__rounded {
-    border-radius: 50px; }
-    .btn .btn__rounded .btn__rounded--small {
-      font-size: 12px; }
-    .btn .btn__rounded .btn__rounded--medium {
-      font-size: 14px; }
-    .btn .btn__rounded .btn__rounded--large {
-      font-size: 16px; }
-    .btn .btn__rounded .btn__rounded--red {
-      background-color: red; }
-    .btn .btn__rounded .btn__rounded--blue {
-      background-color: blue; }
-    .btn .btn__rounded .btn__rounded--green {
-      background-color: green; }
-    .btn .btn__rounded .btn__rounded--yellow {
-      background-color: yellow; }
-  .btn .btn__square {
-    border-radius: 0; }
-    .btn .btn__square .btn__square--small {
-      font-size: 12px; }
-    .btn .btn__square .btn__square--medium {
-      font-size: 14px; }
-    .btn .btn__square .btn__square--large {
-      font-size: 16px; }
-    .btn .btn__square .btn__square--red {
-      background-color: red; }
-    .btn .btn__square .btn__square--blue {
-      background-color: blue; }
-    .btn .btn__square .btn__square--green {
-      background-color: green; }
-    .btn .btn__square .btn__square--yellow {
-      background-color: yellow; }
+  width: 100%;
+}
+.btn .btn__rounded {
+  border-radius: 50px;
+}
+.btn .btn__rounded .btn__rounded--small {
+  font-size: 12px;
+}
+.btn .btn__rounded .btn__rounded--medium {
+  font-size: 14px;
+}
+.btn .btn__rounded .btn__rounded--large {
+  font-size: 16px;
+}
+.btn .btn__rounded .btn__rounded--red {
+  background-color: red;
+}
+.btn .btn__rounded .btn__rounded--blue {
+  background-color: blue;
+}
+.btn .btn__rounded .btn__rounded--green {
+  background-color: green;
+}
+.btn .btn__rounded .btn__rounded--yellow {
+  background-color: yellow;
+}
+.btn .btn__square {
+  border-radius: 0;
+}
+.btn .btn__square .btn__square--small {
+  font-size: 12px;
+}
+.btn .btn__square .btn__square--medium {
+  font-size: 14px;
+}
+.btn .btn__square .btn__square--large {
+  font-size: 16px;
+}
+.btn .btn__square .btn__square--red {
+  background-color: red;
+}
+.btn .btn__square .btn__square--blue {
+  background-color: blue;
+}
+.btn .btn__square .btn__square--green {
+  background-color: green;
+}
+.btn .btn__square .btn__square--yellow {
+  background-color: yellow;
+}
+
+/*# sourceMappingURL=test.css.map */
