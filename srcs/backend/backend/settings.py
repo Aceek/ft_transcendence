@@ -29,8 +29,16 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = environ.get("DEBUG_VAR")
 
+HOST = os.getenv("HOST")
+
+PORT = os.getenv("PORT")
+
 # ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
 ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
+
+if HOST:
+    # Add the host to ALLOWED_HOSTS
+    ALLOWED_HOSTS.append(HOST)
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
@@ -218,6 +226,14 @@ CORS_ALLOWED_ORIGINS = [
     "https://localhost:443",
     "https://localhost",
 ]
+
+if HOST:
+    url_with_host = f"https://{HOST}"
+    
+    if PORT:
+        url_with_host += f":{PORT}"
+    
+    CORS_ALLOWED_ORIGINS.append(url_with_host)
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
