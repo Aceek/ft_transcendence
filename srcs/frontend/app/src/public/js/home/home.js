@@ -1,35 +1,27 @@
-import { changeUrlHistory, addEventListenerById, loadProfileCss, loadScript } from "../pageUtils.js";
+import {
+  changeUrlHistory,
+  addEventListenerById,
+  loadProfileCss,
+  fetchTemplate,
+} from "../pageUtils.js";
 import { router } from "../main.js";
 
-
 function addEventListeners() {
-    addEventListenerById("play-button", "click", function (event) {
-        event.preventDefault();
-        // router("/play");
-        getPongGamePage();
-    });
+  addEventListenerById("play-button", "click", function (event) {
+    event.preventDefault();
+    router("/pong");
+  });
 }
 
-export function getHomePage() {
-  fetch("/public/html/home.html")
-    .then((response) => response.text())
-    .then((template) => {
-      document.getElementById("main").innerHTML = template;
-      loadProfileCss("/public/css/home.css")
-      addEventListeners();
-      changeUrlHistory("/home");
-    });
-
-}
-
-function getPongGamePage() {
-  fetch('public/html/pong.html')
-      .then(response => response.text())
-      .then(template => {
-          document.getElementById('main').innerHTML = template;
-          loadProfileCss("/public/css/pong.css")
-          const script = document.createElement("script");
-          script.src = "public/js/pong/pong.js";
-          document.head.appendChild(script);
-      });
+export async function getHomePage() {
+  try {
+    const homeHtml = await fetchTemplate("/public/html/home.html");
+    document.getElementById("main").innerHTML = homeHtml;
+    loadProfileCss("/public/css/home.css");
+    addEventListeners();
+    changeUrlHistory("/home");
+  } catch (error) {
+    console.error("Error fetching home.html:", error);
+    router("/home");
+  }
 }

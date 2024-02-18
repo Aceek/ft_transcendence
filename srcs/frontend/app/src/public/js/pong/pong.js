@@ -1,11 +1,12 @@
-//----------------------INITIALIZATION------------------------------------
+// ----------------------INITIALIZATION------------------------------------
 
     console.log('Pong.js is executed!');
 
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
     const hostname = window.location.hostname;
-    const socketUrl = 'ws://' + hostname + ':8000/ws/pong/';
+    const roomID = window.location.pathname.split('/').pop();
+    const socketUrl = 'wss://' + hostname + '/ws/pong/' + roomID + '/';
     var socket = new WebSocket(socketUrl);
 
 //----------------------WEBSOCKET-----------------------------------------

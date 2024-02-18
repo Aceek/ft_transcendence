@@ -2,7 +2,6 @@ import django
 
 django.setup()
 from channels.db import database_sync_to_async
-from urllib.parse import parse_qs
 from authentication.authentication import CookieJWTAuthentication
 
 
