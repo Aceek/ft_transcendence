@@ -10,7 +10,11 @@ import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
 
 // export const api_url = "http://localhost:8000/api/";
-export const api_url = "https://localhost/api/";
+// export const api_url = "https://localhost/api/";
+// export const api_url = "https://localhost:9443/api/";
+// export const api_url = "https://nginx:443/";
+let portString = window.location.port ? ":" + window.location.port : "";
+export const api_url = "https://" + window.location.hostname + portString + "/api/";
 
 export const credentialsOption = "include";
 window.addEventListener("popstate", (event) => {

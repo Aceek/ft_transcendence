@@ -5,8 +5,17 @@
     var canvas = document.getElementById('pongCanvas');
     var ctx = canvas.getContext('2d');
     const hostname = window.location.hostname;
+    const port = window.location.port;
     const roomID = window.location.pathname.split('/').pop();
-    const socketUrl = 'wss://' + hostname + '/ws/pong/' + roomID + '/';
+    let socketUrl;
+    
+    // Check if port is available
+    if (port) {
+        socketUrl = 'wss://' + hostname + ':' + port + '/ws/pong/' + roomID + '/';
+    } else {
+        socketUrl = 'wss://' + hostname + '/ws/pong/' + roomID + '/';
+    }
+    
     var socket = new WebSocket(socketUrl);
 
 //----------------------WEBSOCKET-----------------------------------------

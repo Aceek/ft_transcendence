@@ -30,7 +30,7 @@ SECRET_KEY = environ.get("DJANGO_SECRET")
 DEBUG = environ.get("DEBUG_VAR")
 
 # ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
-ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", ""]
+ALLOWED_HOSTS = ["api.ft-transcendence.fr", "localhost", "bess-f4r1s14", ""]
 
 # DRF Spectacular settings
 SPECTACULAR_SETTINGS = {
@@ -216,7 +216,10 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://localhost:443",
+    "https://localhost:9443",
+    "https://bess-f4r1s14:9443",
     "https://localhost",
+    # "https://nginx:443",
 ]
 
 SIMPLE_JWT = {
