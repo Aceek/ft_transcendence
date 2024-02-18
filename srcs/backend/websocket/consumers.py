@@ -45,3 +45,5 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         if self in self.queue:
             self.queue.remove(self)
+
+    
