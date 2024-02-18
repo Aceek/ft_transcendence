@@ -32,9 +32,12 @@ async function initiateMatchmaking() {
   ws.onmessage = function (event) {
     const data = JSON.parse(event.data);
     if (data.message === "Match found") {
+      ws.close();
       if (data.room_url) {
         router(data.room_url);
       }
+    } else {
+      console.log("Message from server: ", data.message);
     }
   };
 

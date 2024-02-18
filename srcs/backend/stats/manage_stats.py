@@ -5,7 +5,7 @@ from stats.models import MatchHistory, EloHistory
 class manageStats:
     def __init__(self, user1: CustomUser, user2: CustomUser, winner: CustomUser):
         """_summary_
-
+        Initialise un objet pour gérer les statistiques des utilisateurs.
         Args:
             user1 (CustomUser): user1 of the match.
             user2 (CustomUser): user2 of the match.
@@ -64,7 +64,7 @@ class manageStats:
 
     def addLose(self):
         """
-        Ajoute une défaite à l'utilisateur.
+        add a lose to the user.
         """
         self.looser.stats.lose += 1
         self.looser.stats.lose_streak += 1
