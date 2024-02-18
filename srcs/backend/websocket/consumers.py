@@ -23,6 +23,14 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             "redis://redis:6379", db=0
         )
 
+        # Vérifie si le joueur est déjà en file d'attente
+        in_queue = await self.redis.get(f"user_{self.user_id}_ws_channel")
+        
+        if in_queue:
+            await self.send(text_data=json.dumps({"message": "You are already in queue"}))
+            await self.close()
+            return
+
         # Stocke le channel name avec l'ID utilisateur dans Redis pour pouvoir envoyer des messages plus tard
         await self.redis.set(f"user_{self.user_id}_ws_channel", self.channel_name)
 
@@ -41,8 +49,11 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             room_id = str(uuid.uuid4())
             room_url = f"/pong/{room_id}/"
 
+            print(f"Match found between {player1_id} and {player2_id} in room {room_url}")
+
             # Envoyer l'URL de la salle aux deux joueurs
             await self.notify_players_about_match([player1_id, player2_id], room_url)
+            await self.redis.delete(f"user_{self.user_id}_ws_channel")
         else:
             await self.send(text_data=json.dumps({"message": "You are in queue"}))
 
@@ -75,8 +86,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                     },
                 )
 
-    async def disconnect(self):
-        await self.redis.delete(f"user_{self.user_id}_ws_channel")
+    async def disconnect(self, close_code):
         await self.redis.close()
 
     async def send_message(self, event):
