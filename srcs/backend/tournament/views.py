@@ -74,6 +74,11 @@ class TournamentJoinView(APIView):
                 {"message": "Can't leave tournament while it's active"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if tournament.is_finished:
+            return Response(
+                {"message": "Can't leave tournament while it's finished"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Retirer l'utilisateur du tournoi
         tournament.user.remove(user)
@@ -108,6 +113,11 @@ class TournamentLaunchView(APIView):
         if tournament.is_active:
             return Response(
                 {"message": "Tournament is already active"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if tournament.is_finished:
+            return Response(
+                {"message": "Tournament is already finished"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         tournament.is_active = True
