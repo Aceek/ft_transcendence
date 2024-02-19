@@ -33,15 +33,21 @@ socket.onmessage = function (event) {
   var data = JSON.parse(event.data);
   // console.log("WebSocket message received:", data);
 
-  if (data.type === "game.init") {
-    initializeGame(data);
-    console.log(data.localIP);
-  } else if (data.type === "game.update") {
-    handleGameUpdate(data);
-  } else if (data.type === "start_game") {
-    socket.send(
-      JSON.stringify({ type: "start_game", message: "ready_to_play" })
-    );
+  switch (data.type) {
+    case "game.init":
+      initializeGame(data);
+      break;
+    // case "game.update":
+    //   handleGameUpdate(data);
+    //   break;
+    case "game.state":
+      handleGameState(data.data); // Handle the new "game.state" message type
+      break;
+    case "start_game":
+      socket.send(JSON.stringify({ type: "start_game", message: "ready_to_play" }));
+      break;
+    default:
+      console.log("Unknown message type:", data.type);
   }
 };
 
@@ -138,18 +144,39 @@ function initializeGame(data) {
 
 //----------------------GAME UPDATE-----------------------------------------
 
-function handleGameUpdate(data) {
-  // Update paddle positions based on server information
-  game.players.left.paddleY = data.leftPaddleY;
-  game.players.right.paddleY = data.rightPaddleY;
+// function handleGameUpdate(data) {
+//   // Update paddle positions based on server information
+//   game.players.left.paddleY = data.leftPaddleY;
+//   game.players.right.paddleY = data.rightPaddleY;
 
-  // Update ball position based on server information
-  game.ball.x = data.ball.x;
-  game.ball.y = data.ball.y;
+//   // Update ball position based on server information
+//   game.ball.x = data.ball.x;
+//   game.ball.y = data.ball.y;
 
-  // Update scores
-  game.players.left.score = data.leftPlayerScore;
-  game.players.right.score = data.rightPlayerScore;
+//   // Update scores
+//   game.players.left.score = data.leftPlayerScore;
+//   game.players.right.score = data.rightPlayerScore;
+// }
+
+function handleGameState(gameState) {
+  // console.log("Handling game state:", gameState);
+  
+  // Deserialize the 'ball' field if it was serialized as a string
+  if (typeof gameState.ball === "string") {
+    gameState.ball = JSON.parse(gameState.ball);
+  }
+
+  // Update the game state with the received data
+  game.players.left.score = parseInt(gameState.lpS, 10);
+  game.players.left.paddleY = parseInt(gameState.lpY, 10);
+  game.players.right.score = parseInt(gameState.rpS, 10);
+  game.players.right.paddleY = parseInt(gameState.rpY, 10);
+  game.ball.x = gameState.ball.x;
+  game.ball.y = gameState.ball.y;
+  game.matchOver = gameState.mO;
+
+  // Log the updated game state for debugging
+  // console.log("Updated game state:", game);
 }
 
 //----------------------GAME LOOP-----------------------------------------

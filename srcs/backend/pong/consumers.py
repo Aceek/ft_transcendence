@@ -150,6 +150,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def send_game_update(self, delta_time=0.0):
         await self.handle_game_update(delta_time)
+        await self.send_game_state()
 
     # -------------------------------PADLLE MOVEMENT-----------------------------
 
@@ -196,26 +197,57 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
-        # Preparing game update data for sending to clients
-        game_update_data = {
-            "type": "game.update",
-            "leftPaddleY": self.left_paddle["y"],
-            "rightPaddleY": self.right_paddle["y"],
-            "ball": self.ball,
-            "leftPlayerScore": self.left_player_score,
-            "rightPlayerScore": self.right_player_score,
-            "matchOver": self.match_over,
+        # # Preparing game update data for sending to clients
+        # game_update_data = {
+        #     "type": "game.update",
+        #     "leftPaddleY": self.left_paddle["y"],
+        #     "rightPaddleY": self.right_paddle["y"],
+        #     "ball": self.ball,
+        #     "leftPlayerScore": self.left_player_score,
+        #     "rightPlayerScore": self.right_player_score,
+        #     "matchOver": self.match_over,
+        # }
+
+        # # Sending the game update data to all clients in the room
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "game_update",
+        #         "message": game_update_data,
+        #     },
+        # )
+
+    async def send_game_state(self):
+        game_state_key = f"game_state:{self.room_name}"
+        # Fetching all fields from the game state hash
+        game_state_data = await self.redis.hgetall(game_state_key)
+        
+        # If you've stored some fields as JSON, remember to deserialize them
+        if 'ball' in game_state_data:
+            game_state_data['ball'] = json.loads(game_state_data['ball'])
+
+        # Convert Redis responses, which are bytes, to a proper format
+        game_state_data = {k: v for k, v in game_state_data.items()}
+        
+        # Convert matchOver back to boolean if stored as int
+        if 'mO' in game_state_data:
+            game_state_data['mO'] = bool(int(game_state_data['mO']))
+        
+        final_message = {
+            "type": "broadcast_message",  # Use the custom handler type you've defined for broadcasting
+            "message": {
+                "type": "game.state",
+                "data": game_state_data
+            }
         }
 
-        # Sending the game update data to all clients in the room
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "game_update",
-                "message": game_update_data,
-            },
-        )
+        # Using channel_layer to send the game state to all clients in the room
+        await self.channel_layer.group_send(self.room_group_name, final_message)
 
+    # You need to add a handler for broadcast_message events
+    async def broadcast_message(self, event):
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(event["message"]))
 
     def update_ball_position(self, delta_time):
         if not self.ball_launched or self.match_over:
