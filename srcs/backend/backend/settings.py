@@ -80,6 +80,7 @@ INSTALLED_APPS = [
 	"pong",
     "corsheaders",
     "websocket",
+    "tournament",
 ]
 
 ASGI_APPLICATION = "backend.asgi.application"

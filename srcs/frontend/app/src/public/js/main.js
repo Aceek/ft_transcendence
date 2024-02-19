@@ -8,6 +8,7 @@ import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
 import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
+import { displayPlayPage } from "./play/play.js";
 
 // export const api_url = "http://localhost:8000/api/";
 export const api_url = "https://localhost/api/";
@@ -78,6 +79,10 @@ async function handleAuthenticatedRoutes(path) {
       case "/matchmaking":
         console.log("Loading matchmaking page");
         await displayMatchmaking();
+        break;
+      case "/play":
+        console.log("Loading play page");
+        await displayPlayPage();
         break;
       default:
         path = "/home";

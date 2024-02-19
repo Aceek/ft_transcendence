@@ -1,0 +1,49 @@
+<div id="mainContainerProfile" class="container">
+  <div class="main-body">
+    <div id="create-tournament" class="row gutters-sm">
+      <div id="tournament-div" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Organiser un tournoi</h3>
+            <form id="create-tournament-form">
+              <!-- Nom du tournoi -->
+              <div class="form-group">
+                <label for="tournament-name"></label>
+                <input type="text" class="form-control" id="tournament-name" name="tournamentName" required
+                  placeholder="Entrez le nom du tournoi">
+              </div>
+
+              <!-- Sélection du nombre de joueurs -->
+              <div class="form-group">
+                <label for="number-of-players"></label>
+                <select class="form-control" id="number-of-players" name="numberOfPlayers" required>
+                  <option value="">Sélectionnez le nombre de joueurs</option>
+                  <option value="3">3 joueurs</option>
+                  <option value="4">4 joueurs</option>
+                  <option value="5">5 joueurs</option>
+                  <option value="6">6 joueurs</option>
+                  <option value="7">7 joueurs</option>
+                  <option value="8">8 joueurs</option>
+                </select>
+              </div>
+              <hr>
+
+              <!-- Bouton de soumission -->
+              <button type="submit-create-tournament" class="btn btn-primary">Créer le tournoi</button>
+            </form>
+            <ul class="list-group list-group-flush">
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Tournoi en cours</h3>
+            <ul class="list-group list-group-flush">
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
