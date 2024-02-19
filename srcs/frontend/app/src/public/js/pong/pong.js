@@ -123,8 +123,8 @@ var game = {
       score: 0,
     },
   },
-  matchOver: false,
-  localIP: 0,
+  gameStatus: null,
+  userID: null,
 };
 
 function initializeGame(data) {
@@ -138,8 +138,7 @@ function initializeGame(data) {
   game.ball.y = data.initialBallPosition.y;
   game.players.left.score = data.initialLeftPlayerScore;
   game.players.right.score = data.initialRightPlayerScore;
-  game.matchOver = data.matchOver;
-  game.localIP = data.localIP;
+  game.gameStatus = data.gameStatus;
 }
 
 //----------------------GAME UPDATE-----------------------------------------
@@ -173,7 +172,8 @@ function handleGameState(gameState) {
   game.players.right.paddleY = parseInt(gameState.rpY, 10);
   game.ball.x = gameState.ball.x;
   game.ball.y = gameState.ball.y;
-  game.matchOver = gameState.mO;
+  game.gameStatus = gameState.gS;
+  game.userID = gameState.user_id;
 
   // Log the updated game state for debugging
   // console.log("Updated game state:", game);
@@ -183,6 +183,9 @@ function handleGameState(gameState) {
 
 // Main game loop
 function mainLoop() {
+  // Log the current game state for debugging
+  console.log("Current game state:", JSON.stringify(game, null, 2));
+
   draw();
   requestAnimationFrame(mainLoop);
 }
@@ -210,7 +213,7 @@ function draw() {
   drawScores(); // Pass the data parameter to drawScores()
 
   // Check if the match is over and display a message
-  if (game.matchOver) {
+  if (game.gameStatus == "over") {
     drawGameOverMessage();
   }
 }
