@@ -31,7 +31,7 @@ socket.onmessage = function (event) {
 
 socket.onmessage = function (event) {
   var data = JSON.parse(event.data);
-  console.log("WebSocket message received:", data);
+  // console.log("WebSocket message received:", data);
 
   if (data.type === "game.init") {
     initializeGame(data);

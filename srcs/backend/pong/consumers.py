@@ -4,6 +4,7 @@ import asyncio
 import time
 import math
 import socket
+import aioredis
 
 # from asyncio import sleep
 from asgiref.sync import sync_to_async
@@ -48,19 +49,17 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # -------------------------------WEBSOCKET CONNECTION-------------------------
 
-    def get_local_ip(self):
-        # Create a socket object
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            # Connect to an external server
-            s.connect(("8.8.8.8", 80))
-            # Get the local IP address
-            local_ip = s.getsockname()[0]
-        finally:
-            s.close()
-        return local_ip
-
     async def connect(self):
+        # Updated aioredis connection for version 2.0+
+        try:
+            # For aioredis v2.0+, use aioredis.from_url to connect
+            self.redis = await aioredis.from_url("redis://redis:6379", db=0, encoding="utf-8", decode_responses=True)
+        except Exception as e:
+            print(f"Failed to connect to Redis: {e}")
+            # Depending on your error handling, you might choose to close the connection
+            # await self.close()
+
+
         # create a room based on the uid of the game
         self.room_name = self.scope["url_route"]["kwargs"]["uid"]
         self.room_group_name = f"pong_room_{self.room_name}"
@@ -68,8 +67,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
-
-        local_ip = self.get_local_ip()
 
         game_init_data = {
             "type": "game.init",
@@ -82,7 +79,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             "initialLeftPlayerScore": self.left_player_score,
             "initialRightPlayerScore": self.right_player_score,
             "matchOver": self.match_over,
-            "localIP": local_ip,
         }
 
         # Send the game initialization data to the frontend
@@ -183,6 +179,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_game_update(self, delta_time, data=None):
         self.update_ball_position(delta_time)
+        
+        # Serializing the ball object as JSON since it's a nested structure
+        ball_json = json.dumps(self.ball)
+        
+        # Creating or updating multiple fields in the hash
+        await self.redis.hset(
+            f"game_state:{self.room_name}",
+            mapping={
+                "lpY": self.left_paddle["y"],
+                "rpY": self.right_paddle["y"],
+                "ball": json.dumps(self.ball),
+                "lpS": self.left_player_score,
+                "rpS": self.right_player_score,
+                "mO": int(self.match_over)  # Storing boolean as int for Redis compatibility
+            }
+        )
+
+        # Preparing game update data for sending to clients
         game_update_data = {
             "type": "game.update",
             "leftPaddleY": self.left_paddle["y"],
@@ -193,7 +207,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "matchOver": self.match_over,
         }
 
-        # Envoyez les données de mise à jour à tous les clients de la room
+        # Sending the game update data to all clients in the room
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -201,6 +215,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "message": game_update_data,
             },
         )
+
 
     def update_ball_position(self, delta_time):
         if not self.ball_launched or self.match_over:
