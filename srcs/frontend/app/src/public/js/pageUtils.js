@@ -68,6 +68,14 @@ export async function getDataWithToken(url = "") {
   return response;
 }
 
+export async function deleteDataWithToken(url = "") {
+  const response = await fetch(url, {
+    method: "DELETE",
+    credentials: credentialsOption,
+  });
+  return response;
+}
+
 export function fieldsMatch(
   fieldId1,
   fieldId2,

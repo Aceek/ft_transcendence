@@ -12,7 +12,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from .manageTournament import ManageTournament
 
-
 # Create your views here.
 
 
@@ -50,9 +49,19 @@ class TournamentJoinView(APIView):
                 {"message": "Tournament is already active"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        
+        if user.tournament.filter(is_finished=False).count() >= 5:
+            return Response(
+                {"message": "User is already in 5 active tournaments"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Ajouter l'utilisateur au tournoi
         tournament.user.add(user)
+        tournament.save()
+        # modifier le nombre de places restantes
+        tournament.place_left = tournament.max_participants - tournament.user.count()
+        tournament.save()
         return Response(
             {"message": "User joined the tournament"}, status=status.HTTP_200_OK
         )
@@ -82,12 +91,14 @@ class TournamentJoinView(APIView):
 
         # Retirer l'utilisateur du tournoi
         tournament.user.remove(user)
+        tournament.save()
+        # modifier le nombre de places restantes
+        tournament.place_left = tournament.max_participants - tournament.user.count()
+        tournament.save()
         return Response(
             {"message": "User left the tournament"}, status=status.HTTP_200_OK
         )
 
-
-# view to launch the tournament
 
 
 class TournamentLaunchView(APIView):
@@ -136,3 +147,17 @@ class TournamentDetailView(generics.RetrieveAPIView):
     queryset = Tournament.objects.all()
     lookup_field = "uid"
     lookup_url_kwarg = "uid"
+
+
+# get tournament by authenticated user
+class UserTournamentView(generics.ListAPIView):
+    """
+    return all tournament that is not finished for the authenticated user
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = TournamentSerializer
+
+    def get_queryset(self):
+        # return Tournament.objects.filter(user=self.request.user).order_by("-created_at")
+        return Tournament.objects.filter(user=self.request.user, is_finished=False).order_by("-created_at")
+    

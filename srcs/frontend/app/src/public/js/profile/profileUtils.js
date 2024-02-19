@@ -82,7 +82,7 @@ export async function injectFriendList(page, UID = null) {
     listItem.appendChild(removeButton);
     friendListContainer.appendChild(listItem);
   });
-  attachLinkListener();
+  await attachLinkListener();
   addPrevNextButtons(friendList, friendListContainer, friendContext);
 }
 
@@ -112,7 +112,7 @@ export async function injectHistoryList(page, UID = null) {
   addPrevNextButtons(historyList, historyListContainer, historyContext, UID);
 }
 
-function addPrevNextButtons(dataList, container, context, UID = null) {
+export function addPrevNextButtons(dataList, container, context, UID = null) {
   const createButton = (text, onClickFunction) => {
     const button = document.createElement("button");
     button.classList.add("button-container");
@@ -163,19 +163,19 @@ export function prepareUpdateData(profile, fields) {
 
 export function printConfirmationMessage(
   texte = "Veuillez vérifier votre nouvelle adresse email pour confirmer le changement.",
-  fieldId = "emailDiv"
+  fieldId = "emailDiv",
+  color = "green"
 ) {
   const messageElement = document.createElement("div");
   messageElement.id = "ConfirmationMessage" + fieldId;
   messageElement.innerText = texte;
-  messageElement.style.color = "green";
+  messageElement.style.color = color;
   messageElement.style.marginLeft = "10px";
   const emailInput = document.getElementById(fieldId);
-  // emailInput.parentNode.insertBefore(messageElement, emailInput.nextSibling);
   emailInput.insertAdjacentElement("afterend", messageElement);
 
 
   setTimeout(() => {
     messageElement.remove();
-  }, 5000);
+  }, 2000);
 }

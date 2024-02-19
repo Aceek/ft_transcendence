@@ -18,6 +18,7 @@ class Tournament(models.Model):
         editable=False,
     )
     round = models.IntegerField(default=1, editable=False)
+    place_left = models.IntegerField(default=8, editable=False)
     name = models.CharField(max_length=20)
     max_participants = models.IntegerField()
     is_active = models.BooleanField(default=False)

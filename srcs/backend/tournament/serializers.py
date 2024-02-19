@@ -12,7 +12,8 @@ class MatchesSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if (
             request
-            and instance.is_active and instance.is_finished == False
+            and instance.is_active
+            and instance.is_finished == False
             and (instance.user1 == request.user or instance.user2 == request.user)
         ):
             representation["room_url"] = f"/room/tournament/{instance.uid}/"
@@ -33,6 +34,7 @@ class TournamentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("max_participants: should be more than 1")
         if validated_data["max_participants"] > 8:
             raise serializers.ValidationError("max_participants: should be less than 9")
+        validated_data["place_left"] = validated_data["max_participants"]
         return super().create(validated_data)
 
     def to_representation(self, instance):
@@ -43,4 +45,10 @@ class TournamentSerializer(serializers.ModelSerializer):
             representation["matches"] = MatchesSerializer(
                 matches, many=True, context=self.context
             ).data
+        # if user is in the tournament
+        request = self.context.get("request")
+        if request and instance.user.filter(id=request.user.id).exists():
+            representation["is_joined"] = True
+        else:
+            representation["is_joined"] = False
         return representation

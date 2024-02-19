@@ -4,6 +4,7 @@ from .views import (
     TournamentJoinView,
     TournamentLaunchView,
     TournamentDetailView,
+    UserTournamentView,
 )
 
 urlpatterns = [
@@ -23,5 +24,10 @@ urlpatterns = [
         "tournaments/<uuid:uid>/retrieve",
         TournamentDetailView.as_view(),
         name="tournaments-retrieve",
+    ),
+    path(
+        "tournaments/me",
+        UserTournamentView.as_view(),
+        name="tournaments-user",
     ),
 ]

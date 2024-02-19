@@ -1,5 +1,15 @@
 <div id="mainContainerProfile" class="container">
   <div class="main-body">
+    <div id="tournament_list_div" class="col-md-12 col-lg-12">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h3>Tournoi en cours</h3>
+          <ul id="tournament_list" class="list-group list-group-flush">
+          </ul>
+        </div>
+      </div>
+    </div>
+    <hr>
     <div id="create-tournament" class="row gutters-sm">
       <div id="tournament-div" class="col-md-12 col-lg-6">
         <div class="card mb-3">
@@ -29,21 +39,22 @@
               <hr>
 
               <!-- Bouton de soumission -->
-              <button type="submit-create-tournament" class="btn btn-primary">Créer le tournoi</button>
+              <button type="submit_new_tournament" class="btn btn-primary">Créer le tournoi</button>
             </form>
             <ul class="list-group list-group-flush">
             </ul>
           </div>
         </div>
       </div>
-      <div class="col-md-12 col-lg-6">
+      <div id="tournament_joined_list_div" class="col-md-12 col-lg-6">
         <div class="card mb-3">
           <div class="card-body">
-            <h3>Tournoi en cours</h3>
-            <ul class="list-group list-group-flush">
+            <h3>Tournoi rejoins : </h3>
+            <ul id="tournament_joined_list" class="list-group list-group-flush">
             </ul>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
