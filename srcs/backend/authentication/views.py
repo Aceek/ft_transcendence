@@ -70,24 +70,27 @@ class LogoutView(APIView):
 
 class TokenRefreshView(APIView):
     permission_classes = [AllowAny]
+    http_method_names = ["get"]
 
-    def post(self, request, *args, **kwargs):
-        serializer = TokenRefreshSerializer(
-            data={"refresh": request.COOKIES.get("refresh_token")}
-        )
-        if serializer.is_valid(raise_exception=True):
-            data = serializer.validated_data
-            response = Response(status=status.HTTP_200_OK)
-            response.set_cookie(
-                "access_token",
-                data["access"],
-                httponly=True,
-                samesite="Strict",
-                secure=True,
+    def get(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get("refresh_token")
+        if  refresh is not None:
+            serializer = TokenRefreshSerializer(
+                data={"refresh": request.COOKIES.get("refresh_token")}
             )
-            return response
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+            if serializer.is_valid(raise_exception=True):
+                data = serializer.validated_data
+                response = Response(status=status.HTTP_200_OK)
+                response.set_cookie(
+                    "access_token",
+                    data["access"],
+                    httponly=True,
+                    samesite="Strict",
+                    secure=True,
+                )
+                return response
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 class OAuth42View(APIView):
     permission_classes = [AllowAny]
