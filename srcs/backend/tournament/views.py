@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from .manageTournament import ManageTournament
+from rest_framework import serializers
 
 # Create your views here.
 
@@ -19,6 +20,19 @@ class TournamentView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TournamentSerializer
     pagination_class = CustomPageNumberPagination
+
+    def perform_create(self, serializer):
+        count = Tournament.objects.filter(
+            ownerUser=self.request.user, is_finished=False
+        ).count()
+        if count >= 5:
+            message = "You can't create more than 5 active tournaments (that's are not finished)"
+            raise serializers.ValidationError(message)
+        tournament = serializer.save(ownerUser=self.request.user)
+
+        # Ajoute automatiquement l'utilisateur comme participant du tournoi
+        tournament.user.add(self.request.user)
+        tournament.save()
 
     def get_queryset(self):
         return Tournament.objects.get_queryset().order_by("-created_at")
@@ -43,13 +57,13 @@ class TournamentJoinView(APIView):
                 {"message": "User already joined the tournament"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         if tournament.is_active:
             return Response(
                 {"message": "Tournament is already active"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         if user.tournament.filter(is_finished=False).count() >= 5:
             return Response(
                 {"message": "User is already in 5 active tournaments"},
@@ -65,6 +79,7 @@ class TournamentJoinView(APIView):
         return Response(
             {"message": "User joined the tournament"}, status=status.HTTP_200_OK
         )
+    
 
     def delete(self, request, uid):
         tournament = get_object_or_404(Tournament, uid=uid)
@@ -88,6 +103,12 @@ class TournamentJoinView(APIView):
                 {"message": "Can't leave tournament while it's finished"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        
+        if tournament.ownerUser == user:
+            return Response(
+                {"message": "Can't leave tournament while you are the owner"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Retirer l'utilisateur du tournoi
         tournament.user.remove(user)
@@ -98,7 +119,6 @@ class TournamentJoinView(APIView):
         return Response(
             {"message": "User left the tournament"}, status=status.HTTP_200_OK
         )
-
 
 
 class TournamentLaunchView(APIView):
@@ -131,6 +151,7 @@ class TournamentLaunchView(APIView):
                 {"message": "Tournament is already finished"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         tournament.is_active = True
         # manageTournament(tournament)
         manageTournament = ManageTournament(tournament)
@@ -139,7 +160,8 @@ class TournamentLaunchView(APIView):
         return Response(
             {"message": "Tournament is now active"}, status=status.HTTP_200_OK
         )
-    
+
+
 # get tournament by id
 class TournamentDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
@@ -154,10 +176,26 @@ class UserTournamentView(generics.ListAPIView):
     """
     return all tournament that is not finished for the authenticated user
     """
+
     permission_classes = [IsAuthenticated]
     serializer_class = TournamentSerializer
 
     def get_queryset(self):
         # return Tournament.objects.filter(user=self.request.user).order_by("-created_at")
-        return Tournament.objects.filter(user=self.request.user, is_finished=False).order_by("-created_at")
-    
+        return Tournament.objects.filter(
+            user=self.request.user, is_finished=False
+        ).order_by("-created_at")
+
+# get tournament owner by authenticated user
+class UserTournamentOwnerView(generics.ListAPIView):
+    """
+    return all tournament that is not finished for the authenticated user
+    """
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = TournamentSerializer
+
+    def get_queryset(self):
+        return Tournament.objects.filter(
+            ownerUser=self.request.user, is_finished=False
+        ).order_by("-created_at")

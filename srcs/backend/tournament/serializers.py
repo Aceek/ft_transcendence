@@ -51,4 +51,10 @@ class TournamentSerializer(serializers.ModelSerializer):
             representation["is_joined"] = True
         else:
             representation["is_joined"] = False
+            
+        # if user is the owner of the tournament
+        if request and instance.ownerUser == request.user:
+            representation["is_owner"] = True
+        else:
+            representation["is_owner"] = False
         return representation

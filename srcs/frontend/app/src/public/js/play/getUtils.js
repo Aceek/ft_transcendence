@@ -1,11 +1,9 @@
 import { printConfirmationMessage } from "../profile/profileUtils.js";
 import { getDataWithToken, deleteDataWithToken } from "../pageUtils.js";
 import { api_url } from "../main.js";
-import {
-  injectTournamentList,
-  injectJoinedTournamentList,
-} from "./injectPlay.js";
+import { injectTournamentList, injectJoinedOrOwnTournamentList } from "./injectPlay.js";
 import { postData } from "../pageUtils.js";
+import { joinedOrOwnedActive } from "./play.js";
 
 export const tounamentContext = {
   currentPage: 1,
@@ -29,7 +27,7 @@ export async function createJoinButton(tournament, li, createOrLeave = false) {
     joinButton.addEventListener("click", async () => {
       await joinTournament(tournament.uid, createOrLeave);
       await injectTournamentList(tounamentContext.currentPage);
-      await injectJoinedTournamentList();
+      await injectJoinedOrOwnTournamentList(joinedOrOwnedActive);
     });
     li.appendChild(joinButton);
     return joinButton;
@@ -69,19 +67,21 @@ export async function attachSubmitNewTournamentListener() {
         document.getElementById("number-of-players").value;
       const url = `${api_url}play/tournaments`;
       let data = {};
-      data["name"] = tournamentName;
-      data["max_participants"] = numberOfPlayers;
+      data = {
+        name: tournamentName,
+        max_participants: numberOfPlayers,
+      };
+
       const response = await postData(url, data);
       if (response.status === 201) {
         printConfirmationMessage("Tournament created", "number-of-players");
         await injectTournamentList(tounamentContext.currentPage);
+        await injectJoinedOrOwnTournamentList(joinedOrOwnedActive);
       } else {
-        const errorResponse = extractErrorMessages(await response.json());
-        printConfirmationMessage(
-          errorResponse,
-          "number-of-players",
-          "red"
-        );
+        const reponseJson = await response.json();
+        console.log("Json = ", reponseJson);
+        const errorResponse = extractErrorMessages(reponseJson);
+        printConfirmationMessage(errorResponse, "number-of-players", "red");
       }
     });
   } catch (error) {
@@ -91,9 +91,15 @@ export async function attachSubmitNewTournamentListener() {
 
 function extractErrorMessages(errors) {
   let errorMessages = "";
-  Object.keys(errors).forEach((field) => {
-    const messages = errors[field].join(", ");
-    errorMessages += `${field}: ${messages}\n`;
-  });
+
+  if (Array.isArray(errors)) {
+    errorMessages = errors.join(", ");
+  } else {
+    Object.keys(errors).forEach((field) => {
+      const messages = errors[field].join(", ");
+      errorMessages += `${field}: ${messages}\n`;
+    });
+  }
+
   return errorMessages.trim();
 }
