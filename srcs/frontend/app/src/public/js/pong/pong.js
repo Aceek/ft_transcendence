@@ -25,23 +25,20 @@ socket.onopen = function (event) {
   console.log("WebSocket connection opened:", event);
 };
 
-socket.onmessage = function (event) {
-  console.log("WebSocket message received:", event.data);
-};
+// socket.onmessage = function (event) {
+//   console.log("WebSocket message received:", event.data);
+// };
 
 socket.onmessage = function (event) {
   var data = JSON.parse(event.data);
-  // console.log("WebSocket message received:", data);
+  console.log("WebSocket message received:", data);
 
   switch (data.type) {
-    case "game.init":
-      initializeGame(data);
+    case "game.static_data":
+      handleStaticData(data.data); // Handle static game data
       break;
-    // case "game.update":
-    //   handleGameUpdate(data);
-    //   break;
-    case "game.state":
-      handleGameState(data.data); // Handle the new "game.state" message type
+    case "game.dynamic_data":
+      handleDynamicData(data.data); // Handle dynamic game data
       break;
     case "start_game":
       socket.send(JSON.stringify({ type: "start_game", message: "ready_to_play" }));
@@ -127,19 +124,62 @@ var game = {
   userID: null,
 };
 
-function initializeGame(data) {
-  // Initialize the game state using the received data
-  game.paddle.width = data.paddleWidth;
-  game.paddle.height = data.paddleHeight;
-  game.ball.size = data.ballSize;
-  game.players.left.paddleY = data.initialLeftPaddleY;
-  game.players.right.paddleY = data.initialRightPaddleY;
-  game.ball.x = data.initialBallPosition.x;
-  game.ball.y = data.initialBallPosition.y;
-  game.players.left.score = data.initialLeftPlayerScore;
-  game.players.right.score = data.initialRightPlayerScore;
-  game.gameStatus = data.gameStatus;
+function handleStaticData(staticData) {
+  console.log("Received static data:", staticData);
+
+  // Parse static game settings
+  game.paddle.width = parseInt(staticData.paddleWidth, 10);
+  game.paddle.height = parseInt(staticData.paddleHeight, 10);
+  game.ball.size = parseInt(staticData.ballSize, 10);
+
+  // Update canvas dimensions directly from staticData
+  canvas.width = parseInt(staticData.canvasWidth, 10);
+  canvas.height = parseInt(staticData.canvasHeight, 10);
+
+  // Update other static game settings directly from staticData
+  game.scoreLimit = parseInt(staticData.scoreLimit, 10);
+  game.paddle.speed = parseInt(staticData.paddleSpeed, 10);
+
+  // Log the updated game settings for debugging
+  console.log("Static game settings parsed and updated:", game);
 }
+
+function handleDynamicData(dynamicData) {
+  console.log("Handling dynamic data:", dynamicData);
+
+  // Parse the JSON strings in the dynamic data
+  const ballData = JSON.parse(dynamicData.ball);
+  const leftPaddleData = JSON.parse(dynamicData.lp);
+  const rightPaddleData = JSON.parse(dynamicData.rp);
+
+  // Update the game state with parsed dynamic data
+  game.ball.x = ballData.x;
+  game.ball.y = ballData.y;
+  game.ball.speedX = ballData.speedX; // Assuming you want to use speedX and speedY
+  game.ball.speedY = ballData.speedY;
+  game.players.left.paddleY = leftPaddleData.y;
+  game.players.right.paddleY = rightPaddleData.y;
+  game.players.left.score = parseInt(dynamicData.ls, 10);
+  game.players.right.score = parseInt(dynamicData.rs, 10);
+  game.gameStatus = parseInt(dynamicData.gs, 10); // Assuming gs is the game status
+
+  // Log the updated game state for debugging
+  console.log("Updated game state with dynamic data:", game);
+}
+
+// function initializeGame(data) {
+//   // Initialize the game state using the received data
+//   game.paddle.width = data.paddleWidth;
+//   game.paddle.height = data.paddleHeight;
+//   game.ball.size = data.ballSize;
+//   game.players.left.paddleY = data.initialLeftPaddleY;
+//   game.players.right.paddleY = data.initialRightPaddleY;
+//   game.ball.x = data.initialBallPosition.x;
+//   game.ball.y = data.initialBallPosition.y;
+//   game.players.left.score = data.initialLeftPlayerScore;
+//   game.players.right.score = data.initialRightPlayerScore;
+//   game.gameStatus = data.gameStatus;
+// }
 
 //----------------------GAME UPDATE-----------------------------------------
 
@@ -157,27 +197,27 @@ function initializeGame(data) {
 //   game.players.right.score = data.rightPlayerScore;
 // }
 
-function handleGameState(gameState) {
-  // console.log("Handling game state:", gameState);
+// function handleGameState(gameState) {
+//   // console.log("Handling game state:", gameState);
   
-  // Deserialize the 'ball' field if it was serialized as a string
-  if (typeof gameState.ball === "string") {
-    gameState.ball = JSON.parse(gameState.ball);
-  }
+//   // Deserialize the 'ball' field if it was serialized as a string
+//   if (typeof gameState.ball === "string") {
+//     gameState.ball = JSON.parse(gameState.ball);
+//   }
 
-  // Update the game state with the received data
-  game.players.left.score = parseInt(gameState.lpS, 10);
-  game.players.left.paddleY = parseInt(gameState.lpY, 10);
-  game.players.right.score = parseInt(gameState.rpS, 10);
-  game.players.right.paddleY = parseInt(gameState.rpY, 10);
-  game.ball.x = gameState.ball.x;
-  game.ball.y = gameState.ball.y;
-  game.gameStatus = gameState.gS;
-  game.userID = gameState.user_id;
+//   // Update the game state with the received data
+//   game.players.left.score = parseInt(gameState.lpS, 10);
+//   game.players.left.paddleY = parseInt(gameState.lpY, 10);
+//   game.players.right.score = parseInt(gameState.rpS, 10);
+//   game.players.right.paddleY = parseInt(gameState.rpY, 10);
+//   game.ball.x = gameState.ball.x;
+//   game.ball.y = gameState.ball.y;
+//   game.gameStatus = gameState.gS;
+//   game.userID = gameState.user_id;
 
   // Log the updated game state for debugging
   // console.log("Updated game state:", game);
-}
+
 
 //----------------------GAME LOOP-----------------------------------------
 
