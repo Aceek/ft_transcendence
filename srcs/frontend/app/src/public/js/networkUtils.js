@@ -10,7 +10,7 @@ export async function isAPIConnected() {
       return true;
     } else {
       response = await fetch(api_url + "auth/refresh/", {
-        method: "POST",
+        method: "GET",
         credentials: credentialsOption,
       });
       return response.status === 200;
