@@ -12,6 +12,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.shortcuts import get_object_or_404
 
 from .game_config import *
+from .game_logic import game_logic_task
 
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -66,6 +67,19 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f"pong_room_{self.room_name}"
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+        # Attempt to set the flag indicating this consumer should handle the game logic
+        flag_set = await self.redis.setnx("game_logic_flag", "true")
+        if flag_set:
+            # This consumer will handle the game logic
+            self.handle_game_logic = True
+            # Set an expiration time for the flag to avoid stale locks
+            await self.redis.expire("game_logic_flag", 60)  # Expires in 60 seconds
+        else:
+            self.handle_game_logic = False
+
+        if self.handle_game_logic:
+            asyncio.create_task(game_logic_task(self.room_name))
 
         await self.accept()
 
@@ -134,6 +148,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Remove this channel from the group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         
+        if self.handle_game_logic:
+            # Clear the flag as this consumer was responsible for the game logic
+            await self.redis.delete("game_logic_flag")
+
         # Optionally, reset the game or handle the disconnection further
         self.initialize_game()  # Consider when and how to reset game state
 

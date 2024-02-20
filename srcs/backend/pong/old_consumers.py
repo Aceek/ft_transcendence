@@ -12,6 +12,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.shortcuts import get_object_or_404
 
 from .game_config import *
+from .game_logic import *
 
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -82,6 +83,24 @@ class GameConsumer(AsyncWebsocketConsumer):
             "gameStatus": self.game_status,
         }
 
+        # Set initial game state in Redis
+        game_state_key = f"game_state:{self.room_name}"
+        initial_game_state = {
+            "paddleWidth": str(self.paddle_width),
+            "paddleHeight": str(self.paddle_height),
+            "ballSize": str(self.ball_size),
+            "initialLeftPaddleY": str(self.left_paddle["y"]),
+            "initialRightPaddleY": str(self.right_paddle["y"]),
+            "initialBallPositionX": str(self.ball["x"]),
+            "initialBallPositionY": str(self.ball["y"]),
+            "initialLeftPlayerScore": str(self.left_player_score),
+            "initialRightPlayerScore": str(self.right_player_score),
+            "status": "active"  # Set the initial status of the game
+        }
+    
+        # Use hmset if your Redis client version supports it, otherwise use hset.
+        await self.redis.hset(game_state_key, mapping=initial_game_state)
+
         # Send the game initialization data to the frontend
         # await self.send(json.dumps(game_init_data))
         await self.channel_layer.group_send(
@@ -100,7 +119,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         # Change game status to paused
         print("disconnected")
-        self.game_status = "paused"
+        # self.game_status = "paused"
+        await self.redis.hset(f"game_state:{self.room_name}", "status", "paused")
         
         # Broadcast the game pause to all clients
         pause_message = {
@@ -151,6 +171,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Print delta time for debugging
             # print("Delta Time:", delta_time)
 
+            game_state = await self.get_game_state()  # Fetch the current game state from Redis
+            if game_state["status"] != "active":
+                print("Game paused or stopped, exiting game loop.")
+                break  # Exit the loop if the game is not active
+
             # Update ball position based on game mechanics
             self.update_ball_position(delta_time)
 
@@ -170,6 +195,11 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def send_game_update(self, delta_time=0.0):
         await self.handle_game_update(delta_time)
         await self.send_game_state()
+
+    async def get_game_state(self):
+    # Example function to fetch the game state from Redis
+        game_state_data = await self.redis.hgetall(f"game_state:{self.room_name}")
+        return game_state_data
 
     # -------------------------------PADLLE MOVEMENT-----------------------------
 
