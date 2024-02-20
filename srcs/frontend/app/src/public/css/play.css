@@ -17,6 +17,23 @@ body{
 
 }
 
+.tournament-name {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 100px);
+}
+
+.li-item {
+  display: grid;
+  grid-template-columns: auto minmax(auto, max-content);
+  gap: 10px;
+  align-items: center;
+}
+
+
 .tournament-link {
   color: #007bff;
   font-weight: bold;

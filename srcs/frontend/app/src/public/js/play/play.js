@@ -14,7 +14,7 @@ export async function displayPlayPage() {
     document.getElementById("main").innerHTML = matchmakingHtml;
     await injectTournamentList();
     await injectJoinedTournamentList();
-    // await attachSubmitNewTournamentListener();
+    await attachSubmitNewTournamentListener();
   } catch (error) {
     console.error("Error:", error);
     router("/home");

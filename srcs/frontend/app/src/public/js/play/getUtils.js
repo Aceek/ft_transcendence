@@ -50,6 +50,7 @@ export async function joinTournament(tournamentUID, createOrLeave = false) {
     if (!response.ok) {
       const errorResponse = await response.json();
       printConfirmationMessage(errorResponse.message, "tournament_list", "red");
+      console.log("response", errorResponse.message);
       throw new Error(errorResponse.message);
     }
   } catch (error) {
@@ -57,33 +58,42 @@ export async function joinTournament(tournamentUID, createOrLeave = false) {
   }
 }
 
-// export async function attachSubmitNewTournamentListener() {
-//   try {
-//     const submitNewTournament = document.getElementById(
-//       "submit_new_tournament"
-//     );
-//     submitNewTournament.addEventListener("click", async () => {
-//       const tournamentName = document.getElementById("tournament_name").value;
-//       const numberOfPlayers =
-//         document.getElementById("number-of-players").value;
-//       const url = `${api_url}play/tournaments`;
-//       data = {};
-//       data.name = tournamentName;
-//       data.max_participants = numberOfPlayers;
-//       const response = postData(url, data);
-//       if (response.status === 201) {
-//         printConfirmationMessage("Tournament created", "number-of-players");
-//         await injectTournamentList(tounamentContext.currentPage);
-//       } else {
-//         const errorResponse = await response.json();
-//         printConfirmationMessage(
-//           errorResponse.message,
-//           "number-of-players",
-//           "red"
-//         );
-//       }
-//     });
-//   } catch (error) {
-//     console.error("Error:", error);
-//   }
-// }
+export async function attachSubmitNewTournamentListener() {
+  try {
+    const submitNewTournament = document.getElementById(
+      "submit_new_tournament"
+    );
+    submitNewTournament.addEventListener("click", async () => {
+      const tournamentName = document.getElementById("tournament_name").value;
+      const numberOfPlayers =
+        document.getElementById("number-of-players").value;
+      const url = `${api_url}play/tournaments`;
+      let data = {};
+      data["name"] = tournamentName;
+      data["max_participants"] = numberOfPlayers;
+      const response = await postData(url, data);
+      if (response.status === 201) {
+        printConfirmationMessage("Tournament created", "number-of-players");
+        await injectTournamentList(tounamentContext.currentPage);
+      } else {
+        const errorResponse = extractErrorMessages(await response.json());
+        printConfirmationMessage(
+          errorResponse,
+          "number-of-players",
+          "red"
+        );
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+function extractErrorMessages(errors) {
+  let errorMessages = "";
+  Object.keys(errors).forEach((field) => {
+    const messages = errors[field].join(", ");
+    errorMessages += `${field}: ${messages}\n`;
+  });
+  return errorMessages.trim();
+}

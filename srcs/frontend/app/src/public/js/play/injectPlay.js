@@ -1,10 +1,7 @@
 import { getTournamentList } from "./getPlay.js";
-import {
-  addPrevNextButtons,
-} from "../profile/profileUtils.js";
+import { addPrevNextButtons } from "../profile/profileUtils.js";
 import { router } from "../main.js";
 import { createJoinButton, tounamentContext } from "./getUtils.js";
-
 
 export async function injectTournamentList(page = 1) {
   const tournaments = await getTournamentList(page);
@@ -18,15 +15,12 @@ export async function injectTournamentList(page = 1) {
         "list-group-item",
         "d-flex",
         "align-items-center",
-        "justify-content-between"
+        "justify-content-between",
+        "li-item"
       );
-
       const tournamentContent = `
-      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-        <h5 class="tournament-name" style="text-align: left">${tournament.name}</h5>
-        <span>Places restantes: ${tournament.place_left}</span>
-        <span class="tournament_status">${tournament.is_joined ? " Participe " : "Non Inscrit"}</span>
-      </div>
+        <h5 style="text-align: left" class="tournament-name">${tournament.name}</h5>
+        <span>Places: ${tournament.place_left}</span>
     `;
       li.innerHTML = tournamentContent;
       tournamentListContainer.appendChild(li);
@@ -35,9 +29,6 @@ export async function injectTournamentList(page = 1) {
   });
   addPrevNextButtons(tournaments, tournamentListContainer, tounamentContext);
 }
-
-
-
 
 async function attachLinkListener() {
   const tournamentLinks = document.querySelectorAll(".tournament-link");
@@ -77,4 +68,3 @@ export async function injectJoinedTournamentList() {
   });
   attachLinkListener();
 }
-
