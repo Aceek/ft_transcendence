@@ -50,8 +50,11 @@ class LoginView(TokenObtainPairView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LogoutView(CreateAPIView):
-    def create(self, request, *args, **kwargs):
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
         token = request.COOKIES.get("refresh_token")
         if token is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
