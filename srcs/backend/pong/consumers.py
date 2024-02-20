@@ -71,11 +71,30 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
         async def disconnect(self, close_code):
-            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-            # reste the game
-            self.initialize_game()
+            # Change game status to paused
+            print("disconnected")
+            # self.game_status = "paused"
+            await self.redis.hset(f"game_state:{self.room_name}", "status", "paused")
             
-            pass
+            # # Broadcast the game pause to all clients
+            # pause_message = {
+            #     "type": "broadcast_message",
+            #     "message": {
+            #         "type": "game.paused",
+            #         "data": {"reason": "Player disconnected", "gameStatus": self.game_status},
+            #     },
+            # }
+            # await self.channel_layer.group_send(self.room_group_name, pause_message)
+            
+            # Remove this channel from the group
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+            
+            if self.handle_game_logic:
+                # Clear the flag as this consumer was responsible for the game logic
+                await self.redis.delete("game_logic_flag")
+
+            # Optionally, reset the game or handle the disconnection further
+            # self.initialize_game()  # Consider when and how to reset game state
 
 
         async def receive(self, text_data):

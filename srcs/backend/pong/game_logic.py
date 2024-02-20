@@ -54,12 +54,12 @@ class GameLogic:
             "ballSize": int(BALL_SIZE),
         }
         await self.redis.hset(static_data_key, mapping=static_data)
-        print(f"Initiating static data from Redis: {static_data}") 
+        print(f"-------Initiating static data from Redis: {static_data}") 
 
     async def update_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         dynamic_data = {
-            "gs": int(self.game_status.value),
+            # "gs": int(self.game_status.value),
             "ls": int(self.left_player_score),
             "rs": int(self.right_player_score),
             "lp": json.dumps(self.left_paddle),
@@ -67,8 +67,14 @@ class GameLogic:
             "ball": json.dumps(self.ball),
         }
         await self.redis.hset(dynamic_data_key, mapping=dynamic_data)
-        print(f"Update dynamic data from Redis: {dynamic_data}") 
+        print(f"-------Update dynamic data from Redis: {dynamic_data}") 
     
+    async def update_redis_game_status(self, new_status: GameStatus):
+        self.game_status = new_status
+        # print(f"-------Game status updated to: {self.game_status}") 
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
+        print(f"-------Game status updated to: {self.game_status}") 
 
     async def fetch_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -87,10 +93,20 @@ class GameLogic:
             self.left_player_score = int(dynamic_data["ls"])
         if 'rs' in dynamic_data:
             self.right_player_score = int(dynamic_data["rs"])
-        if 'gs' in dynamic_data:
-            self.game_status = GameStatus(int(dynamic_data["gs"]))
+        # if 'gs' in dynamic_data:
+        #     self.game_status = GameStatus(int(dynamic_data["gs"]))
 
-        print(f"Fetched dynamic data from Redis: {dynamic_data}") 
+        print(f"-------Fetched dynamic data from Redis: {dynamic_data}")
+
+    async def fetch_redis_game_status(self):
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        game_status = await self.redis.hget(dynamic_data_key, "gs")
+
+        if game_status is not None:
+            self.game_status = GameStatus(int(game_status))
+            print(f"-------Game status fetched from Redis: {self.game_status}")
+        else:
+            print("-------Game status not found in Redis.")
 
     # -------------------------------GAME LOOP-----------------------------------
 
@@ -101,8 +117,11 @@ class GameLogic:
 
         last_update_time = time.time()
         self.game_status = GameStatus.IN_PROGRESS
+        # await self.update_redis_game_status(GameStatus.IN_PROGRESS)
+        print("--------GS before loop", self.game_status)
 
-        while self.game_status == GameStatus.IN_PROGRESS:
+        while True:
+        # while True:
             current_time = time.time()
             delta_time = current_time - last_update_time
             
@@ -111,14 +130,15 @@ class GameLogic:
             #     print("Game not in progress, waiting...")
             #     await asyncio.sleep(1)  # Wait a bit before checking again
             #     continue
-            
             await self.fetch_redis_dynamic_data()
             
+            print("-------game status: ", self.game_status)
             # Update game state logic here
             self.update_ball_position(delta_time)
 
-            # Print ball's initial coordinates
-            # print(f"Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
+                # Increment and print the loop counter
+            # print(f"-------score: {self.left_player_score} vs {self.right_player_score}")
+            print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
 
             await self.update_redis_dynamic_data()
             
@@ -129,7 +149,7 @@ class GameLogic:
             # await self.send_game_update(delta_time)
 
             # Calculate the sleep duration to achieve 60 FPS
-            target_fps = 60
+            target_fps = 1
             target_frame_time = 1.0 / target_fps
             sleep_duration = max(0, target_frame_time - delta_time)
 
@@ -138,13 +158,21 @@ class GameLogic:
 
             last_update_time = current_time
 
+            # await self.fetch_redis_game_status()
+            if self.game_status == GameStatus.COMPLETED:
+                print("Game over. Exiting game loop.")
+                await self.update_redis_game_status(GameStatus.COMPLETED)
+                break  # Exit the loop
+
 
     # -------------------------------GAME MECHANICS-----------------------------------
 
     def update_ball_position(self, delta_time):
-        if not self.game_status == GameStatus.IN_PROGRESS:
+        print("-------Game status update ball func: ", self.game_status)
+        if self.game_status != GameStatus.IN_PROGRESS:
         # if not self.ball_launched or self.game_status != "active":
             # print("ball not launched")
+            print("-------noGAME: ", self.game_status)
             return
 
         # Update ball's position based on its speed and direction
@@ -221,12 +249,13 @@ class GameLogic:
     def check_game_over(self):
         # print("GO check")
         # Check if any player has reached the maximum score (10)
+        print(f"-------------Checking game over. Left player score: {self.left_player_score}, Right player score: {self.right_player_score}, Score limit: {self.score_limit}")
         if (
-            self.left_player_score == self.score_limit
-            or self.right_player_score == self.score_limit
+            self.left_player_score >= self.score_limit
+            or self.right_player_score >= self.score_limit
         ):
             # Set game state to over
-            self.game_status == GameStatus.COMPLETED
+            self.game_status = GameStatus.COMPLETED
         else:
             # Continue the game
             self.reset_ball()
