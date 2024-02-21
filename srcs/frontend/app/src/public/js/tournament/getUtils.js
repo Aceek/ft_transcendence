@@ -21,10 +21,16 @@ export const tounamentContext = {
 
 export const tournamentHistoryContext = {
   currentPage: 1,
+  scrollPosition: 0,
   updatePage: function (page) {
+    // Sauvegarder la position de défilement
+    this.scrollPosition = window.scrollY;
 
     this.currentPage = page;
-    injectTournamentHistory(this.currentPage);
+    injectTournamentHistory(this.currentPage).then(() => {
+      // Restaurer la position de défilement
+      window.scrollTo(0, this.scrollPosition);
+    });
   },
 };
 
