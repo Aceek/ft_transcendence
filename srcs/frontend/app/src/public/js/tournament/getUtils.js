@@ -111,10 +111,9 @@ export async function deleteTournament(
   try {
     let response = await deleteDataWithToken(url);
     if (!response.ok) {
-      const errorResponse = await response.json();
-      console.log("response", errorResponse.message);
+      const errorResponse = extractErrorMessages(await response.json());
       printConfirmationMessage(
-        errorResponse.message,
+        errorResponse,
         containerNameToError,
         "red"
       );
