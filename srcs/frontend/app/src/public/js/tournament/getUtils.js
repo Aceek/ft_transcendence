@@ -4,9 +4,11 @@ import { api_url } from "../main.js";
 import {
   injectTournamentList,
   injectJoinedOrOwnTournamentList,
-} from "./TournamentAll/injectTournament.js";
+} from "./TournamentAll/injectTournamentAll.js";
 import { postData } from "../pageUtils.js";
-import { joinedOrOwnedActive } from "./TournamentAll/allTournament.js";
+import { joinedOrOwnedActive } from "./TournamentAll/tournamentAll.js";
+import { displayTournamentPage } from "./TournamentView/tournament.js";
+import { getProfile } from "../profile/getProfile.js";
 
 export const tounamentContext = {
   currentPage: 1,
@@ -27,7 +29,11 @@ export async function createJoinButton(tournament, li, createOrLeave = false) {
   joinButton.classList.add("btn", btnClass);
   joinButton.textContent = text;
   joinButton.addEventListener("click", async () => {
-    await joinTournament(tournament.uid, createOrLeave);
+    await joinOrLeaveTournament(
+      tournament.uid,
+      createOrLeave,
+      "tournament_list"
+    );
     await injectTournamentList(tounamentContext.currentPage);
     await injectJoinedOrOwnTournamentList(joinedOrOwnedActive);
   });
@@ -49,7 +55,31 @@ export async function createDeleteButton(tournament, containerToAppend) {
   return deleteButton;
 }
 
-export async function joinTournament(tournamentUID, createOrLeave = false) {
+export async function launchTournament(tournamentUID, containerNameToAppend) {
+  const url = `${api_url}play/tournaments/${tournamentUID}/launch`;
+  let response = null;
+  try {
+    response = await getDataWithToken(url);
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      printConfirmationMessage(
+        errorResponse.message,
+        containerNameToAppend,
+        "red"
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function joinOrLeaveTournament(
+  tournamentUID,
+  createOrLeave = false,
+  containerNameToAppend
+) {
   const url = `${api_url}play/tournaments/${tournamentUID}/join`;
   let response = null;
   try {
@@ -60,25 +90,37 @@ export async function joinTournament(tournamentUID, createOrLeave = false) {
     }
     if (!response.ok) {
       const errorResponse = await response.json();
-      printConfirmationMessage(errorResponse.message, "tournament_list", "red");
-      console.log("response", errorResponse.message);
-      throw new Error(errorResponse.message);
+      printConfirmationMessage(
+        errorResponse.message,
+        containerNameToAppend,
+        "red"
+      );
+      return false;
     }
+    return true;
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-export async function deleteTournament(tournamentUID) {
+export async function deleteTournament(
+  tournamentUID,
+  containerNameToError = "tournament_list"
+) {
   const url = `${api_url}play/tournaments/${tournamentUID}/delete`;
   try {
     let response = await deleteDataWithToken(url);
     if (!response.ok) {
       const errorResponse = await response.json();
       console.log("response", errorResponse.message);
-      printConfirmationMessage(errorResponse.message, "tournament_list", "red");
-      throw new Error(errorResponse.message);
+      printConfirmationMessage(
+        errorResponse.message,
+        containerNameToError,
+        "red"
+      );
+      return false;
     }
+    return true;
   } catch (error) {
     console.error("Error:", error);
   }
@@ -90,7 +132,9 @@ export async function attachSubmitNewTournamentListener() {
       "submit_new_tournament"
     );
     submitNewTournament.addEventListener("click", async () => {
-      const tournamentName = document.getElementById("tournament_name").value;
+      const tournamentName = document.getElementById(
+        "tournament_name_input"
+      ).value;
       const numberOfPlayers =
         document.getElementById("number-of-players").value;
       const url = `${api_url}play/tournaments`;
@@ -136,5 +180,86 @@ export async function ReffreshButtonListener() {
   const refreshButton = document.getElementById("refresh_button");
   refreshButton.addEventListener("click", async () => {
     await injectTournamentList(tounamentContext.currentPage);
+  });
+}
+
+export async function createMatchDiv(match) {
+  try {
+    const player1 = await getProfile(match.user1);
+    const player2 = await getProfile(match.user2);
+
+    const status = match.is_finished ? "Terminé" : "Non terminé";
+    const inGame = match.is_in_game ? "En jeu" : "";
+
+    const matchDiv = document.createElement("div");
+    matchDiv.className =
+      "list-group-item d-flex align-items-center justify-content-between match";
+    matchDiv.innerHTML = `
+      <div class="match__info mb-2">
+        <span>${status}${inGame}</span>
+      </div>
+      <div class="match__player">
+        <span data-uid="${player1.id}">${player1.username}</span>
+      </div>
+      <div class="match__vs">VS</div>
+      <div class="match__player">
+      <span data-uid="${player2.id}">${player2.username}</span>
+      </div>
+    `;
+    return matchDiv;
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export function createUsersDiv(user) {
+  const listItem = document.createElement("li");
+  listItem.className =
+    "list-group-item d-flex align-items-center justify-content-between";
+
+  listItem.innerHTML = `
+    <div class="users-tournament-info d-flex align-items-center">
+      <img src="${user.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${user.username}" class="rounded-circle me-3" width="75" height="75">
+      <div>
+        <span class="profile-link" data-uid="${user.id}"><strong>${user.username}</strong></span>
+      </div>
+    </div>
+  `;
+  return listItem;
+}
+
+export async function createJoinOrLeaveButton(
+  tournament,
+  createOrLeave = false
+) {
+  let text = "Rejoindre";
+  let btnClass = "btn-primary";
+  if (createOrLeave) {
+    text = "Quitter";
+    btnClass = "btn-danger";
+  }
+  const joinButton = document.createElement("button");
+  joinButton.classList.add("btn", btnClass);
+  joinButton.textContent = text;
+  joinButton.addEventListener("click", async () => {
+    if (
+      await joinOrLeaveTournament(
+        tournament.uid,
+        createOrLeave,
+        "functional_button_div"
+      )
+    ) {
+      await displayTournamentPage(tournament.uid);
+    }
+  });
+
+  const containerToAppend = document.getElementById("functional_button_div");
+  containerToAppend.appendChild(joinButton);
+}
+
+export async function attachRefreshButtonListener(tournamentUID) {
+  const refreshButton = document.getElementById("refresh_tournament_button");
+  refreshButton.addEventListener("click", async () => {
+    await displayTournamentPage(tournamentUID);
   });
 }

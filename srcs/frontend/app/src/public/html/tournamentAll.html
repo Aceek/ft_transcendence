@@ -20,8 +20,8 @@
             <form id="tournament-form">
               <!-- Nom du tournoi -->
               <div class="form-group">
-                <label for="tournament_name">Nom du tournoi</label>
-                <input type="text" class="form-control" id="tournament_name" name="tournamentName" required
+                <label for="tournament_name_input">Nom du tournoi</label>
+                <input type="text" class="form-control" id="tournament_name_input" name="tournamentName" required
                   placeholder="Entrez le nom du tournoi">
               </div>
 
@@ -60,5 +60,18 @@
         </div>
       </div>
     </div>
+    <div id="history_tournament_played" class="row gutters-sm">
+      <div id="tournament_history_list_div" class="col-md-12 col-lg-12">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Historique des tournois joués</h3>
+            <ul id="tournament_history_list" class="list-group list-group-flush">
+              <!-- inject tournois en cours -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

@@ -8,7 +8,7 @@ import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
 import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
-import { displayPlayPage } from "./tournament/TournamentAll/allTournament.js";
+import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 
 // export const api_url = "http://localhost:8000/api/";

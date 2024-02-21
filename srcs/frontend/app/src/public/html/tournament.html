@@ -1,22 +1,88 @@
-<div id="mainContainerTournament" class="container">
+<div id="main_container_tournament" class="container">
   <div class="main-body">
-    <div id="tournament_list_div" class="col-md-12 col-lg-12">
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-sm-4 col-md-4 col-lg-3">
-              <!-- Nom du tournoi -->
-              <h2 id="tournament_name">Nom du tournoi: <span class="placeholder">Nom du Tournoi JS</span></h2>
-              <!-- Nombre de participants -->
-              <p id="tournament_participants">Nombre de participants: <span class="placeholder">Nombre JS</span></p>
-              <!-- Statut du tournoi -->
-              <p id="tournament_status">Statut du tournoi: <span class="placeholder">Statut JS</span></p>
-              <!-- Tournoi fini ou pas -->
-              <p id="tournament_finished">Le tournoi est fini: <span class="placeholder">Fini/Non Fini JS</span></p>
+    <div id="Tournament_profile_row" class="row gutters-sm">
+      <div class="col-md">
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12">
+                <h3 id="tournament_name">mon tournoi</h3>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <button style="margin-right: 10px;" class="btn btn-primary" id="refresh_tournament_button"
+                  type="button">Reffresh Tournament info</button>
+              </div>
+            </div>
+            <div class="row">
+              <!-- Première colonne pour les informations -->
+              <div class="col-md-6 info-text-align-left tournament-info">
+                <p id="tournament_owner">Propriétaire :</p>
+                <hr>
+                <p id="tournament_created_at">Créé le :</p>
+                <hr>
+                <p id="tournament_is_active">Actif :</p>
+                <hr>
+                <p id="tournament_is_finished">Terminé :</p>
+              </div>
+              <!-- Deuxième colonne pour les informations -->
+              <div class="col-md-6 info-text-align-left tournament-info">
+                <p id="tournament_is_joined">Rejoint :</p>
+                <hr>
+                <p id="tournament_max_participants">Participants max :</p>
+                <hr>
+                <p id="tournament_place_left">Places restantes :</p>
+                <hr>
+                <p id="tournament_round">Round :</p>
+              </div>
+              <hr>
+              <div class="row">
+                <div id="functional_button_div" class="col-12 d-flex justify-content-end">
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <hr>
+    <div id="tournament_users_matches_row" class="row gutters-sm">
+      <div id="matches_tournament_div" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Matches</h3>
+            <ul id="matches_tournament" class="list-group list-group-flush">
+              <!-- Inject matches_tournament here -->
+            </ul>
+            <div class="row">
+              <div id="tournament_match_round_button_col" class="col-12">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div id="tournament_users_col" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3 id="tournament_title">Users in tournament</h3>
+            <ul id="tournament_users_list" class="list-group list-group-flush">
+              <!-- Inject tournament_users_list in tournament here -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
   </div>
 </div>

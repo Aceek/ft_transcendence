@@ -43,3 +43,13 @@ export async function getTournamentByUID(tournamentUID) {
   const data = await response.json();
   return data;
 }
+
+export async function getTournamentHistory() {
+  const url = `${api_url}play/tournaments/history`;
+  const response = await getDataWithToken(url);
+  if (!response.ok) {
+    throw new Error("Failed to get tournament history");
+  }
+  const data = await response.json();
+  return data;
+}

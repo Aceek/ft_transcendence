@@ -3,14 +3,20 @@ import { fetchTemplate, loadProfileCss } from "../../pageUtils.js";
 import {
   injectTournamentList,
   injectJoinedOrOwnTournamentList,
-} from "./injectTournament.js";
-import { attachSubmitNewTournamentListener, ReffreshButtonListener } from "../getUtils.js";
+  injectTournamentHistory,
+} from "./injectTournamentAll.js";
+import {
+  attachSubmitNewTournamentListener,
+  ReffreshButtonListener,
+} from "../getUtils.js";
 
 export let joinedOrOwnedActive = true;
 
 export async function displayPlayPage() {
   try {
-    const matchmakingHtml = await fetchTemplate("/public/html/tournamentAll.html");
+    const matchmakingHtml = await fetchTemplate(
+      "/public/html/tournamentAll.html"
+    );
     loadProfileCss("/public/css/tournamentsAll.css");
     document.getElementById("main").innerHTML = matchmakingHtml;
 
@@ -19,12 +25,23 @@ export async function displayPlayPage() {
     await injectJoinedOrOwnTournamentList(true);
     await handleInjectJoinOrOwnTournament();
     await attachSubmitNewTournamentListener();
+    await preventEnterSubmit();
+    await injectTournamentHistory();
   } catch (error) {
     console.error("Error:", error);
     router("/home");
   }
 }
 
+async function preventEnterSubmit() {
+  document
+    .getElementById("tournament_name_input")
+    .addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+      }
+    });
+}
 
 async function handleInjectJoinOrOwnTournament() {
   const joinTournamentButton = document.getElementById(

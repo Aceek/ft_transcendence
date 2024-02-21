@@ -1,20 +1,44 @@
-
-.tournament-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
 body{
   color: #1a202c;
   text-align: end;
   background-color: #e2e8f0;    
 }
 
-.tournament_status {
-  text-align: center;
+#tournament_users_list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
+.list-group-item {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.list-group-item:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.match {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.match__player {
+  flex: 1;
+  text-align: center;
+}
+
+.match__vs {
+  padding: 0 20px;
+}
+
+.info-text-align-left {
+  text-align: left;
 }
 
 .profile-link {
@@ -23,37 +47,32 @@ body{
   cursor: pointer;
   text-decoration: underline;
 }
+
 .profile-link:hover {
   color: #0056b3;
   text-decoration: none;
 }
 
-.tournament-name {
-  flex: 1;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: calc(100% - 100px);
+.tournament-info {
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
 
-.li-item {
-  display: grid;
-  grid-template-columns: auto minmax(auto, max-content);
-  gap: 10px;
-  align-items: center;
+.tournament-info p {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
 
-
-.tournament-link {
-  color: #007bff;
+#tournament_name {
+  text-align: center;
   font-weight: bold;
-  cursor: pointer;
-  text-decoration: underline;
-}
-.tournament-link:hover {
-  color: #0056b3;
-  text-decoration: none;
+  color: #ffffff;
+  background-color: #007bff;
+  padding: 8px;
+  border-radius: 4px;
+  margin: -16px -16px 16px -16px;
 }
 
 h3 {

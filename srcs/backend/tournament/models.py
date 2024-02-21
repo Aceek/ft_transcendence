@@ -58,7 +58,7 @@ class Matches(models.Model):
     round = models.IntegerField(default=1, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     is_finished = models.BooleanField(default=False)
-    is_draw = models.BooleanField(default=False)
+    is_in_game = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     uid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True

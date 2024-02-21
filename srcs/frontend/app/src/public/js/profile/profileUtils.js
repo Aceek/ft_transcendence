@@ -38,13 +38,16 @@ export function onclickFunctionDeleteContainer(container) {
   container.remove();
 }
 
-async function attachLinkListener() {
+export async function attachLinkListenerProfile() {
   const profileLinks = document.querySelectorAll(".profile-link");
   profileLinks.forEach((link) => {
-    link.addEventListener("click", () => {
-      const uid = link.getAttribute("data-uid");
-      router("/profile/" + uid);
-    });
+    if (!link.getAttribute("data-listener-added")) {
+      link.addEventListener("click", () => {
+        const uid = link.getAttribute("data-uid");
+        router("/profile/" + uid);
+      });
+      link.setAttribute("data-listener-added", "true");
+    }
   });
 }
 
@@ -55,12 +58,13 @@ export async function injectFriendList(page, UID = null) {
   const friendListTitle = document.getElementById("friendListTitle");
   friendListTitle.textContent = "Friend List";
 
-  await friendList.results.forEach(async (friend) => {
-    const listItem = document.createElement("li");
-    listItem.className =
-      "list-group-item d-flex align-items-center justify-content-between";
+  await Promise.all(
+    friendList.results.map(async (friend) => {
+      const listItem = document.createElement("li");
+      listItem.className =
+        "list-group-item d-flex align-items-center justify-content-between";
 
-    listItem.innerHTML = `
+      listItem.innerHTML = `
       <div class="friend-info d-flex align-items-center">
         <img src="${friend.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
@@ -70,19 +74,21 @@ export async function injectFriendList(page, UID = null) {
       </div>
     `;
 
-    const removeButton = await createButtonFriend(
-      friend.id,
-      "users/remove_friends",
-      () => {
-        onclickFunctionDeleteContainer(listItem);
-      }
-    );
-    removeButton.textContent = "Remove";
-    removeButton.classList.add("btn-danger");
-    listItem.appendChild(removeButton);
-    friendListContainer.appendChild(listItem);
-  });
-  await attachLinkListener();
+      const removeButton = await createButtonFriend(
+        friend.id,
+        "users/remove_friends",
+        () => {
+          onclickFunctionDeleteContainer(listItem);
+        }
+      );
+      removeButton.textContent = "Remove";
+      removeButton.classList.add("btn-danger");
+      listItem.appendChild(removeButton);
+      friendListContainer.appendChild(listItem);
+    })
+  );
+
+  await attachLinkListenerProfile();
   addPrevNextButtons(friendList, friendListContainer, friendContext);
 }
 
@@ -166,14 +172,17 @@ export function printConfirmationMessage(
   fieldId = "emailDiv",
   color = "green"
 ) {
+  if (document.getElementById("ConfirmationMessage" + fieldId)) {
+    return;
+  }
+
   const messageElement = document.createElement("div");
   messageElement.id = "ConfirmationMessage" + fieldId;
   messageElement.innerText = texte;
   messageElement.style.color = color;
   messageElement.style.marginLeft = "10px";
-  const emailInput = document.getElementById(fieldId);
-  emailInput.insertAdjacentElement("afterend", messageElement);
-
+  const containerToAppend = document.getElementById(fieldId);
+  containerToAppend.insertAdjacentElement("afterend", messageElement);
 
   setTimeout(() => {
     messageElement.remove();

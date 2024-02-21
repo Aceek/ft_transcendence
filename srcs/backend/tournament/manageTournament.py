@@ -13,20 +13,21 @@ class ManageTournament:
     def organize_matches(self):
         # randomize the users list
         random.shuffle(self.users)
-        if (self.get_nb_users() % 2) != 0:
+        if len(self.users) % 2 != 0:
             # if the number of users is odd, we remove the last one
             byeUser = self.users.pop()
             byeMatch = Matches.objects.create(
                 tournament=self.tournament,
                 user1=byeUser,
+                user2=byeUser,
                 is_active=True,
                 is_finished=True,
-                winner=byeUser,
                 round=self.tournament.round,
             )
+            self.set_end_match(byeMatch, byeUser, False)
             byeMatch.save()
         # create matches
-        for i in range(0, self.get_nb_users(), 2):
+        for i in range(0, len(self.users), 2):
             user1 = self.users[i]
             user2 = self.users[i + 1]
             match = Matches.objects.create(
@@ -43,7 +44,6 @@ class ManageTournament:
     def end_round(self):
         matches = self.get_matches_by_round(self.tournament.round)
         winners = [match.winner for match in matches]
-        print("wiiner of the round : ", winners, " round : ", self.tournament.round)
         # if there is only one winner, the tournament is finished
         if len(winners) == 1:
             self.tournament.is_finished = True
@@ -65,15 +65,15 @@ class ManageTournament:
         else:
             print("round not ended")
 
-    def set_end_match(self, match: Matches, winner: CustomUser):
-        print("match ended : ", match, " winner : ", winner)
+    def set_end_match(self, match: Matches, winner: CustomUser, verify=True):
         match.is_active = False
         match.is_finished = True
-        match.is_draw = False
+        match.is_in_game = False
         match.winner = winner
         ManageHistory(user1=match.user1, user2=match.user2, winner=winner)
         match.save()
-        self.verify_round_end()
+        if verify:
+            self.verify_round_end()
 
     def get_nb_users(self):
         return len(self.users)

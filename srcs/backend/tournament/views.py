@@ -212,7 +212,19 @@ class TournamentDeleteView(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         if instance.ownerUser != self.request.user:
             raise serializers.ValidationError("You are not the owner of the tournament")
+        if instance.is_finished:
+            raise serializers.ValidationError("You can't delete a finished tournament")
         instance.delete()
         return Response(
             {"message": "Tournament deleted"}, status=status.HTTP_200_OK
         )
+
+  
+class TournamentHistoryView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TournamentSerializer
+
+    def get_queryset(self):
+        return Tournament.objects.filter(
+            user=self.request.user, is_finished=True
+        ).order_by("-created_at")

@@ -40,8 +40,8 @@ class TournamentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super(TournamentSerializer, self).to_representation(instance)
 
-        if instance.is_active:
-            matches = Matches.objects.filter(tournament=instance)
+        matches = Matches.objects.filter(tournament=instance)
+        if matches:
             representation["matches"] = MatchesSerializer(
                 matches, many=True, context=self.context
             ).data
