@@ -128,3 +128,10 @@ export function loadScript(url) {
     document.body.appendChild(script);
   });
 }
+
+export function deleteNavbar() {
+  if (document.getElementById('navbar')) {
+    console.log("Deleting navbar");
+    document.getElementById('navbar').remove();
+  }
+}

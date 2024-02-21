@@ -1,5 +1,5 @@
 import { fetchTemplate, loadProfileCss } from "./pageUtils.js";
-import { router } from "./main.js";
+import { router, credentialsOption, api_url } from "./main.js";
 import { getProfile } from "./profile/getProfile.js";
 
 export async function injectNavBar() {
@@ -14,6 +14,8 @@ export async function injectNavBar() {
     const profile = await getProfile();
     injectAvatarOnNavbar(profile);
     addEventListenerToNavLinks();
+    const logoutLink = document.getElementById('logout-link');
+    logoutLink.addEventListener('click', handleLogout);
     window.addEventListener("hashchange", updateActiveLink);
     window.addEventListener("popstate", updateActiveLink);
   } catch (error) {
@@ -22,7 +24,7 @@ export async function injectNavBar() {
 }
 
 async function addEventListenerToNavLinks() {
-  const navLinks = document.querySelectorAll(".nav-link");
+  const navLinks = document.querySelectorAll(".active-link");
 
   navLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
@@ -39,7 +41,7 @@ function injectAvatarOnNavbar(profile) {
 }
 
 export function updateActiveLink(currentPath = window.location.pathname) {
-  const navLinks = document.querySelectorAll(".nav-link");
+  const navLinks = document.querySelectorAll(".active-link");
 
   navLinks.forEach((link) => {
     link.classList.remove("active");
@@ -48,4 +50,19 @@ export function updateActiveLink(currentPath = window.location.pathname) {
       link.classList.add("active");
     }
   });
+}
+
+async function handleLogout(event) {
+  event.preventDefault();
+  try {
+    const response = await fetch(api_url + 'auth/logout', {
+      method: 'GET',
+      credentials: credentialsOption,
+    });
+    const response_status = response.status;
+    console.log('Logout response status:', response_status);
+    router('/login');
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
 }

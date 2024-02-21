@@ -4,7 +4,8 @@ import {
   addEventListenerById,
   addEventListenerByClass,
   postData,
-  changeUrlHistory
+  changeUrlHistory,
+  deleteNavbar
 } from "./pageUtils.js";
 
 async function fetch42AuthLink() {

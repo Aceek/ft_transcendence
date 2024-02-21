@@ -8,6 +8,7 @@ import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
 import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
+import { deleteNavbar } from "./pageUtils.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url = "https://" + window.location.hostname + portString + "/api/";
@@ -89,6 +90,7 @@ async function handleAuthenticatedRoutes(path) {
 }
 
 async function handleUnauthenticatedRoutes(path) {
+  deleteNavbar();
   if (await checkOAuthCode()) {
     console.log("User has OAuth code, redirecting to home page");
     router("/home");
