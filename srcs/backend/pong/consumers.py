@@ -35,7 +35,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Depending on your error handling, you might choose to close the connection
             # await self.close()
 
-         # Example: Store a custom user ID or use Django's authenticated user
+        await self.accept()
+
+        # Example: Store a custom user ID or use Django's authenticated user
         self.user_id = str(self.scope["user"].id if self.scope["user"].is_authenticated else "anonymous")
 
         # create a room based on the uid of the game
@@ -43,50 +45,59 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f"pong_room_{self.room_name}"
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            
+        # connected_clients_set_key = f"game:{self.room_name}:connected_users"
 
-        # Attempt to set the flag indicating this consumer should handle the game logic
-        flag_set = await self.redis.setnx("game_logic_flag", "true")
-        if flag_set:
-            # This consumer will handle the game logic
-            self.handle_game_logic = True
-            # Set an expiration time for the flag to avoid stale locks
-            await self.redis.expire("game_logic_flag", 60)  # Expires in 60 seconds
-        else:
-            self.handle_game_logic = False
+        # # Add this user ID to the set of connected users
+        # await self.redis.sadd(connected_clients_set_key, self.user_id)
+        
+        # # Fetch the number of connected clients by checking the set's cardinality
+        # connected_clients = await self.redis.scard(connected_clients_set_key)
 
-        await self.accept()
+        # print("CONSUMER -> check connected : ", self.user_id)
+        # print("CONSUMER -> nb connected : ", connected_clients)
+
+
+        # await self.wait_for_other_player()
+
+
+        await self.attempt_to_acquire_game_logic_control()
+        if self.handle_game_logic:
+            # Two clients are connected and this instance handles game logic
+            game_logic_instance = GameLogic(self.room_name)
+            asyncio.create_task(game_logic_instance.run_game_loop())
+
+        # Fetch game initialization data from Redis
+        await self.send_redis_static_data_to_client()
+        await self.send_redis_dynamic_data_to_client()
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {"type": "start_game"}
+        )
+        # await asyncio.sleep(3)
+        # Start game loop
+        # await self.game_loop()
+    #     pass
+
 
         # await self.channel_layer.group_send(
         #     self.room_group_name, {"type": "game_init", "message": game_init_data}
         # )
 
-        #  send message to verify the connection and player is ready to play
-        await self.channel_layer.group_send(
-            self.room_group_name, {"type": "start_game"}
-        )
+        # #  send message to verify the connection and player is ready to play
+        # await self.channel_layer.group_send(
+        #     self.room_group_name, {"type": "start_game"}
+        # )
 
     async def disconnect(self, close_code):
-        # Change game status to paused
-        print("disconnected")
-        # self.game_status = "paused"
-        # await self.redis.hset(f"game_state:{self.room_name}", "status", "paused")
-        
-        # # Broadcast the game pause to all clients
-        # pause_message = {
-        #     "type": "broadcast_message",
-        #     "message": {
-        #         "type": "game.paused",
-        #         "data": {"reason": "Player disconnected", "gameStatus": self.game_status},
-        #     },
-        # }
-        # await self.channel_layer.group_send(self.room_group_name, pause_message)
-        
-        # Remove this channel from the group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        
+        print("CONSUMER -> DISCONNECT for client : ", self.user_id)
+
         if self.handle_game_logic:
             # Clear the flag as this consumer was responsible for the game logic
             await self.redis.delete("game_logic_flag")
+
+        connected_clients_set_key = f"game:{self.room_name}:connected_users"
+        await self.redis.srem(connected_clients_set_key, self.user_id)
 
         # Optionally, reset the game or handle the disconnection further
         # self.initialize_game()  # Consider when and how to reset game state
@@ -102,20 +113,34 @@ class GameConsumer(AsyncWebsocketConsumer):
             print("Player is ready to play")
             if self.ready_to_play == 2:
                 print("Both players are ready to play")
-                #1 client defined by the redis flag start the game logic loop
-                if self.handle_game_logic:
-                    game_logic_instance = GameLogic(self.room_name)
-                    asyncio.create_task(game_logic_instance.run_game_loop())
-                # Fetch game initialization data from Redis
-                await self.send_redis_static_data_to_client()
-                await self.send_redis_dynamic_data_to_client()
+                # self.ball_launched = True
                 # self.game_status = "ongoing"
-                asyncio.create_task(self.game_loop())
+                await self.game_loop()
 
-        # if data["message"] == "paddle_movement":
-        #     await self.handle_paddle_movement(data, delta_time)
-        # else:
-        #     await self.handle_game_update(delta_time, data)
+    async def attempt_to_acquire_game_logic_control(self):
+        # Attempt to set the flag indicating this consumer should handle the game logic
+        flag_set = await self.redis.setnx("game_logic_flag", "true")
+        if flag_set:
+            # This consumer will handle the game logic
+            self.handle_game_logic = True
+            # Set an expiration time for the flag to avoid stale locks
+            await self.redis.expire("game_logic_flag", 60)  # Expires in 60 seconds
+        else:
+            self.handle_game_logic = False
+
+    async def wait_for_other_player(self):
+        connected_users_set_key = f"game:{self.room_name}:connected_users"
+        # Directly await the completion of the check for other player
+        # with a specified timeout.
+        await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=30.0)
+
+    async def _check_for_other_player(self, connected_users_set_key):
+        while True:
+            connected_users_count = await self.redis.scard(connected_users_set_key)
+            if connected_users_count >= 2:
+                break
+            await asyncio.sleep(0.1)
+
 
     # ----------------------------REDIS TO CLIENT-----------------------------------
 
@@ -123,7 +148,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         static_data_key = f"game:{self.room_name}:static"
         static_data = await self.redis.hgetall(static_data_key)
 
-        print(f"Sending static game data to client: {static_data}")
+        # print(f"Sending static game data to client: {static_data}")
 
         # Directly send the static game data to the frontend
         # Note: The client will need to handle any necessary data parsing
@@ -139,7 +164,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         dynamic_data = await self.redis.hgetall(dynamic_data_key)
 
-        print(f"Sending dynamic game data to client: {dynamic_data}")
+        # print(f"Sending dynamic game data to client: {dynamic_data}")
 
         # Directly send the dynamic game data to the frontend
         # Note: The client will need to handle deserialization of JSON fields
@@ -155,17 +180,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         game_status = await self.redis.hget(dynamic_data_key, "gs")
 
+        # print("CONSUMER --> game status: ", self.game_status)
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
-            print(f"-------Game status fetched from Redis: {self.game_status}")
-        else:
-            print("-------Game status not found in Redis.")
+            # print("EXIT")
 
     # -------------------------------GAME LOOP-----------------------------------
 
     async def game_loop(self):
         last_update_time = time.time()
-        print("------CONSUMERGame loop started")
+        print("CONSUMER -> LOOP STARTED for client : ", self.user_id)
 
         while True:
             # print("Game loop ongoing")
@@ -174,7 +198,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             await self.send_redis_dynamic_data_to_client()
 
-            target_fps = 1
+            target_fps = 30
             target_frame_time = 1.0 / target_fps
             sleep_duration = max(0, target_frame_time - delta_time)
 
@@ -185,8 +209,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             await self.fetch_redis_game_status()
 
-            if self.game_status == GameStatus.COMPLETED:
-                print("------CONSUMERGame loop EXITED")
+            if self.game_status != GameStatus.IN_PROGRESS:
+                print("CONSUMER -> LOOP EXITED for client : ", self.user_id)
                 break
 
 

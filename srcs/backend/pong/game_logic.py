@@ -54,7 +54,7 @@ class GameLogic:
             "ballSize": int(BALL_SIZE),
         }
         await self.redis.hset(static_data_key, mapping=static_data)
-        print(f"-------Initiating static data from Redis: {static_data}") 
+        # print(f"-------Initiating static data from Redis: {static_data}") 
 
     async def update_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -67,14 +67,12 @@ class GameLogic:
             "ball": json.dumps(self.ball),
         }
         await self.redis.hset(dynamic_data_key, mapping=dynamic_data)
-        print(f"-------Update dynamic data from Redis: {dynamic_data}") 
+        # print(f"-------Update dynamic data from Redis: {dynamic_data}") 
     
     async def update_redis_game_status(self, new_status: GameStatus):
         self.game_status = new_status
-        # print(f"-------Game status updated to: {self.game_status}") 
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
-        print(f"-------Game status updated to: {self.game_status}") 
 
     async def fetch_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -96,7 +94,7 @@ class GameLogic:
         # if 'gs' in dynamic_data:
         #     self.game_status = GameStatus(int(dynamic_data["gs"]))
 
-        print(f"-------Fetched dynamic data from Redis: {dynamic_data}")
+        # print(f"-------Fetched dynamic data from Redis: {dynamic_data}")
 
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -104,9 +102,6 @@ class GameLogic:
 
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
-            print(f"-------Game status fetched from Redis: {self.game_status}")
-        else:
-            print("-------Game status not found in Redis.")
 
     # -------------------------------GAME LOOP-----------------------------------
 
@@ -116,10 +111,9 @@ class GameLogic:
         await self.update_redis_dynamic_data()
 
         last_update_time = time.time()
-        self.game_status = GameStatus.IN_PROGRESS
-        # await self.update_redis_game_status(GameStatus.IN_PROGRESS)
-        print("--------GS before loop", self.game_status)
+        await self.update_redis_game_status(GameStatus.IN_PROGRESS)
 
+        print("GAMELOGIC -> LOOP STARTED")
         while True:
             current_time = time.time()
             delta_time = current_time - last_update_time
@@ -127,12 +121,12 @@ class GameLogic:
             await self.fetch_redis_dynamic_data()
             
             self.update_ball_position(delta_time)
-            print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
+            # print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
 
             await self.update_redis_dynamic_data()
 
             # Calculate the sleep duration to achieve 60 FPS
-            target_fps = 1
+            target_fps = 30
             target_frame_time = 1.0 / target_fps
             sleep_duration = max(0, target_frame_time - delta_time)
 
@@ -141,20 +135,24 @@ class GameLogic:
 
             last_update_time = current_time
 
+            # # Check the number of connected players before proceeding
+            # connected_users_set_key = f"game:{self.room_name}:connected_users"
+            # connected_users_count = await self.redis.scard(connected_users_set_key)
+            # if connected_users_count < 2:
+            #     await self.update_redis_game_status(GameStatus.SUSPENDED)
+            #     print("GAMELOGIC -> user below 2", self.game_status)
+
             # await self.fetch_redis_game_status()
-            if self.game_status == GameStatus.COMPLETED:
-                print("Game over. Exiting game loop.")
-                await self.update_redis_game_status(GameStatus.COMPLETED)
-                break  # Exit the loop
+            if self.game_status != GameStatus.IN_PROGRESS:
+                print("GAMELOGIC -> LOOP EXITED status", self.game_status)
+                await self.update_redis_game_status(self.game_status)
+                break
 
 
     # -------------------------------GAME MECHANICS-----------------------------------
 
     def update_ball_position(self, delta_time):
-        print("-------Game status update ball func: ", self.game_status)
         if self.game_status != GameStatus.IN_PROGRESS:
-            # print("ball not launched")
-            print("-------EXIT: ", self.game_status)
             return
 
         # Update ball's position based on its speed and direction
@@ -229,7 +227,6 @@ class GameLogic:
         self.check_game_over()
 
     def check_game_over(self):
-        print(f"-------------Checking game over. Left player score: {self.left_player_score}, Right player score: {self.right_player_score}, Score limit: {self.score_limit}")
         if (
             self.left_player_score >= self.score_limit
             or self.right_player_score >= self.score_limit

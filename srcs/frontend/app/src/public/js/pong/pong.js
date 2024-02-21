@@ -224,7 +224,7 @@ function handleDynamicData(dynamicData) {
 // Main game loop
 function mainLoop() {
   // Log the current game state for debugging
-  console.log("Current game state:", JSON.stringify(game, null, 2));
+  // console.log("Current game state:", JSON.stringify(game, null, 2));
 
   draw();
   requestAnimationFrame(mainLoop);
