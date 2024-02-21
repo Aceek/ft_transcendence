@@ -127,7 +127,6 @@ export function addPrevNextButtons(dataList, container, context, UID = null) {
     button.onclick = onClickFunction;
     return button;
   };
-
   if (dataList.prevPage) {
     const prevButton = createButton("Précédent", () => {
       context.updatePage(context.currentPage - 1, UID);

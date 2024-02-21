@@ -35,7 +35,7 @@ class TournamentView(generics.ListCreateAPIView):
         tournament.save()
 
     def get_queryset(self):
-        return Tournament.objects.get_queryset().order_by("-created_at")
+        return Tournament.objects.filter(is_finished=False).order_by("-created_at")
 
 
 class TournamentJoinView(APIView):
@@ -223,6 +223,7 @@ class TournamentDeleteView(generics.DestroyAPIView):
 class TournamentHistoryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TournamentSerializer
+    pagination_class = CustomPageNumberPagination
 
     def get_queryset(self):
         return Tournament.objects.filter(

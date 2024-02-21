@@ -3,14 +3,18 @@ import {
   getTournamentOwnedList,
   getTournamentHistory,
 } from "../getTournament.js";
-import { addPrevNextButtons, attachLinkListenerProfile } from "../../profile/profileUtils.js";
+import {
+  addPrevNextButtons,
+  attachLinkListenerProfile,
+} from "../../profile/profileUtils.js";
 import { router } from "../../main.js";
 import {
   createJoinButton,
   tounamentContext,
   createDeleteButton,
+  tournamentHistoryContext,
 } from "../getUtils.js";
-import { getProfile} from "../../profile/getProfile.js";
+import { getProfile } from "../../profile/getProfile.js";
 
 export async function injectTournamentList(page = 1) {
   try {
@@ -20,26 +24,24 @@ export async function injectTournamentList(page = 1) {
 
     await Promise.all(
       tournaments.results.map(async (tournament) => {
-        if (!tournament.is_finished) {
-          const li = document.createElement("li");
-          li.classList.add(
-            "list-group-item",
-            "d-flex",
-            "align-items-center",
-            "justify-content-between",
-            "li-item"
-          );
-          const tournamentContent = `
+        const li = document.createElement("li");
+        li.classList.add(
+          "list-group-item",
+          "d-flex",
+          "align-items-center",
+          "justify-content-between",
+          "li-item"
+        );
+        const tournamentContent = `
           <h5 style="text-align: left" class="tournament-name">${tournament.name}</h5>
           <span>Places: ${tournament.place_left}</span>
           <span>${tournament.is_active ? "En cours" : "en attente..."}</span>
           <span>${tournament.is_owner ? "Créateur" : ""}</span>
         `;
-          li.innerHTML = tournamentContent;
-          tournamentListContainer.appendChild(li);
-          if (!tournament.is_owner) {
-            await createJoinButton(tournament, li, tournament.is_joined);
-          }
+        li.innerHTML = tournamentContent;
+        tournamentListContainer.appendChild(li);
+        if (!tournament.is_owner) {
+          await createJoinButton(tournament, li, tournament.is_joined);
         }
       })
     );
@@ -153,16 +155,16 @@ export async function injectJoinedOrOwnTournamentList(joined = true) {
   }
 }
 
-export async function injectTournamentHistory() {
+export async function injectTournamentHistory(page = 1) {
   try {
-    const tournaments = await getTournamentHistory();
+    const tournaments = await getTournamentHistory(page);
     const tournamentsListContainer = document.getElementById(
       "tournament_history_list"
     );
-    
+
     tournamentsListContainer.innerHTML = "";
-    
-    for (const tournament of tournaments) {
+
+    for (const tournament of tournaments.results) {
       const winner = await getProfile(tournament.winner);
       const li = document.createElement("li");
       li.classList.add(
@@ -181,6 +183,7 @@ export async function injectTournamentHistory() {
     }
     attachLinkListenerTournament();
     attachLinkListenerProfile();
+    addPrevNextButtons(tournaments, tournamentsListContainer, tournamentHistoryContext);
   } catch (error) {
     console.error("Error:", error);
   }

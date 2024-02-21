@@ -4,6 +4,7 @@ import { api_url } from "../main.js";
 import {
   injectTournamentList,
   injectJoinedOrOwnTournamentList,
+  injectTournamentHistory,
 } from "./TournamentAll/injectTournamentAll.js";
 import { postData } from "../pageUtils.js";
 import { joinedOrOwnedActive } from "./TournamentAll/tournamentAll.js";
@@ -17,6 +18,16 @@ export const tounamentContext = {
     injectTournamentList(this.currentPage);
   },
 };
+
+export const tournamentHistoryContext = {
+  currentPage: 1,
+  updatePage: function (page) {
+
+    this.currentPage = page;
+    injectTournamentHistory(this.currentPage);
+  },
+};
+
 
 export async function createJoinButton(tournament, li, createOrLeave = false) {
   let text = "Rejoindre";

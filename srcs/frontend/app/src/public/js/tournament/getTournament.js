@@ -44,12 +44,22 @@ export async function getTournamentByUID(tournamentUID) {
   return data;
 }
 
-export async function getTournamentHistory() {
-  const url = `${api_url}play/tournaments/history`;
+export async function getTournamentHistory(page = 1) {
+  const url = `${api_url}play/tournaments/history?page=${page}`;
   const response = await getDataWithToken(url);
   if (!response.ok) {
     throw new Error("Failed to get tournament history");
   }
   const data = await response.json();
-  return data;
+  if (data.results) {
+    return {
+      results: data.results,
+      nextPage: data.next,
+      prevPage: data.previous,
+    };
+  } else {
+    return {
+      results: data,
+    };
+  }
 }
