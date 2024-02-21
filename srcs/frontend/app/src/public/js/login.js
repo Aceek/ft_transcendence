@@ -61,8 +61,12 @@ export async function getLoginPage() {
     const template = await fetchTemplate("/public/html/login-form.html");
     document.getElementById("main").innerHTML = template;
     if (sessionStorage.getItem('register') === 'true') {
-      document.getElementById('info-message').textContent = 'Account successfully created, please validate your email before login in';
+      document.getElementById('info-message').textContent = 'Account successfully created, please validate your email before login in.';
       sessionStorage.removeItem('register');
+    }
+    else if (sessionStorage.getItem('validate') === 'true') {
+      document.getElementById('info-message').textContent = 'Email successfully validated, you can now login !';
+      sessionStorage.removeItem('validate');
     }
     addEventListeners();
   } catch (error) {
@@ -70,12 +74,35 @@ export async function getLoginPage() {
   }
 }
 
+export async function checkEmailVerification() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const uid = urlParams.get("uid");
+  const token = urlParams.get("token");
+
+  if (uid && token) {
+    console.log('the uid and token are: ', uid, token);
+    return fetch(api_url + "mail/validate/" + `?uid=${uid}&token=${token}`, {
+      method: "GET",
+      credentials: credentialsOption,
+    })
+      .then((response) => {
+        console.log('the response for email verif is: ', response.status);
+        return response.status === 200;
+      })
+      .catch((error) => {
+        console.error(error);
+        return false;
+      });
+  }
+  return Promise.resolve(false);
+}
+
 export async function checkOAuthCode() {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
 
   if (code) {
-    changeUrlHistory("/");
+    // changeUrlHistory("/");
     return fetch(api_url + "auth/oauth2/" + `?code=${code}`, {
       method: "GET",
       credentials: credentialsOption,

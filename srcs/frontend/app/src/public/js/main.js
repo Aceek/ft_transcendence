@@ -1,4 +1,4 @@
-import { getLoginPage, checkOAuthCode } from "./login.js";
+import { getLoginPage, checkOAuthCode, checkEmailVerification } from "./login.js";
 import { getHomePage } from "./home/home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./networkUtils.js";
@@ -26,7 +26,7 @@ export async function router(path, updateHistory = true) {
   console.log(`Navigating to path: ${path}`);
 
   if (updateHistory) {
-    history.pushState(null, "", path);
+    history.pushState(null, "", path + window.location.search);
   }
 
   if (await isAPIConnected()) {
@@ -91,6 +91,9 @@ async function handleAuthenticatedRoutes(path) {
 
 async function handleUnauthenticatedRoutes(path) {
   deleteNavbar();
+  if (await checkEmailVerification()) {
+    sessionStorage.setItem('validate', 'true');
+  }
   if (await checkOAuthCode()) {
     console.log("User has OAuth code, redirecting to home page");
     router("/home");
