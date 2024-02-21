@@ -20,6 +20,9 @@ class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.ready_to_play = 0
+        self.game_status = GameStatus.NOT_STARTED
+
     # -------------------------------WEBSOCKET CONNECTION-------------------------
 
     async def connect(self):
@@ -51,14 +54,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             self.handle_game_logic = False
 
-        if self.handle_game_logic:
-            game_logic_instance = GameLogic(self.room_name)
-            asyncio.create_task(game_logic_instance.run_game_loop())
-
-        # Fetch game initialization data from Redis
-        await self.send_redis_static_data_to_client()
-        await self.send_redis_dynamic_data_to_client()
-
         await self.accept()
 
         # await self.channel_layer.group_send(
@@ -70,50 +65,57 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.room_group_name, {"type": "start_game"}
         )
 
-        async def disconnect(self, close_code):
-            # Change game status to paused
-            print("disconnected")
-            # self.game_status = "paused"
-            await self.redis.hset(f"game_state:{self.room_name}", "status", "paused")
-            
-            # # Broadcast the game pause to all clients
-            # pause_message = {
-            #     "type": "broadcast_message",
-            #     "message": {
-            #         "type": "game.paused",
-            #         "data": {"reason": "Player disconnected", "gameStatus": self.game_status},
-            #     },
-            # }
-            # await self.channel_layer.group_send(self.room_group_name, pause_message)
-            
-            # Remove this channel from the group
-            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-            
-            if self.handle_game_logic:
-                # Clear the flag as this consumer was responsible for the game logic
-                await self.redis.delete("game_logic_flag")
+    async def disconnect(self, close_code):
+        # Change game status to paused
+        print("disconnected")
+        # self.game_status = "paused"
+        # await self.redis.hset(f"game_state:{self.room_name}", "status", "paused")
+        
+        # # Broadcast the game pause to all clients
+        # pause_message = {
+        #     "type": "broadcast_message",
+        #     "message": {
+        #         "type": "game.paused",
+        #         "data": {"reason": "Player disconnected", "gameStatus": self.game_status},
+        #     },
+        # }
+        # await self.channel_layer.group_send(self.room_group_name, pause_message)
+        
+        # Remove this channel from the group
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        
+        if self.handle_game_logic:
+            # Clear the flag as this consumer was responsible for the game logic
+            await self.redis.delete("game_logic_flag")
 
-            # Optionally, reset the game or handle the disconnection further
-            # self.initialize_game()  # Consider when and how to reset game state
+        # Optionally, reset the game or handle the disconnection further
+        # self.initialize_game()  # Consider when and how to reset game state
 
 
-        async def receive(self, text_data):
-            data = json.loads(text_data)
+    async def receive(self, text_data):
+        data = json.loads(text_data)
 
-            delta_time = 0.0
+        delta_time = 0.0
 
-            if data["message"] == "ready_to_play":
-                self.ready_to_play += 1
-                print("Player is ready to play")
-                if self.ready_to_play == 2:
-                    print("Both players are ready to play")
-                    # self.ball_launched = True
-                    # self.game_status = "ongoing"
-                    asyncio.create_task(self.game_loop())
-            # if data["message"] == "paddle_movement":
-            #     await self.handle_paddle_movement(data, delta_time)
-            # else:
-            #     await self.handle_game_update(delta_time, data)
+        if data["message"] == "ready_to_play":
+            self.ready_to_play += 1
+            print("Player is ready to play")
+            if self.ready_to_play == 2:
+                print("Both players are ready to play")
+                #1 client defined by the redis flag start the game logic loop
+                if self.handle_game_logic:
+                    game_logic_instance = GameLogic(self.room_name)
+                    asyncio.create_task(game_logic_instance.run_game_loop())
+                # Fetch game initialization data from Redis
+                await self.send_redis_static_data_to_client()
+                await self.send_redis_dynamic_data_to_client()
+                # self.game_status = "ongoing"
+                asyncio.create_task(self.game_loop())
+
+        # if data["message"] == "paddle_movement":
+        #     await self.handle_paddle_movement(data, delta_time)
+        # else:
+        #     await self.handle_game_update(delta_time, data)
 
     # ----------------------------REDIS TO CLIENT-----------------------------------
 
@@ -149,20 +151,30 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
+    async def fetch_redis_game_status(self):
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        game_status = await self.redis.hget(dynamic_data_key, "gs")
+
+        if game_status is not None:
+            self.game_status = GameStatus(int(game_status))
+            print(f"-------Game status fetched from Redis: {self.game_status}")
+        else:
+            print("-------Game status not found in Redis.")
+
     # -------------------------------GAME LOOP-----------------------------------
 
     async def game_loop(self):
         last_update_time = time.time()
-        print("Game loop started")
+        print("------CONSUMERGame loop started")
 
         while True:
             # print("Game loop ongoing")
             current_time = time.time()
             delta_time = current_time - last_update_time
 
-            # await self.send_redis_dynamic_data_to_client()
+            await self.send_redis_dynamic_data_to_client()
 
-            target_fps = 60
+            target_fps = 1
             target_frame_time = 1.0 / target_fps
             sleep_duration = max(0, target_frame_time - delta_time)
 
@@ -170,6 +182,12 @@ class GameConsumer(AsyncWebsocketConsumer):
             await asyncio.sleep(sleep_duration)
 
             last_update_time = current_time
+
+            await self.fetch_redis_game_status()
+
+            if self.game_status == GameStatus.COMPLETED:
+                print("------CONSUMERGame loop EXITED")
+                break
 
 
     # -------------------------------CHANNEL LAYER-----------------------------------

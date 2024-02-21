@@ -85,14 +85,14 @@ class GameLogic:
             self.left_paddle = json.loads(dynamic_data['lp'])
         if 'rp' in dynamic_data:
             self.right_paddle = json.loads(dynamic_data['rp'])
-        if 'ball' in dynamic_data:
-            self.ball = json.loads(dynamic_data['ball'])
+        # if 'ball' in dynamic_data:
+        #     self.ball = json.loads(dynamic_data['ball'])
 
         # Assign other data directly
-        if 'ls' in dynamic_data:
-            self.left_player_score = int(dynamic_data["ls"])
-        if 'rs' in dynamic_data:
-            self.right_player_score = int(dynamic_data["rs"])
+        # if 'ls' in dynamic_data:
+        #     self.left_player_score = int(dynamic_data["ls"])
+        # if 'rs' in dynamic_data:
+        #     self.right_player_score = int(dynamic_data["rs"])
         # if 'gs' in dynamic_data:
         #     self.game_status = GameStatus(int(dynamic_data["gs"]))
 
@@ -121,32 +121,15 @@ class GameLogic:
         print("--------GS before loop", self.game_status)
 
         while True:
-        # while True:
             current_time = time.time()
             delta_time = current_time - last_update_time
             
-            # game_state = await self.redis.hgetall(self.game_state_key)
-            # if game_state["gameStatus"] != "active":
-            #     print("Game not in progress, waiting...")
-            #     await asyncio.sleep(1)  # Wait a bit before checking again
-            #     continue
             await self.fetch_redis_dynamic_data()
             
-            print("-------game status: ", self.game_status)
-            # Update game state logic here
             self.update_ball_position(delta_time)
-
-                # Increment and print the loop counter
-            # print(f"-------score: {self.left_player_score} vs {self.right_player_score}")
             print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
 
             await self.update_redis_dynamic_data()
-            
-            # Example: Echo the updated positions back to all clients
-            # await self.send_game_update(delta_time)
-
-            # Example: Echo the updated positions back to all clients
-            # await self.send_game_update(delta_time)
 
             # Calculate the sleep duration to achieve 60 FPS
             target_fps = 1
@@ -170,9 +153,8 @@ class GameLogic:
     def update_ball_position(self, delta_time):
         print("-------Game status update ball func: ", self.game_status)
         if self.game_status != GameStatus.IN_PROGRESS:
-        # if not self.ball_launched or self.game_status != "active":
             # print("ball not launched")
-            print("-------noGAME: ", self.game_status)
+            print("-------EXIT: ", self.game_status)
             return
 
         # Update ball's position based on its speed and direction
@@ -247,8 +229,6 @@ class GameLogic:
         self.check_game_over()
 
     def check_game_over(self):
-        # print("GO check")
-        # Check if any player has reached the maximum score (10)
         print(f"-------------Checking game over. Left player score: {self.left_player_score}, Right player score: {self.right_player_score}, Score limit: {self.score_limit}")
         if (
             self.left_player_score >= self.score_limit
