@@ -61,22 +61,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         # await self.wait_for_other_player()
 
 
-        await self.attempt_to_acquire_game_logic_control()
-        if self.handle_game_logic:
-            # Two clients are connected and this instance handles game logic
-            game_logic_instance = GameLogic(self.room_name)
-            asyncio.create_task(game_logic_instance.run_game_loop())
-
-        # Fetch game initialization data from Redis
-        await self.send_redis_static_data_to_client()
-        await self.send_redis_dynamic_data_to_client()
-
         await self.channel_layer.group_send(
             self.room_group_name, {"type": "start_game"}
         )
+
+        await self.attempt_to_acquire_game_logic_control()
+
         # await asyncio.sleep(3)
         # Start game loop
-        # await self.game_loop()
+        # await self.game_task = asyncio.create_task(game_loop())
     #     pass
 
 
@@ -90,17 +83,29 @@ class GameConsumer(AsyncWebsocketConsumer):
         # )
 
     async def disconnect(self, close_code):
-        print("CONSUMER -> DISCONNECT for client : ", self.user_id)
-
+        print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
         if self.handle_game_logic:
-            # Clear the flag as this consumer was responsible for the game logic
             await self.redis.delete("game_logic_flag")
+        
+        if hasattr(self, 'game_logic_task') and not self.game_logic_task.done():
+            self.game_logic_task.cancel()
+            try:
+                # Wait for the task to be cancelled
+                # This ensures any cleanup within the task can complete
+                await self.game_logic_task
+            except asyncio.CancelledError:
+                # The task was cancelled, so any necessary cleanup should be done here
+                print(f"Game logic task for {self.user_id} was cancelled.")
 
-        connected_clients_set_key = f"game:{self.room_name}:connected_users"
-        await self.redis.srem(connected_clients_set_key, self.user_id)
-
-        # Optionally, reset the game or handle the disconnection further
-        # self.initialize_game()  # Consider when and how to reset game state
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        # Notify others about the disconnection
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "player_disconnected",
+        #         "user_id": self.user_id
+        #     }
+        # )
 
 
     async def receive(self, text_data):
@@ -110,11 +115,19 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if data["message"] == "ready_to_play":
             self.ready_to_play += 1
-            print("Player is ready to play")
+            print("Player is ready to play : ", self.user_id)
             if self.ready_to_play == 2:
                 print("Both players are ready to play")
-                # self.ball_launched = True
-                # self.game_status = "ongoing"
+               
+                if self.handle_game_logic:
+                    # Two clients are connected and this instance handles game logic
+                    game_logic_instance = GameLogic(self.room_name)
+                    self.game_logic_task = asyncio.create_task(game_logic_instance.run_game_loop())
+
+                # Fetch game initialization data from Redis
+                await self.send_redis_static_data_to_client()
+                await self.send_redis_dynamic_data_to_client()
+                
                 await self.game_loop()
 
     async def attempt_to_acquire_game_logic_control(self):
@@ -128,18 +141,18 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             self.handle_game_logic = False
 
-    async def wait_for_other_player(self):
-        connected_users_set_key = f"game:{self.room_name}:connected_users"
-        # Directly await the completion of the check for other player
-        # with a specified timeout.
-        await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=30.0)
+    # async def wait_for_other_player(self):
+    #     connected_users_set_key = f"game:{self.room_name}:connected_users"
+    #     # Directly await the completion of the check for other player
+    #     # with a specified timeout.
+    #     await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=30.0)
 
-    async def _check_for_other_player(self, connected_users_set_key):
-        while True:
-            connected_users_count = await self.redis.scard(connected_users_set_key)
-            if connected_users_count >= 2:
-                break
-            await asyncio.sleep(0.1)
+    # async def _check_for_other_player(self, connected_users_set_key):
+    #     while True:
+    #         connected_users_count = await self.redis.scard(connected_users_set_key)
+    #         if connected_users_count >= 2:
+    #             break
+            # await asyncio.sleep(0.1)
 
 
     # ----------------------------REDIS TO CLIENT-----------------------------------
@@ -198,7 +211,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             await self.send_redis_dynamic_data_to_client()
 
-            target_fps = 30
+            target_fps = 120
             target_frame_time = 1.0 / target_fps
             sleep_duration = max(0, target_frame_time - delta_time)
 

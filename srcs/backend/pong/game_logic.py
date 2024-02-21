@@ -114,40 +114,44 @@ class GameLogic:
         await self.update_redis_game_status(GameStatus.IN_PROGRESS)
 
         print("GAMELOGIC -> LOOP STARTED")
-        while True:
-            current_time = time.time()
-            delta_time = current_time - last_update_time
-            
-            await self.fetch_redis_dynamic_data()
-            
-            self.update_ball_position(delta_time)
-            # print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
+        try:
+            while True:
+                current_time = time.time()
+                delta_time = current_time - last_update_time
+                
+                await self.fetch_redis_dynamic_data()
+                
+                self.update_ball_position(delta_time)
+                # print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
 
-            await self.update_redis_dynamic_data()
+                await self.update_redis_dynamic_data()
 
-            # Calculate the sleep duration to achieve 60 FPS
-            target_fps = 30
-            target_frame_time = 1.0 / target_fps
-            sleep_duration = max(0, target_frame_time - delta_time)
+                # Calculate the sleep duration to achieve 60 FPS
+                target_fps = 120
+                target_frame_time = 1.0 / target_fps
+                sleep_duration = max(0, target_frame_time - delta_time)
 
-            # Adjust the sleep duration based on the delta time
-            await asyncio.sleep(sleep_duration)
+                # Adjust the sleep duration based on the delta time
+                await asyncio.sleep(sleep_duration)
 
-            last_update_time = current_time
+                last_update_time = current_time
 
-            # # Check the number of connected players before proceeding
-            # connected_users_set_key = f"game:{self.room_name}:connected_users"
-            # connected_users_count = await self.redis.scard(connected_users_set_key)
-            # if connected_users_count < 2:
-            #     await self.update_redis_game_status(GameStatus.SUSPENDED)
-            #     print("GAMELOGIC -> user below 2", self.game_status)
+                # # Check the number of connected players before proceeding
+                # connected_users_set_key = f"game:{self.room_name}:connected_users"
+                # connected_users_count = await self.redis.scard(connected_users_set_key)
+                # if connected_users_count < 2:
+                #     await self.update_redis_game_status(GameStatus.SUSPENDED)
+                #     print("GAMELOGIC -> user below 2", self.game_status)
 
-            # await self.fetch_redis_game_status()
-            if self.game_status != GameStatus.IN_PROGRESS:
-                print("GAMELOGIC -> LOOP EXITED status", self.game_status)
-                await self.update_redis_game_status(self.game_status)
-                break
+                # await self.fetch_redis_game_status()
+                if self.game_status != GameStatus.IN_PROGRESS:
+                    print("GAMELOGIC -> LOOP EXITED status", self.game_status)
+                    await self.update_redis_game_status(self.game_status)
+                    break
 
+        except asyncio.CancelledError:
+            # Perform any necessary cleanup after cancellation
+            print("Game loop was cancelled, cleaning up")
 
     # -------------------------------GAME MECHANICS-----------------------------------
 
