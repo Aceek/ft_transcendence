@@ -8,7 +8,8 @@ import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
 import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
-import { displayPlayPage } from "./play/play.js";
+import { displayPlayPage } from "./tournament/TournamentAll/allTournament.js";
+import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 
 // export const api_url = "http://localhost:8000/api/";
 export const api_url = "https://localhost/api/";
@@ -41,6 +42,7 @@ async function matchRegex(path) {
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
   const pongMatch = path.match(/^\/pong\/([a-zA-Z0-9_-]+)$/);
+  const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
@@ -56,6 +58,10 @@ async function matchRegex(path) {
     const pongID = pongMatch[1];
     console.log("Loading room page with roomID:", pongID);
     await getPongGamePage(pongID);
+    return true;
+  } else if (tournamentMatch) {
+    const tournamentID = tournamentMatch[1];
+    await displayTournamentPage(tournamentID);
     return true;
   }
   return false;

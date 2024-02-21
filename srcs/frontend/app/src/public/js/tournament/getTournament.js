@@ -33,3 +33,13 @@ export async function getTournamentOwnedList() {
   const data = await response.json();
   return data;
 }
+
+export async function getTournamentByUID(tournamentUID) {
+  const url = `${api_url}play/tournaments/${tournamentUID}/retrieve`;
+  const response = await getDataWithToken(url);
+  if (!response.ok) {
+    throw new Error("Failed to get tournament");
+  }
+  const data = await response.json();
+  return data;
+}

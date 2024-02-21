@@ -1,18 +1,20 @@
-import { router } from "../main.js";
-import { fetchTemplate, loadProfileCss } from "../pageUtils.js";
+import { router } from "../../main.js";
+import { fetchTemplate, loadProfileCss } from "../../pageUtils.js";
 import {
   injectTournamentList,
   injectJoinedOrOwnTournamentList,
-} from "./injectPlay.js";
-import { attachSubmitNewTournamentListener } from "./getUtils.js";
+} from "./injectTournament.js";
+import { attachSubmitNewTournamentListener, ReffreshButtonListener } from "../getUtils.js";
 
 export let joinedOrOwnedActive = true;
 
 export async function displayPlayPage() {
   try {
-    const matchmakingHtml = await fetchTemplate("/public/html/play.html");
-    loadProfileCss("/public/css/play.css");
+    const matchmakingHtml = await fetchTemplate("/public/html/tournamentAll.html");
+    loadProfileCss("/public/css/tournamentsAll.css");
     document.getElementById("main").innerHTML = matchmakingHtml;
+
+    await ReffreshButtonListener();
     await injectTournamentList();
     await injectJoinedOrOwnTournamentList(true);
     await handleInjectJoinOrOwnTournament();
@@ -22,6 +24,7 @@ export async function displayPlayPage() {
     router("/home");
   }
 }
+
 
 async function handleInjectJoinOrOwnTournament() {
   const joinTournamentButton = document.getElementById(

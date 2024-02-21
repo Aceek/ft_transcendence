@@ -6,6 +6,7 @@ from .views import (
     TournamentDetailView,
     UserTournamentView,
     UserTournamentOwnerView,
+    TournamentDeleteView,
 )
 
 urlpatterns = [
@@ -36,5 +37,10 @@ urlpatterns = [
         "tournaments/me/owned",
         UserTournamentOwnerView.as_view(),
         name="tournaments-owner",
+    ),
+    path(
+        "tournaments/<uuid:uid>/delete",
+        TournamentDeleteView.as_view(),
+        name="tournaments-delete",
     ),
 ]

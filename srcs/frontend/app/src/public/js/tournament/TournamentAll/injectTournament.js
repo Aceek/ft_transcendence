@@ -1,7 +1,11 @@
-import { getTournamentList, getTournamentOwnedList } from "./getPlay.js";
-import { addPrevNextButtons } from "../profile/profileUtils.js";
-import { router } from "../main.js";
-import { createJoinButton, tounamentContext, createDeleteButton } from "./getUtils.js";
+import { getTournamentList, getTournamentOwnedList } from "../getTournament.js";
+import { addPrevNextButtons } from "../../profile/profileUtils.js";
+import { router } from "../../main.js";
+import {
+  createJoinButton,
+  tounamentContext,
+  createDeleteButton,
+} from "../getUtils.js";
 
 export async function injectTournamentList(page = 1) {
   const tournaments = await getTournamentList(page);
@@ -21,10 +25,14 @@ export async function injectTournamentList(page = 1) {
       const tournamentContent = `
         <h5 style="text-align: left" class="tournament-name">${tournament.name}</h5>
         <span>Places: ${tournament.place_left}</span>
+        <span>${tournament.is_active ? "En cours" : "en attente..."}</span>
+        <span>${tournament.is_owner ? "Créateur" : ""}</span>
     `;
       li.innerHTML = tournamentContent;
       tournamentListContainer.appendChild(li);
-      await createJoinButton(tournament, li, tournament.is_joined);
+      if (!tournament.is_owner) {
+        await createJoinButton(tournament, li, tournament.is_joined);
+      }
     }
   });
   addPrevNextButtons(tournaments, tournamentListContainer, tounamentContext);
@@ -59,11 +67,9 @@ export async function injectJoinedTournamentList() {
         );
 
         const tournamentJoinedContent = `
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-              <h5 style="text-align: left" class="tournament-link" data-uid="${tournament.uid}"><strong>${tournament.name}</strong></h5>
-              <span>Places restantes: ${tournament.place_left}</span>
-              <span>${tournament.is_active ? "En cours" : "en attente..."}</span>
-            </div>
+          <h5 style="text-align: left" class="tournament-link" data-uid="${tournament.uid}"><strong>${tournament.name}</strong></h5>
+          <span>Places: ${tournament.place_left}</span>
+          <span>${tournament.is_active ? "En cours" : "en attente..."}</span>
           `;
         li.innerHTML = tournamentJoinedContent;
         tournamentsListContainer.appendChild(li);
@@ -93,14 +99,13 @@ export async function injectOwnedTournamentList() {
       );
 
       const tournamentOwnedContent = `
-      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-        <h5 style="text-align: left" class="tournament-link" data-uid="${tournament.uid}"><strong>${tournament.name}</strong></h5>
-        <span>Places restantes: ${tournament.place_left}</span>
-        <span>${tournament.is_active ? "En cours" : "en attente..."}</span>
-      </div>
+        <h5 style="text-align: left" class="tournament-link tournament-name" data-uid="${tournament.uid}"><strong>${tournament.name}</strong></h5>
+        <span style="margin-right: 15px;">Places: ${tournament.place_left}</span>
+        <span style="margin-right: 15px;">${tournament.is_active ? "En cours" : "en attente..."}</span>
         `;
       li.innerHTML = tournamentOwnedContent;
       tournamentsListContainer.appendChild(li);
+      await createDeleteButton(tournament, li);
     });
     attachLinkListener();
   } catch (error) {

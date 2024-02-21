@@ -104,14 +104,14 @@ export function loadProfileCss(url) {
     link.href.includes(url)
   );
 
-  // if (!existingLink) {
-  const link = document.createElement("link");
-  link.type = "text/css";
-  link.rel = "stylesheet";
-  link.href = url;
+  if (!existingLink) {
+    const link = document.createElement("link");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    link.href = url;
 
-  head.appendChild(link);
-  // }
+    head.appendChild(link);
+  }
 }
 
 export function changeUrlHistory(pathname) {
