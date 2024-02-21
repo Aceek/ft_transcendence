@@ -28,6 +28,7 @@ function getFormData() {
 
 function handleLoginResponse(response) {
   let errorMessage = document.getElementById("error-message");
+  document.getElementById('info-message').textContent = '';
   if (response.status === 200) {
     errorMessage.textContent = "";
     router("/home");
@@ -59,6 +60,10 @@ export async function getLoginPage() {
   try {
     const template = await fetchTemplate("/public/html/login-form.html");
     document.getElementById("main").innerHTML = template;
+    if (sessionStorage.getItem('register') === 'true') {
+      document.getElementById('info-message').textContent = 'Account successfully created, please validate your email before login in';
+      sessionStorage.removeItem('register');
+    }
     addEventListeners();
   } catch (error) {
     console.error(error);

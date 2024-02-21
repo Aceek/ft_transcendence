@@ -108,6 +108,7 @@ function addEventListeners() {
     let formData = getFormData();
     let response = await postData(api_url + "auth/register/", formData);
     if (response.status === 201) {
+      sessionStorage.setItem('register', 'true');
       router("/login");
     }
   });
