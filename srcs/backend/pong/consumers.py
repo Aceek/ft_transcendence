@@ -66,7 +66,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
         if self.handle_game_logic:
-            await self.redis.delete("game_logic_flag")
+                flag_key = f"game_logic_flag:{self.room_name}"
+                await self.redis.delete(flag_key)
         
         if hasattr(self, 'game_logic_task') and not self.game_logic_task.done():
             self.game_logic_task.cancel()
@@ -116,13 +117,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def attempt_to_acquire_game_logic_control(self):
-        # Attempt to set the flag indicating this consumer should handle the game logic
-        flag_set = await self.redis.setnx("game_logic_flag", "true")
+        flag_key = f"game_logic_flag:{self.room_name}"
+        flag_set = await self.redis.setnx(flag_key, "true")
         if flag_set:
-            # This consumer will handle the game logic
+            # This consumer handles the game logic for the room
             self.handle_game_logic = True
-            # Set an expiration time for the flag to avoid stale locks
-            await self.redis.expire("game_logic_flag", 60)  # Expires in 60 seconds
+            # Optionally, set an expiration time for the flag
+            await self.redis.expire(flag_key, 60)  # Expires in 60 seconds
         else:
             self.handle_game_logic = False
 
