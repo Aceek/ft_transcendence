@@ -1,4 +1,4 @@
-import { getLoginPage, checkOAuthCode } from "./login.js";
+import { getLoginPage, checkOAuthCode, checkEmailVerification } from "./login.js";
 import { getHomePage } from "./home/home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./networkUtils.js";
@@ -29,6 +29,10 @@ export async function router(path, updateHistory = true) {
 
   if (updateHistory) {
     history.pushState(null, "", path + window.location.search);
+  }
+
+  if (await checkEmailVerification()) {
+    sessionStorage.setItem('validate', 'true');
   }
 
   if (await isAPIConnected()) {
@@ -69,6 +73,7 @@ async function matchRegex(path) {
 }
 
 async function handleAuthenticatedRoutes(path) {
+  sessionStorage.removeItem('validate');
   if (await matchRegex(path)) {
   } else {
     switch (path) {

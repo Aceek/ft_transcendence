@@ -5,6 +5,7 @@ import {
   fetchTemplate,
   postData,
   fieldsMatch,
+  changeUrlHistory,
 } from "./pageUtils.js";
 
 function emailMatch() {
@@ -108,6 +109,7 @@ function addEventListeners() {
     let formData = getFormData();
     let response = await postData(api_url + "auth/register/", formData);
     if (response.status === 201) {
+      sessionStorage.setItem('register', 'true');
       router("/login");
     }
   });
@@ -117,6 +119,7 @@ export async function getRegisterPage() {
   try {
     const template = await fetchTemplate("/public/html/register-form.html");
     document.getElementById("main").innerHTML = template;
+    changeUrlHistory("/register");
     addEventListeners();
   } catch (error) {
     console.error("Error:", error);

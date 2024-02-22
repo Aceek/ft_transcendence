@@ -28,6 +28,7 @@ function getFormData() {
 
 function handleLoginResponse(response) {
   let errorMessage = document.getElementById("error-message");
+  document.getElementById('info-message').textContent = '';
   if (response.status === 200) {
     errorMessage.textContent = "";
     router("/home");
@@ -59,10 +60,40 @@ export async function getLoginPage() {
   try {
     const template = await fetchTemplate("/public/html/login-form.html");
     document.getElementById("main").innerHTML = template;
+    if (sessionStorage.getItem('register') === 'true') {
+      document.getElementById('info-message').textContent = 'Account successfully created, please validate your email before login in.';
+      sessionStorage.removeItem('register');
+    }
+    else if (sessionStorage.getItem('validate') === 'true') {
+      document.getElementById('info-message').textContent = 'Email successfully validated, you can now login !';
+      sessionStorage.removeItem('validate');
+    }
+    changeUrlHistory("/login");
     addEventListeners();
   } catch (error) {
     console.error(error);
   }
+}
+
+export async function checkEmailVerification() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const uid = urlParams.get("uid");
+  const token = urlParams.get("token");
+
+  if (uid && token) {
+    return fetch(api_url + "mail/validate/" + `?uid=${uid}&token=${token}`, {
+      method: "GET",
+      credentials: credentialsOption,
+    })
+      .then((response) => {
+        return response.status === 200;
+      })
+      .catch((error) => {
+        console.error(error);
+        return false;
+      });
+  }
+  return Promise.resolve(false);
 }
 
 export async function checkOAuthCode() {
