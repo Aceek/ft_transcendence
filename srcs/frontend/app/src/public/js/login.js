@@ -68,6 +68,7 @@ export async function getLoginPage() {
       document.getElementById('info-message').textContent = 'Email successfully validated, you can now login !';
       sessionStorage.removeItem('validate');
     }
+    changeUrlHistory("/login");
     addEventListeners();
   } catch (error) {
     console.error(error);
@@ -80,13 +81,11 @@ export async function checkEmailVerification() {
   const token = urlParams.get("token");
 
   if (uid && token) {
-    console.log('the uid and token are: ', uid, token);
     return fetch(api_url + "mail/validate/" + `?uid=${uid}&token=${token}`, {
       method: "GET",
       credentials: credentialsOption,
     })
       .then((response) => {
-        console.log('the response for email verif is: ', response.status);
         return response.status === 200;
       })
       .catch((error) => {
@@ -102,7 +101,7 @@ export async function checkOAuthCode() {
   const code = urlParams.get("code");
 
   if (code) {
-    // changeUrlHistory("/");
+    changeUrlHistory("/");
     return fetch(api_url + "auth/oauth2/" + `?code=${code}`, {
       method: "GET",
       credentials: credentialsOption,

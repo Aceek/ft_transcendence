@@ -5,6 +5,7 @@ import {
   fetchTemplate,
   postData,
   fieldsMatch,
+  changeUrlHistory,
 } from "./pageUtils.js";
 
 function emailMatch() {
@@ -118,6 +119,7 @@ export async function getRegisterPage() {
   try {
     const template = await fetchTemplate("/public/html/register-form.html");
     document.getElementById("main").innerHTML = template;
+    changeUrlHistory("/register");
     addEventListeners();
   } catch (error) {
     console.error("Error:", error);
