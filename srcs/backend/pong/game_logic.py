@@ -114,10 +114,12 @@ class GameLogic:
         # Directly await the completion of the check for other player
         # with a specified timeout.
         try:
-            await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=30.0)
+            await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=300.0)
             print("Both players connected.")
+            return True
         except asyncio.TimeoutError:
             print("Timeout reached while waiting for another player.")
+            return False
 
     async def _check_for_other_player(self, connected_users_set_key):
         while True:
@@ -207,7 +209,11 @@ class GameLogic:
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
 
-        await self.wait_for_other_player()
+        players_ready = await self.wait_for_other_player()
+        if not players_ready:
+            print("Not enough players connected. Exiting game loop.")
+            return
+        
         await self.channel_layer.group_send(
             self.room_group_name,
             {

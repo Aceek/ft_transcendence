@@ -62,7 +62,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.handle_game_logic:
             self.game_logic_instance = GameLogic(self.room_name)
             self.game_logic_task = asyncio.create_task(self.game_logic_instance.run_game_loop())
-            print("should have start GAMELOGIC task")
 
     async def disconnect(self, close_code):
         print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
@@ -79,12 +78,19 @@ class GameConsumer(AsyncWebsocketConsumer):
                 # The task was cancelled, so any necessary cleanup should be done here
                 print(f"Game logic task for {self.user_id} was cancelled.")
 
+        # Cancel game_loop_task if it exists and is not done
+        if hasattr(self, 'game_loop_task') and not self.game_loop_task.done():
+            self.game_loop_task.cancel()
+            try:
+                await self.game_loop_task
+            except asyncio.CancelledError:
+                print(f"Game loop task for {self.user_id} was cancelled.")
+
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
         # Remove this user from the set of connected users
         connected_users_set_key = f"game:{self.room_name}:connected_users"
         await self.redis.srem(connected_users_set_key, self.user_id)
-
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-
 
     async def receive(self, text_data):
         data = json.loads(text_data)
