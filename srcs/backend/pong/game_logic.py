@@ -202,9 +202,20 @@ class GameLogic:
         if self.game_status != GameStatus.IN_PROGRESS:
             return
 
-        # Update ball's position based on its speed and direction
-        self.ball["x"] += self.ball["speedX"] * delta_time
-        self.ball["y"] += self.ball["speedY"] * delta_time
+        # Calculate predicted next position
+        next_x = self.ball["x"] + self.ball["speedX"] * delta_time
+        next_y = self.ball["y"] + self.ball["speedY"] * delta_time
+
+        # Check for wall collisions based on predicted position
+        if next_y - self.ball_size / 2 < 0 or next_y + self.ball_size / 2 > self.canvas_height:
+            self.handle_wall_collision()
+            # Adjust ball position to the edge of the wall
+            adjusted_y = max(self.ball_size / 2, min(next_y, self.canvas_height - self.ball_size / 2))
+            self.ball["y"] = adjusted_y
+        else:
+            # No collision, update position normally
+            self.ball["x"] = next_x
+            self.ball["y"] = next_y
 
         self.check_collisions()
         self.check_scoring()

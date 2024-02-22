@@ -256,7 +256,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.static_data',
             'data': data
         }))
-        print("Cstatic data sent")
         
 
     async def game_dynamic_data(self, event):
@@ -266,5 +265,4 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.dynamic_data',
             'data': data
         }))
-        print("Cdynamic data sent")
 
