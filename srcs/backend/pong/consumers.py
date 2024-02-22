@@ -22,6 +22,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         self.ready_to_play = 0
         self.game_status = GameStatus.NOT_STARTED
+        self.paddle_side = None
 
     # -------------------------------WEBSOCKET CONNECTION-------------------------
 
@@ -47,12 +48,27 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
+        left_paddle_key = f"game:{self.room_name}:left_paddle"
+        right_paddle_key = f"game:{self.room_name}:right_paddle"
 
         # Add this user ID to the set of connected users
         await self.redis.sadd(connected_clients_set_key, self.user_id)
         
-        # Fetch the number of connected clients by checking the set's cardinality
+        # Determine paddle assignment based on the number of connected clients
         connected_clients = await self.redis.scard(connected_clients_set_key)
+
+        if connected_clients == 1:
+            # Assign current user to the left paddle if they are the first to connect
+            await self.redis.set(left_paddle_key, self.user_id)
+            self.paddle_side = "left"
+        elif connected_clients == 2:
+            # Assign to right paddle if they are the second, but first check if left paddle is already assigned
+            if not await self.redis.exists(left_paddle_key):
+                await self.redis.set(left_paddle_key, self.user_id)
+                self.paddle_side = "left"
+            else:
+                await self.redis.set(right_paddle_key, self.user_id)
+                self.paddle_side = "right"
 
         print("CONSUMER -> check connected : ", self.user_id)
         print("CONSUMER -> nb connected : ", connected_clients)
@@ -62,6 +78,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.handle_game_logic:
             self.game_logic_instance = GameLogic(self.room_name)
             self.game_logic_task = asyncio.create_task(self.game_logic_instance.run_game_loop())
+
 
     async def disconnect(self, close_code):
         print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
@@ -89,9 +106,18 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
+        connected_clients_set_key = f"game:{self.room_name}:connected_users"
+        left_paddle_key = f"game:{self.room_name}:left_paddle"
+        right_paddle_key = f"game:{self.room_name}:right_paddle"
+        
         # Remove this user from the set of connected users
-        connected_users_set_key = f"game:{self.room_name}:connected_users"
-        await self.redis.srem(connected_users_set_key, self.user_id)
+        await self.redis.srem(connected_clients_set_key, self.user_id)
+        
+        # Remove paddle assignment if this user was assigned a paddle
+        if await self.redis.get(left_paddle_key) == self.user_id:
+            await self.redis.delete(left_paddle_key)
+        elif await self.redis.get(right_paddle_key) == self.user_id:
+            await self.redis.delete(right_paddle_key)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -101,15 +127,17 @@ class GameConsumer(AsyncWebsocketConsumer):
             print("Player is ready to play : ", self.user_id)
             self.game_loop_task = asyncio.create_task(self.game_loop())
 
-
         # Handle "paddle_position_update" message
         elif "type" in data and data["type"] == "paddle_position_update":
             paddle_y = data.get('PaddleY')
             if paddle_y is not None:
                 print(f"Received paddle position update: {paddle_y}")
                 # Update game logic with new paddle position
-                if hasattr(self, 'game_logic_instance'):
-                    await self.game_logic_instance.update_paddle_position('left', paddle_y)
+                if self.paddle_side == "left":
+                    await self.update_redis_paddle_position('left', paddle_y)
+                elif self.paddle_side == "right":
+                    await self.update_redis_paddle_position('right', paddle_y)
+                    print("RIGHTTTTTTTTTTTTTTTTTTTT")
                 else:
                     print("Game logic instance not found or not initialized")
         else:
@@ -127,8 +155,35 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             self.handle_game_logic = False
 
+    # -------------------------------PADLLE UPDATE-----------------------------------
 
+    async def update_redis_paddle_position(self, paddle_side, new_y):
+        """
+        Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate,
+        ensuring it remains within the game bounds and does not exceed the paddle speed limit.
+        """
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        paddle_key = "lp_y" if paddle_side == "left" else "rp_y"
+        
+        # Fetch the current Y position from Redis
+        current_y = await self.redis.hget(dynamic_data_key, paddle_key)
+        current_y = int(current_y) if current_y is not None else 0
+        
+        # Clamp the new Y position within the 0 to game_height range
+        new_y = max(0, min(new_y, SCREEN_HEIGHT- PADDLE_HEIGHT))
+        
+        # Calculate the difference between the new and current position
+        y_diff = abs(new_y - current_y)
+        
+        # Ensure the paddle does not move more than the paddle speed limit
+        if y_diff <= PADDLE_SPEED:
+            await self.redis.hset(dynamic_data_key, paddle_key, int(new_y))
+            print(f"Updated {paddle_side} paddle position to Redis: {new_y}")
+        else:
+            print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
 
+        # # Optionally, send updated game state to all connected clients
+        # await self.send_redis_dynamic_data_to_client()
 
     # ----------------------------REDIS TO CLIENT-----------------------------------
 

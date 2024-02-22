@@ -64,8 +64,8 @@ class GameLogic:
     async def update_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         dynamic_data = {
-            "lp_y": int(self.left_paddle['y']),
-			"rp_y": int(self.right_paddle['y']),
+            # "lp_y": int(self.left_paddle['y']),
+			# "rp_y": int(self.right_paddle['y']),
 			"b_x": int(self.ball['x']),
 			"b_y": int(self.ball['y']),
 			"bs_x": int(self.ball['speedX']),
@@ -79,27 +79,29 @@ class GameLogic:
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
 
-    async def fetch_redis_dynamic_data(self):
+    async def reset_paddle_positions(self):
+        """
+        Reset the paddle positions for both sides to the initial Y coordinate.
+        """
         dynamic_data_key = f"game:{self.room_name}:dynamic"
-        dynamic_data = await self.redis.hgetall(dynamic_data_key)
+        
+        # Reset both paddle positions to the initial Y value
+        await self.redis.hset(dynamic_data_key, "lp_y", INITIAL_PADDLE_Y)
+        await self.redis.hset(dynamic_data_key, "rp_y", INITIAL_PADDLE_Y)
+        
+        print(f"Reset both paddle positions to initial Y: {INITIAL_PADDLE_Y}")
 
-        # Deserialize JSON stored fields
-        if 'lp' in dynamic_data:
-            self.left_paddle = json.loads(dynamic_data['lp'])
-        if 'rp' in dynamic_data:
-            self.right_paddle = json.loads(dynamic_data['rp'])
-        # if 'ball' in dynamic_data:
-        #     self.ball = json.loads(dynamic_data['ball'])
-
-        # Assign other data directly
-        # if 'ls' in dynamic_data:
-        #     self.left_player_score = int(dynamic_data["ls"])
-        # if 'rs' in dynamic_data:
-        #     self.right_player_score = int(dynamic_data["rs"])
-        # if 'gs' in dynamic_data:
-        #     self.game_status = GameStatus(int(dynamic_data["gs"]))
-
-        # print(f"-------Fetched dynamic data from Redis: {dynamic_data}")
+    async def fetch_redis_paddle_pos(self):
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        # Fetch only the lp_y and rp_y fields from Redis
+        lp_y, rp_y = await self.redis.hmget(dynamic_data_key, "lp_y", "rp_y")
+        
+        # Update the Y positions of the paddles if they exist
+        if lp_y is not None:
+            self.left_paddle['y'] = int(lp_y)
+        if rp_y is not None:
+            self.right_paddle['y'] = int(rp_y)
+            # print("updated redis right : ", self.right_paddle['y'])
 
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -164,43 +166,43 @@ class GameLogic:
 
     # -------------------------------PADLLE UPDATE-----------------------------------
 
-    async def update_paddle_position(self, paddle_side, new_y):
-        """
-        Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate,
-        ensuring it remains within the game bounds and does not exceed the paddle speed limit.
-        """
+    # async def update_paddle_position(self, paddle_side, new_y):
+    #     """
+    #     Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate,
+    #     ensuring it remains within the game bounds and does not exceed the paddle speed limit.
+    #     """
         
-        # Clamp the new Y position within the 0 to game_height range
-        new_y = max(0, min(new_y, self.canvas_height - self.paddle_height))
+    #     # Clamp the new Y position within the 0 to game_height range
+    #     new_y = max(0, min(new_y, self.canvas_height - self.paddle_height))
         
-        if paddle_side == 'left':
-            # Calculate the difference between the new and current position
-            y_diff = abs(new_y - self.left_paddle['y'])
+    #     if paddle_side == 'left':
+    #         # Calculate the difference between the new and current position
+    #         y_diff = abs(new_y - self.left_paddle['y'])
             
-            # Ensure the paddle does not move more than the paddle speed limit
-            if y_diff <= self.paddle_speed:
-                self.left_paddle['y'] = new_y
-            else:
-                print("Attempted to move the paddle more than the speed limit.")
+    #         # Ensure the paddle does not move more than the paddle speed limit
+    #         if y_diff <= self.paddle_speed:
+    #             self.left_paddle['y'] = new_y
+    #         else:
+    #             print("Attempted to move the paddle more than the speed limit.")
                 
-        elif paddle_side == 'right':
-            # Calculate the difference between the new and current position
-            y_diff = abs(new_y - self.right_paddle['y'])
+    #     elif paddle_side == 'right':
+    #         # Calculate the difference between the new and current position
+    #         y_diff = abs(new_y - self.right_paddle['y'])
             
-            # Ensure the paddle does not move more than the paddle speed limit
-            if y_diff <= self.paddle_speed:
-                self.right_paddle['y'] = new_y
-            else:
-                print("Attempted to move the paddle more than the speed limit.")
-        else:
-            print(f"Invalid paddle side: {paddle_side}")
-            return
+    #         # Ensure the paddle does not move more than the paddle speed limit
+    #         if y_diff <= self.paddle_speed:
+    #             self.right_paddle['y'] = new_y
+    #         else:
+    #             print("Attempted to move the paddle more than the speed limit.")
+    #     else:
+    #         print(f"Invalid paddle side: {paddle_side}")
+    #         return
 
-        # Update Redis with the new paddle position
-        await self.update_redis_dynamic_data()
+    #     # Update Redis with the new paddle position
+    #     await self.update_redis_dynamic_data()
 
-        # Optionally, send updated game state to all connected clients
-        await self.send_redis_dynamic_data_to_client()
+    #     # Optionally, send updated game state to all connected clients
+    #     await self.send_redis_dynamic_data_to_client()
 
     # -------------------------------GAME LOOP-----------------------------------
 
@@ -208,6 +210,9 @@ class GameLogic:
         await self.connect_to_redis()
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
+        await self.reset_paddle_positions()
+        print("PAD POS")
+        
 
         players_ready = await self.wait_for_other_player()
         if not players_ready:
@@ -234,7 +239,7 @@ class GameLogic:
                 current_time = time.time()
                 delta_time = current_time - last_update_time
                 
-                await self.fetch_redis_dynamic_data()
+                await self.fetch_redis_paddle_pos()
                 
                 self.update_ball_position(delta_time)
                 # print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
