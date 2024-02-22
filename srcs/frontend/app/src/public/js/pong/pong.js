@@ -109,6 +109,8 @@ var game = {
     size: 0,
     x: 0,
     y: 0,
+    speedX: 0,
+    speedY: 0,
   },
   players: {
     left: {
@@ -120,8 +122,8 @@ var game = {
       score: 0,
     },
   },
-  gameStatus: null,
-  userID: null,
+//   gameStatus: null,
+//   userID: null,
 };
 
 function handleStaticData(staticData) {
@@ -146,22 +148,13 @@ function handleStaticData(staticData) {
 
 function handleDynamicData(dynamicData) {
   console.log("Handling dynamic data:", dynamicData);
-
-  // Parse the JSON strings in the dynamic data
-  const ballData = JSON.parse(dynamicData.ball);
-  const leftPaddleData = JSON.parse(dynamicData.lp);
-  const rightPaddleData = JSON.parse(dynamicData.rp);
-
   // Update the game state with parsed dynamic data
-  game.ball.x = ballData.x;
-  game.ball.y = ballData.y;
-  game.ball.speedX = ballData.speedX; // Assuming you want to use speedX and speedY
-  game.ball.speedY = ballData.speedY;
-  game.players.left.paddleY = leftPaddleData.y;
-  game.players.right.paddleY = rightPaddleData.y;
-  game.players.left.score = parseInt(dynamicData.ls, 10);
-  game.players.right.score = parseInt(dynamicData.rs, 10);
-  game.gameStatus = parseInt(dynamicData.gs, 10); // Assuming gs is the game status
+  game.ball.x = parseInt(dynamicData.b_x, 10);
+  game.ball.y = parseInt(dynamicData.b_y, 10);
+  game.ball.speedX = parseInt(dynamicData.bs_x, 10);
+  game.ball.speedY = parseInt(dynamicData.bs_y, 10);
+  game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
+  game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
 
   // Log the updated game state for debugging
   console.log("Updated game state with dynamic data:", game);

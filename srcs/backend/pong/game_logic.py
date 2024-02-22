@@ -59,12 +59,12 @@ class GameLogic:
     async def update_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         dynamic_data = {
-            # "gs": int(self.game_status.value),
-            "ls": int(self.left_player_score),
-            "rs": int(self.right_player_score),
-            "lp": json.dumps(self.left_paddle),
-            "rp": json.dumps(self.right_paddle),
-            "ball": json.dumps(self.ball),
+            "lp_y": int(self.left_paddle['y']),
+			"rp_y": int(self.right_paddle['y']),
+			"b_x": int(self.ball['x']),
+			"b_y": int(self.ball['y']),
+			"bs_x": int(self.ball['speedX']),
+			"bs_y": int(self.ball['speedY']),
         }
         await self.redis.hset(dynamic_data_key, mapping=dynamic_data)
         # print(f"-------Update dynamic data from Redis: {dynamic_data}") 
