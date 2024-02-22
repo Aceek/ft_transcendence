@@ -29,6 +29,10 @@ export async function router(path, updateHistory = true) {
     history.pushState(null, "", path + window.location.search);
   }
 
+  if (await checkEmailVerification()) {
+    sessionStorage.setItem('validate', 'true');
+  }
+
   if (await isAPIConnected()) {
     await injectNavBar();
     handleAuthenticatedRoutes(path);
@@ -62,6 +66,7 @@ async function matchRegex(path) {
 }
 
 async function handleAuthenticatedRoutes(path) {
+  sessionStorage.removeItem('validate');
   if (await matchRegex(path)) {
   } else {
     switch (path) {
@@ -91,9 +96,6 @@ async function handleAuthenticatedRoutes(path) {
 
 async function handleUnauthenticatedRoutes(path) {
   deleteNavbar();
-  if (await checkEmailVerification()) {
-    sessionStorage.setItem('validate', 'true');
-  }
   if (await checkOAuthCode()) {
     console.log("User has OAuth code, redirecting to home page");
     router("/home");
