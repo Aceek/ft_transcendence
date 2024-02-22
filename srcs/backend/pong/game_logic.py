@@ -146,12 +146,32 @@ class GameLogic:
 
     async def update_paddle_position(self, paddle_side, new_y):
         """
-        Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate.
+        Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate,
+        ensuring it remains within the game bounds and does not exceed the paddle speed limit.
         """
+        
+        # Clamp the new Y position within the 0 to game_height range
+        new_y = max(0, min(new_y, self.canvas_height - self.paddle_height))
+        
         if paddle_side == 'left':
-            self.left_paddle['y'] = new_y
+            # Calculate the difference between the new and current position
+            y_diff = abs(new_y - self.left_paddle['y'])
+            
+            # Ensure the paddle does not move more than the paddle speed limit
+            if y_diff <= self.paddle_speed:
+                self.left_paddle['y'] = new_y
+            else:
+                print("Attempted to move the paddle more than the speed limit.")
+                
         elif paddle_side == 'right':
-            self.right_paddle['y'] = new_y
+            # Calculate the difference between the new and current position
+            y_diff = abs(new_y - self.right_paddle['y'])
+            
+            # Ensure the paddle does not move more than the paddle speed limit
+            if y_diff <= self.paddle_speed:
+                self.right_paddle['y'] = new_y
+            else:
+                print("Attempted to move the paddle more than the speed limit.")
         else:
             print(f"Invalid paddle side: {paddle_side}")
             return
