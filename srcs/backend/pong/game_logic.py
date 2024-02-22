@@ -6,12 +6,17 @@ import asyncio
 import time
 import math
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from .game_config import *
 from .game_status import GameStatus
 
 class GameLogic:
     def __init__(self, room_name):
         self.room_name = room_name
+        self.room_group_name = f'pong_room_{room_name}'
+        self.channel_layer = get_channel_layer()
         self.game_state_key = f"game_state:{room_name}"
        
         #---CONSTANT VAR---
@@ -102,6 +107,40 @@ class GameLogic:
 
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
+            
+         # ----------------------------REDIS TO CLIENT-----------------------------------
+
+    async def send_redis_static_data_to_client(self):
+        static_data_key = f"game:{self.room_name}:static"
+        static_data = await self.redis.hgetall(static_data_key)
+
+        # print(f"Sending static game data to client: {static_data}")
+
+        # Directly send the static game data to the frontend
+        # Note: The client will need to handle any necessary data parsing
+        await self.channel_layer.group_send(
+            self.room_group_name, 
+            {
+                "type": "game.static_data", 
+                "data": static_data  # Sending the Redis hash map as is
+            }
+        )
+
+    async def send_redis_dynamic_data_to_client(self):
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        dynamic_data = await self.redis.hgetall(dynamic_data_key)
+
+        # print(f"wSending dynamic game data to client: {dynamic_data}")
+
+        # Directly send the dynamic game data to the frontend
+        # Note: The client will need to handle deserialization of JSON fields
+        await self.channel_layer.group_send(
+            self.room_group_name, 
+            {
+                "type": "game.dynamic_data", 
+                "data": dynamic_data  # Sending the Redis hash map as is
+            }
+        )
 
     # -------------------------------GAME LOOP-----------------------------------
 
@@ -109,6 +148,9 @@ class GameLogic:
         await self.connect_to_redis()
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
+        await self.send_redis_static_data_to_client()
+        await self.send_redis_dynamic_data_to_client()
+
 
         last_update_time = time.time()
         await self.update_redis_game_status(GameStatus.IN_PROGRESS)
@@ -125,9 +167,10 @@ class GameLogic:
                 # print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
 
                 await self.update_redis_dynamic_data()
+                await self.send_redis_dynamic_data_to_client()
 
                 # Calculate the sleep duration to achieve 60 FPS
-                target_fps = 120
+                target_fps = 60
                 target_frame_time = 1.0 / target_fps
                 sleep_duration = max(0, target_frame_time - delta_time)
 

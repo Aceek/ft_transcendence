@@ -114,21 +114,20 @@ class GameConsumer(AsyncWebsocketConsumer):
         delta_time = 0.0
 
         if data["message"] == "ready_to_play":
-            self.ready_to_play += 1
+            # self.ready_to_play += 1
             print("Player is ready to play : ", self.user_id)
-            if self.ready_to_play == 2:
-                print("Both players are ready to play")
+            # if self.ready_to_play == 2:
+            #     print("Both players are ready to play")
                
-                if self.handle_game_logic:
-                    # Two clients are connected and this instance handles game logic
-                    game_logic_instance = GameLogic(self.room_name)
-                    self.game_logic_task = asyncio.create_task(game_logic_instance.run_game_loop())
+            if self.handle_game_logic:
+            # Two clients are connected and this instance handles game logic
+                self.game_logic_instance = GameLogic(self.room_name)
+                self.game_logic_task = asyncio.create_task( self.game_logic_instance.run_game_loop())
 
                 # Fetch game initialization data from Redis
-                await self.send_redis_static_data_to_client()
-                await self.send_redis_dynamic_data_to_client()
-                
-                await self.game_loop()
+                # await self.send_redis_static_data_to_client()
+                # await self.send_redis_dynamic_data_to_client()
+            self.game_loop_task =  asyncio.create_task(self.game_loop())
 
     async def attempt_to_acquire_game_logic_control(self):
         # Attempt to set the flag indicating this consumer should handle the game logic
@@ -157,37 +156,43 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # ----------------------------REDIS TO CLIENT-----------------------------------
 
-    async def send_redis_static_data_to_client(self):
-        static_data_key = f"game:{self.room_name}:static"
-        static_data = await self.redis.hgetall(static_data_key)
+    # async def send_redis_static_data_to_client(self):
+    #     static_data_key = f"game:{self.room_name}:static"
+    #     static_data = await self.redis.hgetall(static_data_key)
 
-        # print(f"Sending static game data to client: {static_data}")
+    #     # print(f"Sending static game data to client: {static_data}")
+        
+    #     static_data_str = json.dumps({"type": "game.static_data", "data": static_data})
+    #     await self.send(text_data=static_data_str)
 
-        # Directly send the static game data to the frontend
-        # Note: The client will need to handle any necessary data parsing
-        await self.channel_layer.group_send(
-            self.room_group_name, 
-            {
-                "type": "game.static_data", 
-                "data": static_data  # Sending the Redis hash map as is
-            }
-        )
+    #     # Directly send the static game data to the frontend
+    #     # Note: The client will need to handle any necessary data parsing
+    #     # await self.channel_layer.group_send(
+    #     #     self.room_group_name, 
+    #     #     {
+    #     #         "type": "game.static_data", 
+    #     #         "data": static_data  # Sending the Redis hash map as is
+    #     #     }
+    #     # )
 
-    async def send_redis_dynamic_data_to_client(self):
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        dynamic_data = await self.redis.hgetall(dynamic_data_key)
+    # async def send_redis_dynamic_data_to_client(self):
+    #     dynamic_data_key = f"game:{self.room_name}:dynamic"
+    #     dynamic_data = await self.redis.hgetall(dynamic_data_key)
 
-        # print(f"Sending dynamic game data to client: {dynamic_data}")
+    #     print(f"Sending dynamic game data to client: {dynamic_data}")
+        
+    #     dynamic_data_str = json.dumps({"type": "game.dynamic_data", "data": dynamic_data})
+    #     await self.send(text_data=dynamic_data_str)
 
-        # Directly send the dynamic game data to the frontend
-        # Note: The client will need to handle deserialization of JSON fields
-        await self.channel_layer.group_send(
-            self.room_group_name, 
-            {
-                "type": "game.dynamic_data", 
-                "data": dynamic_data  # Sending the Redis hash map as is
-            }
-        )
+    #     # Directly send the dynamic game data to the frontend
+    #     # Note: The client will need to handle deserialization of JSON fields
+    #     # await self.channel_layer.group_send(
+    #     #     self.room_group_name, 
+    #     #     {
+    #     #         "type": "game.dynamic_data", 
+    #     #         "data": dynamic_data  # Sending the Redis hash map as is
+    #     #     }
+    #     # )
 
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -209,9 +214,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             current_time = time.time()
             delta_time = current_time - last_update_time
 
-            await self.send_redis_dynamic_data_to_client()
+            # await self.send_redis_dynamic_data_to_client()
 
-            target_fps = 120
+            target_fps = 60
             target_frame_time = 1.0 / target_fps
             sleep_duration = max(0, target_frame_time - delta_time)
 
@@ -251,6 +256,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.static_data',
             'data': data
         }))
+        print("Cstatic data sent")
+        
 
     async def game_dynamic_data(self, event):
         # Logic to handle dynamic data message
@@ -259,4 +266,5 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.dynamic_data',
             'data': data
         }))
+        print("Cdynamic data sent")
 
