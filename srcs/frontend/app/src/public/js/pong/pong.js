@@ -40,9 +40,9 @@ socket.onmessage = function (event) {
     case "game.dynamic_data":
       handleDynamicData(data.data); // Handle dynamic game data
       break;
-    case "start_game":
-      socket.send(JSON.stringify({ type: "start_game", message: "ready_to_play" }));
-      break;
+    // case "start_game":
+    //   socket.send(JSON.stringify({ type: "start_game", message: "ready_to_play" }));
+    //   break;
     default:
       console.log("Unknown message type:", data.type);
   }

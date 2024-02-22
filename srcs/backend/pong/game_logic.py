@@ -107,6 +107,24 @@ class GameLogic:
 
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
+
+    async def wait_for_other_player(self):
+        connected_users_set_key = f"game:{self.room_name}:connected_users"
+        print(f"Waiting for other players in room: {self.room_name}")
+        # Directly await the completion of the check for other player
+        # with a specified timeout.
+        try:
+            await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=30.0)
+            print("Both players connected.")
+        except asyncio.TimeoutError:
+            print("Timeout reached while waiting for another player.")
+
+    async def _check_for_other_player(self, connected_users_set_key):
+        while True:
+            connected_users_count = await self.redis.scard(connected_users_set_key)
+            if connected_users_count >= 2:
+                break
+            await asyncio.sleep(0.1)
             
          # ----------------------------REDIS TO CLIENT-----------------------------------
 
@@ -188,6 +206,15 @@ class GameLogic:
         await self.connect_to_redis()
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
+
+        await self.wait_for_other_player()
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "send_start_game_message",  # This corresponds to a handler in your consumer
+            }
+        )
+
         await self.send_redis_static_data_to_client()
         await self.send_redis_dynamic_data_to_client()
 
