@@ -31,7 +31,7 @@ socket.onopen = function (event) {
 
 socket.onmessage = function (event) {
   var data = JSON.parse(event.data);
-  console.log("WebSocket message received:", data);
+//   console.log("WebSocket message received:", data);
 
   switch (data.type) {
     case "game.static_data":
@@ -127,7 +127,7 @@ var game = {
 };
 
 function handleStaticData(staticData) {
-  console.log("Received static data:", staticData);
+//   console.log("Received static data:", staticData);
 
   // Parse static game settings
   game.paddle.width = parseInt(staticData.paddleWidth, 10);
@@ -143,11 +143,11 @@ function handleStaticData(staticData) {
   game.paddle.speed = parseInt(staticData.paddleSpeed, 10);
 
   // Log the updated game settings for debugging
-  console.log("Static game settings parsed and updated:", game);
+//   console.log("Static game settings parsed and updated:", game);
 }
 
 function handleDynamicData(dynamicData) {
-  console.log("Handling dynamic data:", dynamicData);
+//   console.log("Handling dynamic data:", dynamicData);
   // Update the game state with parsed dynamic data
   game.ball.x = parseInt(dynamicData.b_x, 10);
   game.ball.y = parseInt(dynamicData.b_y, 10);
@@ -157,7 +157,7 @@ function handleDynamicData(dynamicData) {
   game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
 
   // Log the updated game state for debugging
-  console.log("Updated game state with dynamic data:", game);
+//   console.log("Updated game state with dynamic data:", game);
 }
 
 // function initializeGame(data) {
@@ -214,17 +214,48 @@ function handleDynamicData(dynamicData) {
 
 //----------------------GAME LOOP-----------------------------------------
 
-// Main game loop
-function mainLoop() {
-  // Log the current game state for debugging
-  // console.log("Current game state:", JSON.stringify(game, null, 2));
+// // Main game loop
+// function mainLoop() {
+//   // Log the current game state for debugging
+//   // console.log("Current game state:", JSON.stringify(game, null, 2));
 
-  draw();
+//   draw();
+//   requestAnimationFrame(mainLoop);
+// }
+
+// // Start the main game loop
+// mainLoop();
+
+let lastUpdateTime = 0;
+const fps = 1000;
+const frameDuration = 1000 / fps;
+
+function interpolatePosition(lastPosition, speed, deltaTime) {
+  // Calculate and return the new position based on the speed and the delta time
+  return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
+}
+
+function mainLoop(timestamp) {
+  // Calculate the delta time since the last frame
+  const deltaTime = timestamp - lastUpdateTime;
+  
+  if (deltaTime > frameDuration) {
+    // Calculate the interpolated positions
+    game.ball.x = interpolatePosition(game.ball.x, game.ball.speedX, deltaTime);
+    game.ball.y = interpolatePosition(game.ball.y, game.ball.speedY, deltaTime);
+    
+    draw(); // Draw the frame with the interpolated positions
+    
+    lastUpdateTime = timestamp - (deltaTime % frameDuration); // Adjust for any overshoot of the frame duration
+  }
+  
+// Log the ball's position
+console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}`);
+
   requestAnimationFrame(mainLoop);
 }
 
-// Start the main game loop
-mainLoop();
+requestAnimationFrame(mainLoop); // Start the game loop
 
 //----------------------DRAWING-----------------------------------------
 
