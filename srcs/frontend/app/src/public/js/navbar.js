@@ -5,7 +5,6 @@ import { getProfile } from "./profile/getProfile.js";
 export async function injectNavBar() {
   loadProfileCss("/public/css/navbar.css");
   if (document.getElementById("navbar")) {
-    console.log("La barre de navigation est déjà chargée.");
     return;
   }
   try {

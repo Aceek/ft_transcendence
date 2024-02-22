@@ -6,6 +6,8 @@ import {
   friendContext,
 } from "./profileUtils.js";
 import { createButtonFriend } from "./profileFriends.js";
+import { attachLinkListenerProfile } from "./profileUtils.js";
+
 
 export function injectFriendsSearsh() {
   const friendListCol = document.getElementById("friends-list-col");
@@ -28,7 +30,7 @@ async function displayUsersInSearch(usersInSearch) {
   if (usersInSearch.length > 5) {
     usersInSearch = usersInSearch.slice(0, 5);
   }
-  await usersInSearch.forEach(async (user) => {
+  await Promise.all(usersInSearch.map(async (user) => {
     const listItem = document.createElement("li");
     listItem.className =
       "list-group-item d-flex align-items-center justify-content-between";
@@ -37,14 +39,15 @@ async function displayUsersInSearch(usersInSearch) {
       <div class="friend-info d-flex align-items-center">
         <img src="${user.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${user.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
-          <a href="/profile/${user.id}"><strong>${user.username}</strong></a>
+          <span class="profile-link" data-uid="${user.id}"><strong>${user.username}</strong></span>
           <span class="text-success ms-2">• En ligne</span>
         </div>
       </div>
     `;
-    addRemoveorAddButton(listItem, user.id);
+    await addRemoveorAddButton(listItem, user.id);
     friendsList.appendChild(listItem);
-  });
+  }));
+  await attachLinkListenerProfile();
 }
 
 async function addRemoveorAddButton(listItem, userUID) {

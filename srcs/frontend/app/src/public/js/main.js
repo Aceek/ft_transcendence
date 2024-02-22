@@ -9,6 +9,8 @@ import { injectNavBar, updateActiveLink } from "./navbar.js";
 import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
+import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
+import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url = "https://" + window.location.hostname + portString + "/api/";
@@ -26,7 +28,7 @@ export async function router(path, updateHistory = true) {
   console.log(`Navigating to path: ${path}`);
 
   if (updateHistory) {
-    history.pushState(null, "", path);
+    history.pushState(null, "", path + window.location.search);
   }
 
   if (await isAPIConnected()) {
@@ -41,6 +43,7 @@ async function matchRegex(path) {
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
   const pongMatch = path.match(/^\/pong\/([a-zA-Z0-9_-]+)$/);
+  const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
@@ -56,6 +59,10 @@ async function matchRegex(path) {
     const pongID = pongMatch[1];
     console.log("Loading room page with roomID:", pongID);
     await getPongGamePage(pongID);
+    return true;
+  } else if (tournamentMatch) {
+    const tournamentID = tournamentMatch[1];
+    await displayTournamentPage(tournamentID);
     return true;
   }
   return false;
@@ -79,6 +86,10 @@ async function handleAuthenticatedRoutes(path) {
       case "/matchmaking":
         console.log("Loading matchmaking page");
         await displayMatchmaking();
+        break;
+      case "/play":
+        console.log("Loading play page");
+        await displayPlayPage();
         break;
       default:
         path = "/home";

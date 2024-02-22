@@ -19,21 +19,25 @@ export async function getFriendList(page = 1) {
   if (page === 0) {
     url = `${api_url}users/friends`;
   }
-  const response = await getDataWithToken(url);
-  if (!response.ok) {
-    throw new Error("Failed to get friend list");
-  }
-  const data = await response.json();
-  if (data.results) {
-    return {
-      results: data.results,
-      nextPage: data.next,
-      prevPage: data.previous,
-    };
-  } else {
-    return {
-      results: data,
-    };
+  try {
+    const response = await getDataWithToken(url);
+    if (!response.ok) {
+      throw new Error("Failed to get friend list");
+    }
+    const data = await response.json();
+    if (data.results) {
+      return {
+        results: data.results,
+        nextPage: data.next,
+        prevPage: data.previous,
+      };
+    } else {
+      return {
+        results: data,
+      };
+    }
+  } catch (error) {
+    console.error("Error:", error);
   }
 }
 

@@ -1,0 +1,77 @@
+<div id="mainContainerTournament" class="container">
+  <div class="main-body">
+    <div id="tournament_list_div" class="col-md-12 col-lg-12">
+      <div class="card mb-3">
+        <div class="card-body">
+          <button class="btn btn-primary" id="refresh_button" type="button">Reffresh Tournament</button>
+          <h3>Tournoi en cours</h3>
+          <ul id="tournament_list" class="list-group list-group-flush">
+            <!-- inject tournois en cours -->
+          </ul>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div id="create-tournament" class="row gutters-sm">
+      <div id="tournament-div" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Organiser un tournoi</h3>
+            <form id="tournament-form">
+              <!-- Nom du tournoi -->
+              <div class="form-group">
+                <label for="tournament_name_input">Nom du tournoi</label>
+                <input type="text" class="form-control" id="tournament_name_input" name="tournamentName" required
+                  placeholder="Entrez le nom du tournoi">
+              </div>
+
+              <!-- Sélection du nombre de joueurs -->
+              <div class="form-group">
+                <label for="number-of-players">Sélection du nombre de joueurs</label>
+                <select class="form-control" id="number-of-players" name="numberOfPlayers" required>
+                  <option value="">Sélectionnez le nombre de joueurs</option>
+                  <option value="3">3 joueurs</option>
+                  <option value="4">4 joueurs</option>
+                  <option value="5">5 joueurs</option>
+                  <option value="6">6 joueurs</option>
+                  <option value="7">7 joueurs</option>
+                  <option value="8">8 joueurs</option>
+                </select>
+              </div>
+            </form>
+            <hr>
+
+            <!-- Bouton de soumission -->
+            <button id="submit_new_tournament" class="btn btn-primary">Créer le tournoi</button>
+            <ul class="list-group list-group-flush">
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div id="tournament_joined_list_div" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Tournoi rejoins : </h3>
+            <button class="btn btn-primary" id="joined_tournament_button" type="button">Joined</button>
+            <button class="btn btn-primary" id="owner_tournament_button" type="button">Owned</button>
+            <ul id="tournament_joined_list_own" class="list-group list-group-flush">
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="history_tournament_played" class="row gutters-sm">
+      <div id="tournament_history_list_div" class="col-md-12 col-lg-12">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Historique des tournois joués</h3>
+            <ul id="tournament_history_list" class="list-group list-group-flush">
+              <!-- inject tournois en cours -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

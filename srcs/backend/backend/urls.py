@@ -39,4 +39,6 @@ urlpatterns = [
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 	path("api/pong/", include('pong.urls')),
+  
+    path("api/play/", include("tournament.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
