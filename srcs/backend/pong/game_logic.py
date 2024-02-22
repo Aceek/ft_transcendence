@@ -142,6 +142,26 @@ class GameLogic:
             }
         )
 
+    # -------------------------------PADLLE UPDATE-----------------------------------
+
+    async def update_paddle_position(self, paddle_side, new_y):
+        """
+        Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate.
+        """
+        if paddle_side == 'left':
+            self.left_paddle['y'] = new_y
+        elif paddle_side == 'right':
+            self.right_paddle['y'] = new_y
+        else:
+            print(f"Invalid paddle side: {paddle_side}")
+            return
+
+        # Update Redis with the new paddle position
+        await self.update_redis_dynamic_data()
+
+        # Optionally, send updated game state to all connected clients
+        await self.send_redis_dynamic_data_to_client()
+
     # -------------------------------GAME LOOP-----------------------------------
 
     async def run_game_loop(self):

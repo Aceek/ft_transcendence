@@ -54,15 +54,25 @@ socket.onclose = function (event) {
 
 //----------------------EVENT LISTENERS-----------------------------------------
 
-let leftPaddleState = {
-  up: false,
-  down: false,
-};
+// Global variables to track the last sent paddle positions
+let lastSentPaddleY = null;
 
-let rightPaddleState = {
-  up: false,
-  down: false,
-};
+// Function to handle paddle movements and send updates to the server
+function sendPaddlePositionUpdate() {
+    // Check if there's a significant change in paddle positions
+    if (game.players.left.paddleY !== lastSentPaddleY) {
+        // Update last sent positions
+        lastSentPaddleY = game.players.left.paddleY;
+
+        // Send updated positions to the server
+        socket.send(JSON.stringify({
+            type: "paddle_position_update",
+            PaddleY: game.players.left.paddleY,
+        }));
+
+        console.log("Paddle positions sent:", lastSentPaddleY);
+    }
+}
 
 // Event listeners for key presses
 document.addEventListener("keydown", function (event) {
@@ -76,26 +86,17 @@ document.addEventListener("keyup", function (event) {
 });
 
 function handleKeyPress(key, isPressed) {
-  // Update the corresponding paddle state based on the pressed key
-  if (key === "w") {
-    leftPaddleState.up = isPressed;
-  } else if (key === "s") {
-    leftPaddleState.down = isPressed;
-  } else if (key === "ArrowUp") {
-    rightPaddleState.up = isPressed;
-  } else if (key === "ArrowDown") {
-    rightPaddleState.down = isPressed;
-  }
+    // Determine the change in position
+    let change = game.paddle.speed * (isPressed ? 1 : 0); // Adjust speed based on key state
 
-  // Send WebSocket messages for paddle movements
-  console.log("Sending paddle movements:", leftPaddleState, rightPaddleState);
-  socket.send(
-    JSON.stringify({
-      message: "paddle_movement",
-      leftPaddleState: leftPaddleState,
-      rightPaddleState: rightPaddleState,
-    })
-  );
+    // Update paddle position based on the key pressed
+    if (key === "ArrowUp") {
+        game.players.left.paddleY -= change;
+        sendPaddlePositionUpdate(); // Send position update
+    } else if (key === "ArrowDown") {
+        game.players.left.paddleY += change;
+        sendPaddlePositionUpdate(); // Send position update
+    }
 }
 
 //----------------------DATA INITALIZATION---------------------------------------
@@ -160,58 +161,6 @@ function handleDynamicData(dynamicData) {
 //   console.log("Updated game state with dynamic data:", game);
 }
 
-// function initializeGame(data) {
-//   // Initialize the game state using the received data
-//   game.paddle.width = data.paddleWidth;
-//   game.paddle.height = data.paddleHeight;
-//   game.ball.size = data.ballSize;
-//   game.players.left.paddleY = data.initialLeftPaddleY;
-//   game.players.right.paddleY = data.initialRightPaddleY;
-//   game.ball.x = data.initialBallPosition.x;
-//   game.ball.y = data.initialBallPosition.y;
-//   game.players.left.score = data.initialLeftPlayerScore;
-//   game.players.right.score = data.initialRightPlayerScore;
-//   game.gameStatus = data.gameStatus;
-// }
-
-//----------------------GAME UPDATE-----------------------------------------
-
-// function handleGameUpdate(data) {
-//   // Update paddle positions based on server information
-//   game.players.left.paddleY = data.leftPaddleY;
-//   game.players.right.paddleY = data.rightPaddleY;
-
-//   // Update ball position based on server information
-//   game.ball.x = data.ball.x;
-//   game.ball.y = data.ball.y;
-
-//   // Update scores
-//   game.players.left.score = data.leftPlayerScore;
-//   game.players.right.score = data.rightPlayerScore;
-// }
-
-// function handleGameState(gameState) {
-//   // console.log("Handling game state:", gameState);
-  
-//   // Deserialize the 'ball' field if it was serialized as a string
-//   if (typeof gameState.ball === "string") {
-//     gameState.ball = JSON.parse(gameState.ball);
-//   }
-
-//   // Update the game state with the received data
-//   game.players.left.score = parseInt(gameState.lpS, 10);
-//   game.players.left.paddleY = parseInt(gameState.lpY, 10);
-//   game.players.right.score = parseInt(gameState.rpS, 10);
-//   game.players.right.paddleY = parseInt(gameState.rpY, 10);
-//   game.ball.x = gameState.ball.x;
-//   game.ball.y = gameState.ball.y;
-//   game.gameStatus = gameState.gS;
-//   game.userID = gameState.user_id;
-
-  // Log the updated game state for debugging
-  // console.log("Updated game state:", game);
-
-
 //----------------------GAME LOOP-----------------------------------------
 
 // // Main game loop
@@ -250,7 +199,7 @@ function mainLoop(timestamp) {
   }
   
 // Log the ball's position
-console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}`);
+// console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}`);
 
   requestAnimationFrame(mainLoop);
 }

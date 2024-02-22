@@ -111,23 +111,27 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
 
-        delta_time = 0.0
-
-        if data["message"] == "ready_to_play":
-            # self.ready_to_play += 1
+        # Handle "ready_to_play" message
+        if "message" in data and data["message"] == "ready_to_play":
             print("Player is ready to play : ", self.user_id)
-            # if self.ready_to_play == 2:
-            #     print("Both players are ready to play")
-               
             if self.handle_game_logic:
-            # Two clients are connected and this instance handles game logic
                 self.game_logic_instance = GameLogic(self.room_name)
-                self.game_logic_task = asyncio.create_task( self.game_logic_instance.run_game_loop())
+                self.game_logic_task = asyncio.create_task(self.game_logic_instance.run_game_loop())
+            self.game_loop_task = asyncio.create_task(self.game_loop())
 
-                # Fetch game initialization data from Redis
-                # await self.send_redis_static_data_to_client()
-                # await self.send_redis_dynamic_data_to_client()
-            self.game_loop_task =  asyncio.create_task(self.game_loop())
+        # Handle "paddle_position_update" message
+        elif "type" in data and data["type"] == "paddle_position_update":
+            paddle_y = data.get('PaddleY')
+            if paddle_y is not None:
+                print(f"Received paddle position update: {paddle_y}")
+                # Update game logic with new paddle position
+                if hasattr(self, 'game_logic_instance'):
+                    await self.game_logic_instance.update_paddle_position('left', paddle_y)
+                else:
+                    print("Game logic instance not found or not initialized")
+        else:
+            print("Received unknown message type or missing key.")
+
 
     async def attempt_to_acquire_game_logic_control(self):
         # Attempt to set the flag indicating this consumer should handle the game logic
