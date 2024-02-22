@@ -27,7 +27,7 @@ export async function router(path, updateHistory = true) {
   console.log(`Navigating to path: ${path}`);
 
   if (updateHistory) {
-    history.pushState(null, "", path);
+    history.pushState(null, "", path + window.location.search);
   }
 
   if (await isAPIConnected()) {
