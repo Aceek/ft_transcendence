@@ -78,25 +78,25 @@ class GameConsumer(AsyncWebsocketConsumer):
                 flag_key = f"game_logic_flag:{self.room_name}"
                 await self.redis.delete(flag_key)
         
-        if hasattr(self, 'game_logic_task') and not self.game_logic_task.done():
-            self.game_logic_task.cancel()
-            try:
-                # Wait for the task to be cancelled
-                # This ensures any cleanup within the task can complete
-                await self.game_logic_task
-            except asyncio.CancelledError:
-                # The task was cancelled, so any necessary cleanup should be done here
-                print(f"Game logic task for {self.user_id} was cancelled.")
+        # Withdraw this user ID from the set of connected users
+        connected_clients_set_key = f"game:{self.room_name}:connected_users"
+        await self.redis.srem(connected_clients_set_key, self.user_id)
+        print(f"Removed user {self.user_id} from connected users in room: {self.room_name}")
+        
+        # if hasattr(self, 'game_logic_task') and not self.game_logic_task.done():
+        #     self.game_logic_task.cancel()
+        #     try:
+        #         # Wait for the task to be cancelled
+        #         # This ensures any cleanup within the task can complete
+        #         await self.game_logic_task
+        #     except asyncio.CancelledError:
+        #         # The task was cancelled, so any necessary cleanup should be done here
+        #         print(f"Game logic task for {self.user_id} was cancelled.")
 
-        # Cancel game_loop_task if it exists and is not done
-        if hasattr(self, 'game_loop_task') and not self.game_loop_task.done():
-            self.game_loop_task.cancel()
-            try:
-                await self.game_loop_task
-            except asyncio.CancelledError:
-                print(f"Game loop task for {self.user_id} was cancelled.")
+        await self.update_redis_game_status(GameStatus.SUSPENDED)
+        
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -177,6 +177,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # ----------------------------REDIS TO CLIENT-----------------------------------
 
+    async def update_redis_game_status(self, new_status: GameStatus):
+        self.game_status = new_status
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
+
+        await self.send_redis_game_status_to_client()
+
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         game_status = await self.redis.hget(dynamic_data_key, "gs")
@@ -185,6 +192,26 @@ class GameConsumer(AsyncWebsocketConsumer):
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
             # print("EXIT")
+
+    async def send_redis_game_status_to_client(self):
+        """
+        Send the current game status to the client.
+        """
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        game_status_key = "gs"
+        
+        # Fetch the current game status from Redis
+        current_game_status = await self.redis.hget(dynamic_data_key, game_status_key)
+        
+        current_game_status = GameStatus(int(current_game_status)).name if current_game_status else "UNKNOWN"
+        
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "game.status_update",  # Ensure this type matches a handler in your consumer
+                "status": current_game_status
+            }
+        )
 
     # -------------------------------GAME LOOP-----------------------------------
 
@@ -217,20 +244,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # -------------------------------CHANNEL LAYER-----------------------------------
 
-    async def game_init(self, event):
-        message = event["message"]
-        await self.send(text_data=json.dumps(message))
+    # async def game_init(self, event):
+    #     message = event["message"]
+    #     await self.send(text_data=json.dumps(message))
 
-    async def game_update(self, event):
-        message = event["message"]
-        await self.send(text_data=json.dumps(message))
+    # async def game_update(self, event):
+    #     message = event["message"]
+    #     await self.send(text_data=json.dumps(message))
 
     # async def start_game(self, event):
     #     await self.send(text_data=json.dumps({"type": "start_game"}))
 
-    async def broadcast_message(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps(event["message"]))
+    # async def broadcast_message(self, event):
+    #     # Send message to WebSocket
+    #     await self.send(text_data=json.dumps(event["message"]))
 
     async def game_static_data(self, event):
         # Logic to handle static data message
@@ -276,3 +303,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Send the score update message to the client
         await self.send(text_data=json.dumps(message))
+
+    async def game_status_update(self, event):
+        """
+        Handle receiving a game status update from the game logic.
+        """
+        # Extract the status from the event
+        game_status = event['status']
+        
+        # Send the status to the WebSocket client
+        await self.send(text_data=json.dumps({
+            'type': 'game.status_update',
+            'status': game_status
+        }))

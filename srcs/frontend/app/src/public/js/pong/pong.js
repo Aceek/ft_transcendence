@@ -41,6 +41,9 @@ socket.onmessage = function (event) {
     case "game.score_update": // Handle score update
       handleScoreUpdate(data.side, data.score);
       break;
+    case "game.status_update": // NEW: Handle game status update
+      handleGameStatusUpdate(data.status);
+      break;
     default:
       console.log("Unknown message type:", data.type);
   }
@@ -130,6 +133,11 @@ function handleScoreUpdate(side, score) {
   }
 }
 
+function handleGameStatusUpdate(status) {
+  console.log("Game status update received:", status);
+  game.status = status;
+}
+
 
 //----------------------DATA INITALIZATION---------------------------------------
 
@@ -156,7 +164,7 @@ var game = {
       score: 0,
     },
   },
-//   gameStatus: null,
+  gameStatus: 0,
 //   userID: null,
 };
 
@@ -205,10 +213,18 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
   return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
 }
 
+let isGamePaused = false;
+
 function mainLoop(timestamp) {
   // Calculate the delta time since the last frame
   const deltaTime = timestamp - lastUpdateTime;
-  
+
+  if (game.status === "SUSPENDED") {
+    drawPausedMessage();
+    requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+    return; // Skip the rest of the loop logic
+  }
+
   if (deltaTime > frameDuration) {
     // Calculate the interpolated positions
     game.ball.x = interpolatePosition(game.ball.x, game.ball.speedX, deltaTime);
@@ -332,4 +348,15 @@ function drawGameOverMessage() {
   var playerWinsTextX = middleDashLineX - playerWinsTextWidth / 2;
 
   ctx.fillText(playerWinsText, playerWinsTextX, heightPosition + 70); // Adjust vertical spacing
+}
+
+function drawPausedMessage() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+  ctx.fillStyle = "rgba(0,0,0,0.75)"; // Semi-transparent overlay
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#FFFFFF"; // White text
+  ctx.font = "30px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Game Paused", canvas.width / 2, canvas.height / 2);
 }

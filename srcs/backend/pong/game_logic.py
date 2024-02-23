@@ -86,12 +86,34 @@ class GameLogic:
 			"bs_y": int(self.ball['speedY']),
         }
         await self.redis.hset(dynamic_data_key, mapping=dynamic_data)
-        # print(f"-------Update dynamic data from Redis: {dynamic_data}") 
+        # print(f"-------Update dynamic data from Redis: {dynamic_data}")
     
     async def update_redis_game_status(self, new_status: GameStatus):
         self.game_status = new_status
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
+
+        await self.send_redis_game_status_to_client()
+
+    async def send_redis_game_status_to_client(self):
+        """
+        Send the current game status to the client.
+        """
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        game_status_key = "gs"
+        
+        # Fetch the current game status from Redis
+        current_game_status = await self.redis.hget(dynamic_data_key, game_status_key)
+        
+        current_game_status = GameStatus(int(current_game_status)).name if current_game_status else "UNKNOWN"
+        
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "game.status_update",  # Ensure this type matches a handler in your consumer
+                "status": current_game_status
+            }
+        )
 
     async def reset_paddle_positions(self):
         """
@@ -135,6 +157,10 @@ class GameLogic:
 
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
+            print(f"Fetched game status from Redis: {self.game_status}")  # Added print statement
+        else:
+            print("Game status not found in Redis.")  # Added to handle case where game status is None
+
 
     async def update_redis_score(self, player_side):
         """
@@ -164,7 +190,7 @@ class GameLogic:
             connected_users_count = await self.redis.scard(connected_users_set_key)
             if connected_users_count >= 2:
                 break
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
             
          # ----------------------------REDIS TO CLIENT-----------------------------------
 
@@ -239,8 +265,6 @@ class GameLogic:
         await self.send_redis_static_data_to_client()
         await self.send_redis_dynamic_data_to_client()
 
-
-        
         last_update_time = time.time()
         await self.update_redis_game_status(GameStatus.IN_PROGRESS)
 
@@ -252,8 +276,10 @@ class GameLogic:
                 
                 await self.fetch_redis_paddle_pos()
                 
-                self.update_ball_position(delta_time)
-                # print(f"-------Ball's position -> X: {self.ball['x']}, Y: {self.ball['y']}")
+                # Update ball position only if the game is in progress
+                if self.game_status == GameStatus.IN_PROGRESS:
+                    print("loop continue")
+                    self.update_ball_position(delta_time)
 
                 await self.update_redis_dynamic_data()
                 await self.send_redis_dynamic_data_to_client()
@@ -267,6 +293,32 @@ class GameLogic:
                     except Exception as e:
                         print(f"Error updating or sending score for {side}: {e}")
 
+                if self.game_status == GameStatus.COMPLETED:
+                    await self.update_redis_game_status(GameStatus.COMPLETED)
+
+                #WARNING MAKE INFINITE LOOP
+                await self.fetch_redis_game_status()
+
+                if self.game_status == GameStatus.SUSPENDED:
+                # Attempt to wait for other player(s) to reconnect or join
+                        players_ready = await self.wait_for_other_player()
+
+                        if players_ready:
+                            print("Players are ready. Game can resume.")
+                            # Optionally, update the game status to IN_PROGRESS or another appropriate status
+                            await self.update_redis_game_status(GameStatus.IN_PROGRESS)
+                        else:
+                            print("Not all players reconnected. Handling game suspension.")
+                            # Handle the scenario where not all players reconnected within the timeout
+                            # This could involve extending the suspension, ending the game, or other logic
+                            continue  # Or use break if you wish to exit the loop instead
+
+                # await self.fetch_redis_game_status()
+                if self.game_status != GameStatus.IN_PROGRESS:
+                    print("GAMELOGIC -> LOOP EXITED status", self.game_status)
+                    await self.update_redis_game_status(self.game_status)
+                    break
+
                 # Calculate the sleep duration to achieve 60 FPS
                 target_fps = 60
                 target_frame_time = 1.0 / target_fps
@@ -276,12 +328,6 @@ class GameLogic:
                 await asyncio.sleep(sleep_duration)
 
                 last_update_time = current_time
-
-                # await self.fetch_redis_game_status()
-                if self.game_status != GameStatus.IN_PROGRESS:
-                    print("GAMELOGIC -> LOOP EXITED status", self.game_status)
-                    await self.update_redis_game_status(self.game_status)
-                    break
 
         except asyncio.CancelledError:
             # Perform any necessary cleanup after cancellation
@@ -390,6 +436,7 @@ class GameLogic:
             self.players["left"]["score"]["value"] >= self.score_limit
             or self.players["left"]["score"]["value"] >= self.score_limit
         ):
+            print(f"Game Over: Left score {self.players['left']['score']['value']}, Right score {self.players['right']['score']['value']}, Score limit {self.score_limit}")
             # Set game state to over
             self.game_status = GameStatus.COMPLETED
         else:
