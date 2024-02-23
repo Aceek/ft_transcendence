@@ -157,9 +157,10 @@ class GameLogic:
 
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
-            print(f"Fetched game status from Redis: {self.game_status}")  # Added print statement
-        else:
-            print("Game status not found in Redis.")  # Added to handle case where game status is None
+            if self.game_status != GameStatus.IN_PROGRESS:
+                print(f"Fetched game status from Redis: {self.game_status}")  # Added print statement
+        # else:
+        #     print("Game status not found in Redis.")  # Added to handle case where game status is None
 
 
     async def update_redis_score(self, player_side):
@@ -278,7 +279,6 @@ class GameLogic:
                 
                 # Update ball position only if the game is in progress
                 if self.game_status == GameStatus.IN_PROGRESS:
-                    print("loop continue")
                     self.update_ball_position(delta_time)
 
                 await self.update_redis_dynamic_data()

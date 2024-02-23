@@ -225,6 +225,12 @@ function mainLoop(timestamp) {
     return; // Skip the rest of the loop logic
   }
 
+  if (game.status === "COMPLETED") {
+    drawGameOverMessage();
+    requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+    return; // Skip the rest of the loop logic
+  }
+
   if (deltaTime > frameDuration) {
     // Calculate the interpolated positions
     game.ball.x = interpolatePosition(game.ball.x, game.ball.speedX, deltaTime);
@@ -261,11 +267,6 @@ function draw() {
 
   // Draw scores
   drawScores(); // Pass the data parameter to drawScores()
-
-  // Check if the match is over and display a message
-  if (game.gameStatus == "over") {
-    drawGameOverMessage();
-  }
 }
 
 function drawPaddle(x, y) {
