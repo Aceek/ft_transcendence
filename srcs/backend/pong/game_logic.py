@@ -51,11 +51,6 @@ class GameLogic:
                 }
             }
         }
-
-        # self.score_updated = {"left": False, "right": False}
-        # self.left_player_score = self.right_player_score = INITIAL_SCORE
-        # self.left_paddle = {"y": INITIAL_PADDLE_Y}
-        # self.right_paddle = {"y": INITIAL_PADDLE_Y}
         self.ball = {
             "x": INITIAL_BALL_X,
             "y": INITIAL_BALL_Y,
