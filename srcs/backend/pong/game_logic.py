@@ -31,9 +31,31 @@ class GameLogic:
 
         #---DYNAMIC VAR---
         self.game_status = GameStatus.NOT_STARTED
-        self.left_player_score = self.right_player_score = INITIAL_SCORE
-        self.left_paddle = {"y": INITIAL_PADDLE_Y}
-        self.right_paddle = {"y": INITIAL_PADDLE_Y}
+        self.players = {
+            "left": {
+                "score": {
+                    "value": INITIAL_SCORE,
+                    "updated": False
+                },
+                "paddle": {
+                    "y": INITIAL_PADDLE_Y
+                }
+            },
+            "right": {
+                "score": {
+                    "value": INITIAL_SCORE,
+                    "updated": False
+                },
+                "paddle": {
+                    "y": INITIAL_PADDLE_Y
+                }
+            }
+        }
+
+        # self.score_updated = {"left": False, "right": False}
+        # self.left_player_score = self.right_player_score = INITIAL_SCORE
+        # self.left_paddle = {"y": INITIAL_PADDLE_Y}
+        # self.right_paddle = {"y": INITIAL_PADDLE_Y}
         self.ball = {
             "x": INITIAL_BALL_X,
             "y": INITIAL_BALL_Y,
@@ -88,17 +110,29 @@ class GameLogic:
         
         print(f"Reset both paddle positions to initial Y: {INITIAL_PADDLE_Y}")
 
+    async def reset_score(self):
+        """
+        Reset the paddle positions for both sides to the initial Y coordinate.
+        """
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        
+        # Reset both paddle positions to the initial Y value
+        await self.redis.hset(dynamic_data_key, "lp_s", INITIAL_SCORE)
+        await self.redis.hset(dynamic_data_key, "rp_s", INITIAL_SCORE)
+        
+        print(f"Reset both paddle positions to initial Y: {INITIAL_PADDLE_Y}")
+
     async def fetch_redis_paddle_pos(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
-        # Fetch only the lp_y and rp_y fields from Redis
         lp_y, rp_y = await self.redis.hmget(dynamic_data_key, "lp_y", "rp_y")
         
         # Update the Y positions of the paddles if they exist
         if lp_y is not None:
-            self.left_paddle['y'] = int(lp_y)
+            self.players["left"]["paddle"]["y"] = int(lp_y)
+            # self.left_paddle['y'] = int(lp_y)
         if rp_y is not None:
-            self.right_paddle['y'] = int(rp_y)
-            # print("updated redis right : ", self.right_paddle['y'])
+            self.players["right"]["paddle"]["y"] = int(lp_y)
+            # self.right_paddle['y'] = int(rp_y)
 
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -107,11 +141,21 @@ class GameLogic:
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
 
+    async def update_redis_score(self, player_side):
+        """
+        Increment the score of the specified player side ('left' or 'right').
+        """
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        player_key = "lp_s" if player_side == "left" else "rp_s"
+        
+        # Increment the score directly in Redis
+        await self.redis.hincrby(dynamic_data_key, player_key, 1)
+
+        await self.send_redis_score_to_client(player_side)
+
     async def wait_for_other_player(self):
         connected_users_set_key = f"game:{self.room_name}:connected_users"
         print(f"Waiting for other players in room: {self.room_name}")
-        # Directly await the completion of the check for other player
-        # with a specified timeout.
         try:
             await asyncio.wait_for(self._check_for_other_player(connected_users_set_key), timeout=300.0)
             print("Both players connected.")
@@ -157,6 +201,25 @@ class GameLogic:
             }
         )
 
+    async def send_redis_score_to_client(self, player_side):
+        """
+        Send the updated score of the specified player side ('left' or 'right') to the client.
+        """
+        dynamic_data_key = f"game:{self.room_name}:dynamic"
+        score_key = "lp_s" if player_side == "left" else "rp_s"
+        
+        # Fetch the specific score from Redis
+        player_score = await self.redis.hget(dynamic_data_key, score_key)
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "game.score_update",  # Note the underscore
+                "side": player_side,
+                "score": player_score
+            }
+        )
+
     # -------------------------------GAME LOOP-----------------------------------
 
     async def run_game_loop(self):
@@ -164,23 +227,25 @@ class GameLogic:
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
         await self.reset_paddle_positions()
+        await self.reset_score()
 
         players_ready = await self.wait_for_other_player()
         if not players_ready:
             print("Not enough players connected. Exiting game loop.")
             return
         
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "send_start_game_message",  # This corresponds to a handler in your consumer
-            }
-        )
+        # await self.channel_layer.group_send(
+        #     self.room_group_name,
+        #     {
+        #         "type": "send_start_game_message",  # This corresponds to a handler in your consumer
+        #     }
+        # )
 
         await self.send_redis_static_data_to_client()
         await self.send_redis_dynamic_data_to_client()
 
 
+        
         last_update_time = time.time()
         await self.update_redis_game_status(GameStatus.IN_PROGRESS)
 
@@ -197,6 +262,15 @@ class GameLogic:
 
                 await self.update_redis_dynamic_data()
                 await self.send_redis_dynamic_data_to_client()
+
+                for side in ["left", "right"]:
+                    try:
+                        if self.players[side]["score"]["updated"]:
+                            await self.update_redis_score(side)
+                            await self.send_redis_score_to_client(side)
+                            self.players[side]["score"]["updated"] = False
+                    except Exception as e:
+                        print(f"Error updating or sending score for {side}: {e}")
 
                 # Calculate the sleep duration to achieve 60 FPS
                 target_fps = 60
@@ -246,31 +320,33 @@ class GameLogic:
         # Check for collisions with paddles
         if (
             self.ball["x"] - self.ball_size / 2 < self.paddle_width
-            and self.left_paddle["y"]
+            and self.players["left"]["paddle"]["y"]
             < self.ball["y"]
-            < self.left_paddle["y"] + self.paddle_height
+            < self.players["left"]["paddle"]["y"]  + self.paddle_height
         ) or (
             self.ball["x"] + self.ball_size / 2 > self.canvas_width - self.paddle_width
-            and self.right_paddle["y"]
+            and self.players["right"]["paddle"]["y"]
             < self.ball["y"]
-            < self.right_paddle["y"] + self.paddle_height
+            < self.players["right"]["paddle"]["y"]  + self.paddle_height
         ):
             self.handle_paddle_collision()
 
         # Check for collisions with walls
         if (
+
             self.ball["y"] - self.ball_size / 2 < 0
             or self.ball["y"] + self.ball_size / 2 > self.canvas_height
         ):
             self.handle_wall_collision()
+            print("wall collison")
 
     def handle_paddle_collision(self):
         # Determine which paddle was hit
         if self.ball["x"] < self.canvas_width / 2:
-            paddle = self.left_paddle
+            paddle = self.players["left"]["paddle"]
             direction = 1
         else:
-            paddle = self.right_paddle
+            paddle = self.players["right"]["paddle"]
             direction = -1
 
         # Calculate the relative position of the collision point on the paddle
@@ -294,22 +370,30 @@ class GameLogic:
     def check_scoring(self):
         # Check for scoring (ball crossing left or right border)
         if self.ball["x"] < 0 - self.ball_size / 2:
-            self.score_for_right_player()
+            self.update_score("right")
         elif self.ball["x"] > self.canvas_width + self.ball_size / 2:
-            self.score_for_left_player()
+            self.update_score("left")
 
-    def score_for_left_player(self):
-        self.left_player_score += 1
-        self.check_game_over()
+    def update_score(self, player_side):
+        """
+        Updates the score for the specified player side ('left' or 'right') and checks for game over.
+        
+        Args:
+            player_side (str): The side of the player ('left' or 'right') to update the score for.
+        """
+        # Increment the score based on the player side
+        self.players[player_side]["score"]["value"] += 1
 
-    def score_for_right_player(self):
-        self.right_player_score += 1
+        # Mark that the score has been updated
+        self.players[player_side]["score"]["updated"] = True
+
+        # Check if the updated score results in the game being over
         self.check_game_over()
 
     def check_game_over(self):
         if (
-            self.left_player_score >= self.score_limit
-            or self.right_player_score >= self.score_limit
+            self.players["left"]["score"]["value"] >= self.score_limit
+            or self.players["left"]["score"]["value"] >= self.score_limit
         ):
             # Set game state to over
             self.game_status = GameStatus.COMPLETED

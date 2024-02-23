@@ -35,8 +35,11 @@ socket.onmessage = function (event) {
     case "game.dynamic_data":
       handleDynamicData(data.data); // Handle dynamic game data
       break;
-    case "paddle_side_assignment": // Handle paddle side assignment
+    case "game.paddle_side": // Handle paddle side assignment
       handlePaddleSideAssignment(data.paddle_side);
+      break;
+    case "game.score_update": // Handle score update
+      handleScoreUpdate(data.side, data.score);
       break;
     default:
       console.log("Unknown message type:", data.type);
@@ -48,37 +51,6 @@ socket.onclose = function (event) {
 };
 
 //----------------------EVENT LISTENERS-----------------------------------------
-
-// Function to handle paddle side assignment
-function handlePaddleSideAssignment(paddleSide) {
-  console.log("Assigned paddle side:", paddleSide);
-  // Assign the paddle side to your game state
-  game.paddle.side = paddleSide;
-}
-
-// Global variables to track the last sent paddle positions for both sides
-let lastSentPaddleY = null;
-
-function sendPaddlePositionUpdate() {
-  // Determine the current player's paddle and the corresponding variable for tracking
-  const isLeftSide = game.paddle.side === "left";
-  const currentPlayer = isLeftSide ? game.players.left : game.players.right;
-  // const lastSentPaddleY = isLeftSide ? lastSentLeftPaddleY : lastSentRightPaddleY;
-
-  // Check if there's a significant change in the current paddle's position
-  if (currentPlayer.paddleY !== lastSentPaddleY) {
-      lastSentLeftPaddleY = currentPlayer.paddleY;
-  }
-
-  // Send updated position to the server
-  socket.send(JSON.stringify({
-      type: "paddle_position_update",
-      side: game.paddle.side,
-      PaddleY: currentPlayer.paddleY,
-  }));
-
-  console.log(`${game.paddle.side} paddle position sent:`, currentPlayer.paddleY);
-}
 
 // Event listeners for key presses
 document.addEventListener("keydown", function (event) {
@@ -96,23 +68,68 @@ function handleKeyPress(key, isPressed) {
   if (!game.paddle.side) {
     return;
   }
-
+  
   // Determine the change in position
   let change = game.paddle.speed * (isPressed ? 1 : 0);
-
+  
   // Select the correct paddle based on the assigned side
   let paddleKey = game.paddle.side === "left" ? "left" : "right";
-
+  
   // Update paddle position based on the key pressed
   if (key === "ArrowUp") {
-      game.players[paddleKey].paddleY -= change;
+    game.players[paddleKey].paddleY -= change;
   } else if (key === "ArrowDown") {
-      game.players[paddleKey].paddleY += change;
+    game.players[paddleKey].paddleY += change;
   }
-
+  
   // Send position update
   sendPaddlePositionUpdate();
 }
+
+//----------------------GAME UPDATE----------------------------------------------
+
+// Global variables to track the last sent paddle positions for both sides
+let lastSentPaddleY = null;
+
+function sendPaddlePositionUpdate() {
+  // Determine the current player's paddle and the corresponding variable for tracking
+  const isLeftSide = game.paddle.side === "left";
+  const currentPlayer = isLeftSide ? game.players.left : game.players.right;
+  // const lastSentPaddleY = isLeftSide ? lastSentLeftPaddleY : lastSentRightPaddleY;
+  
+  // Check if there's a significant change in the current paddle's position
+  if (currentPlayer.paddleY !== lastSentPaddleY) {
+    lastSentLeftPaddleY = currentPlayer.paddleY;
+  }
+  
+  // Send updated position to the server
+  socket.send(JSON.stringify({
+    type: "paddle_position_update",
+    side: game.paddle.side,
+      PaddleY: currentPlayer.paddleY,
+  }));
+
+  console.log(`${game.paddle.side} paddle position sent:`, currentPlayer.paddleY);
+}
+  
+// Function to handle paddle side assignment
+function handlePaddleSideAssignment(paddleSide) {
+  console.log("Assigned paddle side:", paddleSide);
+  // Assign the paddle side to your game state
+  game.paddle.side = paddleSide;
+}
+
+function handleScoreUpdate(side, score) {
+  console.log(`Score update for ${side} side:`, score);
+  
+  // Assuming you have elements with IDs 'leftScore' and 'rightScore' to display scores
+  if (side === "left") {
+    game.players.left.score = score;
+  } else if (side === "right") {
+    game.players.right.score = score;
+  }
+}
+
 
 //----------------------DATA INITALIZATION---------------------------------------
 

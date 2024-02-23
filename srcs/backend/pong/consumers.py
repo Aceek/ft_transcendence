@@ -101,13 +101,13 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
 
-        # Handle "ready_to_play" message
-        if "message" in data and data["message"] == "ready_to_play":
-            print("Player is ready to play : ", self.user_id)
-            # self.game_loop_task = asyncio.create_task(self.game_loop())
+        # # Handle "ready_to_play" message
+        # if "message" in data and data["message"] == "ready_to_play":
+        #     print("Player is ready to play : ", self.user_id)
+        #     # self.game_loop_task = asyncio.create_task(self.game_loop())
 
         # Handle "paddle_position_update" message
-        elif "type" in data and data["type"] == "paddle_position_update":
+        if "type" in data and data["type"] == "paddle_position_update":
             paddle_y = data.get('PaddleY')
             if paddle_y is not None:
                 # print(f"Received paddle position update: {paddle_y}")
@@ -141,7 +141,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         """
         if self.paddle_side is not None:
             await self.send(text_data=json.dumps({
-                'type': 'paddle_side_assignment',
+                'type': 'game.paddle_side',
                 'paddle_side': self.paddle_side
             }))
         else:
@@ -225,8 +225,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         message = event["message"]
         await self.send(text_data=json.dumps(message))
 
-    async def start_game(self, event):
-        await self.send(text_data=json.dumps({"type": "start_game"}))
+    # async def start_game(self, event):
+    #     await self.send(text_data=json.dumps({"type": "start_game"}))
 
     async def broadcast_message(self, event):
         # Send message to WebSocket
@@ -248,12 +248,31 @@ class GameConsumer(AsyncWebsocketConsumer):
             'data': data
         }))
 
-    # Add this method to your GameConsumer class
-    async def send_start_game_message(self, event):
-        # Prepare the message in the format expected by the frontend
+    # # Add this method to your GameConsumer class
+    # async def send_start_game_message(self, event):
+    #     # Prepare the message in the format expected by the frontend
+    #     message = {
+    #         "type": "start_game",
+    #         "message": "ready_to_play"
+    #     }
+    #     # Send the message to WebSocket
+    #     await self.send(text_data=json.dumps(message))
+
+
+    async def game_score_update(self, event):
+        """
+        Handle score update messages.
+        """
+        # Extract the relevant data from the event
+        player_side = event['side']
+        score = event['score']
+
+        # Prepare the message to send to the client
         message = {
-            "type": "start_game",
-            "message": "ready_to_play"
+            'type': 'game.score_update',  # Confirming the message type
+            'side': player_side,  # Indicating which player's score is updated
+            'score': score  # The updated score
         }
-        # Send the message to WebSocket
+
+        # Send the score update message to the client
         await self.send(text_data=json.dumps(message))
