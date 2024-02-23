@@ -11,12 +11,37 @@ let socketUrl;
 
 // Check if port is available
 if (port) {
-    socketUrl = 'wss://' + hostname + ':' + port + '/ws/pong/' + roomID + '/';
+  socketUrl = 'wss://' + hostname + ':' + port + '/ws/pong/' + roomID + '/';
 } else {
-    socketUrl = 'wss://' + hostname + '/ws/pong/' + roomID + '/';
+  socketUrl = 'wss://' + hostname + '/ws/pong/' + roomID + '/';
 }
-
 var socket = new WebSocket(socketUrl);
+
+var game = {
+  paddle: {
+    width: 0,
+    height: 0,
+    side: null,
+  },
+  ball: {
+    size: 0,
+    x: 0,
+    y: 0,
+    speedX: 0,
+    speedY: 0,
+  },
+  players: {
+    left: {
+      paddleY: 0,
+      score: 0,
+    },
+    right: {
+      paddleY: 0,
+      score: 0,
+    },
+  },
+  gameStatus: 0,
+};
 
 //----------------------WEBSOCKET-----------------------------------------
 
@@ -39,21 +64,80 @@ socket.onmessage = function (event) {
       handlePaddleSideAssignment(data.paddle_side);
       break;
     case "game.score_update": // Handle score update
-      handleScoreUpdate(data.side, data.score);
-      break;
+    handleScoreUpdate(data.side, data.score);
+    break;
     case "game.status_update": // NEW: Handle game status update
-      handleGameStatusUpdate(data.status);
-      break;
+    handleGameStatusUpdate(data.status);
+    break;
     default:
       console.log("Unknown message type:", data.type);
+    }
+  };
+  
+  socket.onclose = function (event) {
+    console.log("WebSocket connection closed:", event);
+  };
+  
+  //----------------------MSH HANDLER-----------------------------------------
+
+  function handleStaticData(staticData) {
+  //   console.log("Received static data:", staticData);
+  
+    // Parse static game settings
+    game.paddle.width = parseInt(staticData.paddleWidth, 10);
+    game.paddle.height = parseInt(staticData.paddleHeight, 10);
+    game.ball.size = parseInt(staticData.ballSize, 10);
+  
+    // Update canvas dimensions directly from staticData
+    canvas.width = parseInt(staticData.canvasWidth, 10);
+    canvas.height = parseInt(staticData.canvasHeight, 10);
+  
+    // Update other static game settings directly from staticData
+    game.scoreLimit = parseInt(staticData.scoreLimit, 10);
+    game.paddle.speed = parseInt(staticData.paddleSpeed, 10);
+  
+    // Log the updated game settings for debugging
+  //   console.log("Static game settings parsed and updated:", game);
   }
-};
+  
+  function handleDynamicData(dynamicData) {
+    // console.log("Handling dynamic data:", dynamicData);
+    // Update the game state with parsed dynamic data
+    game.ball.x = parseInt(dynamicData.b_x, 10);
+    game.ball.y = parseInt(dynamicData.b_y, 10);
+    game.ball.speedX = parseInt(dynamicData.bs_x, 10);
+    game.ball.speedY = parseInt(dynamicData.bs_y, 10);
+    game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
+    game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
+  
+    // Log the updated game state for debugging
+  //   console.log("Updated game state with dynamic data:", game);
+  }
 
-socket.onclose = function (event) {
-  console.log("WebSocket connection closed:", event);
-};
-
-//----------------------EVENT LISTENERS-----------------------------------------
+  // Function to handle paddle side assignment
+  function handlePaddleSideAssignment(paddleSide) {
+    console.log("Assigned paddle side:", paddleSide);
+    // Assign the paddle side to your game state
+    game.paddle.side = paddleSide;
+  }
+  
+  function handleScoreUpdate(side, score) {
+    console.log(`Score update for ${side} side:`, score);
+    
+    // Assuming you have elements with IDs 'leftScore' and 'rightScore' to display scores
+    if (side === "left") {
+      game.players.left.score = score;
+    } else if (side === "right") {
+      game.players.right.score = score;
+    }
+  }
+  
+  function handleGameStatusUpdate(status) {
+    console.log("Game status update received:", status);
+    game.status = status;
+  }
+  
+//----------------------KEY EVENT-----------------------------------------
 
 // Event listeners for key presses
 document.addEventListener("keydown", function (event) {
@@ -89,8 +173,6 @@ function handleKeyPress(key, isPressed) {
   sendPaddlePositionUpdate();
 }
 
-//----------------------GAME UPDATE----------------------------------------------
-
 // Global variables to track the last sent paddle positions for both sides
 let lastSentPaddleY = null;
 
@@ -114,95 +196,8 @@ function sendPaddlePositionUpdate() {
 
   console.log(`${game.paddle.side} paddle position sent:`, currentPlayer.paddleY);
 }
-  
-// Function to handle paddle side assignment
-function handlePaddleSideAssignment(paddleSide) {
-  console.log("Assigned paddle side:", paddleSide);
-  // Assign the paddle side to your game state
-  game.paddle.side = paddleSide;
-}
 
-function handleScoreUpdate(side, score) {
-  console.log(`Score update for ${side} side:`, score);
-  
-  // Assuming you have elements with IDs 'leftScore' and 'rightScore' to display scores
-  if (side === "left") {
-    game.players.left.score = score;
-  } else if (side === "right") {
-    game.players.right.score = score;
-  }
-}
-
-function handleGameStatusUpdate(status) {
-  console.log("Game status update received:", status);
-  game.status = status;
-}
-
-
-//----------------------DATA INITALIZATION---------------------------------------
-
-var game = {
-  paddle: {
-    width: 0,
-    height: 0,
-    side: null,
-  },
-  ball: {
-    size: 0,
-    x: 0,
-    y: 0,
-    speedX: 0,
-    speedY: 0,
-  },
-  players: {
-    left: {
-      paddleY: 0,
-      score: 0,
-    },
-    right: {
-      paddleY: 0,
-      score: 0,
-    },
-  },
-  gameStatus: 0,
-//   userID: null,
-};
-
-function handleStaticData(staticData) {
-//   console.log("Received static data:", staticData);
-
-  // Parse static game settings
-  game.paddle.width = parseInt(staticData.paddleWidth, 10);
-  game.paddle.height = parseInt(staticData.paddleHeight, 10);
-  game.ball.size = parseInt(staticData.ballSize, 10);
-
-  // Update canvas dimensions directly from staticData
-  canvas.width = parseInt(staticData.canvasWidth, 10);
-  canvas.height = parseInt(staticData.canvasHeight, 10);
-
-  // Update other static game settings directly from staticData
-  game.scoreLimit = parseInt(staticData.scoreLimit, 10);
-  game.paddle.speed = parseInt(staticData.paddleSpeed, 10);
-
-  // Log the updated game settings for debugging
-//   console.log("Static game settings parsed and updated:", game);
-}
-
-function handleDynamicData(dynamicData) {
-  // console.log("Handling dynamic data:", dynamicData);
-  // Update the game state with parsed dynamic data
-  game.ball.x = parseInt(dynamicData.b_x, 10);
-  game.ball.y = parseInt(dynamicData.b_y, 10);
-  game.ball.speedX = parseInt(dynamicData.bs_x, 10);
-  game.ball.speedY = parseInt(dynamicData.bs_y, 10);
-  game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
-  game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
-
-  // Log the updated game state for debugging
-//   console.log("Updated game state with dynamic data:", game);
-}
-
-//----------------------GAME LOOP-----------------------------------------
+//----------------------MAIN LOOP-----------------------------------------
 
 let lastUpdateTime = 0;
 const fps = 240;
@@ -212,8 +207,6 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
   // Calculate and return the new position based on the speed and the delta time
   return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
 }
-
-let isGamePaused = false;
 
 function mainLoop(timestamp) {
   // Calculate the delta time since the last frame
@@ -226,7 +219,7 @@ function mainLoop(timestamp) {
     game.ball.y = interpolatePosition(game.ball.y, game.ball.speedY, deltaTime);
     
     draw(); // Draw the frame with the interpolated positions
-    
+
     if (game.status === "SUSPENDED") {
       drawPausedMessage();
       requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
@@ -250,7 +243,7 @@ function mainLoop(timestamp) {
 
 requestAnimationFrame(mainLoop); // Start the game loop
 
-//----------------------DRAWING-----------------------------------------
+//----------------------DRAW-----------------------------------------
 
 function draw() {
   // Clear the canvas

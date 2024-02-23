@@ -24,21 +24,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.game_status = GameStatus.NOT_STARTED
         self.paddle_side = None
 
-    # -------------------------------WEBSOCKET CONNECTION-------------------------
+    # -------------------------------WEBSOCKET-------------------------
 
     async def connect(self):
-        # Updated aioredis connection for version 2.0+
         try:
-            # For aioredis v2.0+, use aioredis.from_url to connect
             self.redis = await aioredis.from_url("redis://redis:6379", db=0, encoding="utf-8", decode_responses=True)
         except Exception as e:
             print(f"Failed to connect to Redis: {e}")
-            # Depending on your error handling, you might choose to close the connection
-            # await self.close()
 
         await self.accept()
 
-        # Example: Store a custom user ID or use Django's authenticated user
         self.user_id = str(self.scope["user"].id if self.scope["user"].is_authenticated else "anonymous")
 
         # create a room based on the uid of the game
@@ -82,16 +77,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
         await self.redis.srem(connected_clients_set_key, self.user_id)
         print(f"Removed user {self.user_id} from connected users in room: {self.room_name}")
-        
-        # if hasattr(self, 'game_logic_task') and not self.game_logic_task.done():
-        #     self.game_logic_task.cancel()
-        #     try:
-        #         # Wait for the task to be cancelled
-        #         # This ensures any cleanup within the task can complete
-        #         await self.game_logic_task
-        #     except asyncio.CancelledError:
-        #         # The task was cancelled, so any necessary cleanup should be done here
-        #         print(f"Game logic task for {self.user_id} was cancelled.")
 
         await self.update_redis_game_status(GameStatus.SUSPENDED)
         
@@ -100,11 +85,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-
-        # # Handle "ready_to_play" message
-        # if "message" in data and data["message"] == "ready_to_play":
-        #     print("Player is ready to play : ", self.user_id)
-        #     # self.game_loop_task = asyncio.create_task(self.game_loop())
 
         # Handle "paddle_position_update" message
         if "type" in data and data["type"] == "paddle_position_update":
@@ -121,6 +101,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             print("Received unknown message type or missing key.")
 
+    # -------------------------------SYNC-----------------------------------
 
     async def attempt_to_acquire_game_logic_control(self):
         flag_key = f"game_logic_flag:{self.room_name}"
@@ -133,7 +114,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             self.handle_game_logic = False
 
-    # -------------------------------PADLLE UPDATE-----------------------------------
+    # -------------------------------PADDLE UPDATE-----------------------------------
     
     async def send_paddle_side_assignment(self):
         """
@@ -175,7 +156,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
 
-    # ----------------------------REDIS TO CLIENT-----------------------------------
+    # ----------------------------GAME STATUS-----------------------------------
 
     async def update_redis_game_status(self, new_status: GameStatus):
         self.game_status = new_status
@@ -188,10 +169,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         game_status = await self.redis.hget(dynamic_data_key, "gs")
 
-        # print("CONSUMER --> game status: ", self.game_status)
         if game_status is not None:
             self.game_status = GameStatus(int(game_status))
-            # print("EXIT")
 
     async def send_redis_game_status_to_client(self):
         """
@@ -213,51 +192,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # -------------------------------GAME LOOP-----------------------------------
-
-    # async def game_loop(self):
-    #     last_update_time = time.time()
-    #     print("CONSUMER -> LOOP STARTED for client : ", self.user_id)
-
-    #     while True:
-    #         # print("Game loop ongoing")
-    #         current_time = time.time()
-    #         delta_time = current_time - last_update_time
-
-    #         # await self.send_redis_dynamic_data_to_client()
-
-    #         target_fps = 60
-    #         target_frame_time = 1.0 / target_fps
-    #         sleep_duration = max(0, target_frame_time - delta_time)
-
-    #         # Adjust the sleep duration based on the delta time
-    #         await asyncio.sleep(sleep_duration)
-
-    #         last_update_time = current_time
-
-    #         await self.fetch_redis_game_status()
-
-    #         if self.game_status != GameStatus.IN_PROGRESS:
-    #             print("CONSUMER -> LOOP EXITED for client : ", self.user_id)
-    #             break
-
-
-    # -------------------------------CHANNEL LAYER-----------------------------------
-
-    # async def game_init(self, event):
-    #     message = event["message"]
-    #     await self.send(text_data=json.dumps(message))
-
-    # async def game_update(self, event):
-    #     message = event["message"]
-    #     await self.send(text_data=json.dumps(message))
-
-    # async def start_game(self, event):
-    #     await self.send(text_data=json.dumps({"type": "start_game"}))
-
-    # async def broadcast_message(self, event):
-    #     # Send message to WebSocket
-    #     await self.send(text_data=json.dumps(event["message"]))
+    # -------------------------------CHANNEL MESSAGE-------------------------------------
 
     async def game_static_data(self, event):
         # Logic to handle static data message
@@ -274,16 +209,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.dynamic_data',
             'data': data
         }))
-
-    # # Add this method to your GameConsumer class
-    # async def send_start_game_message(self, event):
-    #     # Prepare the message in the format expected by the frontend
-    #     message = {
-    #         "type": "start_game",
-    #         "message": "ready_to_play"
-    #     }
-    #     # Send the message to WebSocket
-    #     await self.send(text_data=json.dumps(message))
 
 
     async def game_score_update(self, event):
