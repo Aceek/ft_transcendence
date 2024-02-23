@@ -214,10 +214,8 @@ class GameLogic:
         # Update the Y positions of the paddles if they exist
         if lp_y is not None:
             self.players["left"]["paddle"]["y"] = int(lp_y)
-            # self.left_paddle['y'] = int(lp_y)
         if rp_y is not None:
-            self.players["right"]["paddle"]["y"] = int(lp_y)
-            # self.right_paddle['y'] = int(rp_y)
+            self.players["right"]["paddle"]["y"] = int(rp_y)
 
     async def reset_paddle_positions(self):
         """

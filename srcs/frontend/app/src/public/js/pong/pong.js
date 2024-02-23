@@ -64,11 +64,11 @@ socket.onmessage = function (event) {
       handlePaddleSideAssignment(data.paddle_side);
       break;
     case "game.score_update": // Handle score update
-    handleScoreUpdate(data.side, data.score);
-    break;
+      handleScoreUpdate(data.side, data.score);
+      break;
     case "game.status_update": // NEW: Handle game status update
-    handleGameStatusUpdate(data.status);
-    break;
+      handleGameStatusUpdate(data.status);
+      break;
     default:
       console.log("Unknown message type:", data.type);
     }
