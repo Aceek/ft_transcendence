@@ -11,6 +11,7 @@ import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
 import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
+import { get2FAPage } from "./2fa.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url = "https://" + window.location.hostname + portString + "/api/";
@@ -113,6 +114,9 @@ async function handleUnauthenticatedRoutes(path) {
   } else if (path === "/register") {
     console.log("Loading register page");
     getRegisterPage();
+  } else if (path === "/2fa") {
+    console.log("Loading 2fa page");
+    get2FAPage();
   } else {
     console.log("Loading login page");
     getLoginPage();
