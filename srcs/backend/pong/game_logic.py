@@ -231,8 +231,43 @@ class GameLogic:
         
         print(f"Reset both paddle positions to initial Y: {INITIAL_PADDLE_Y}")
 
-    # -------------------------------CHECK PLAYER-----------------------------------
+            
+    # *******************************MAIN LOOP***************************************
+    # -------------------------------INIT-----------------------------------
+            
+    async def setup_game_environment(self):
+        """Initial game setup."""
+        await self.connect_to_redis()
+        await self.init_redis_static_data()
+        await self.update_redis_dynamic_data()
+        await self.reset_paddle_positions()
+        await self.reset_score()
 
+    async def game_preparation(self):
+        """Prepare the game by sending initial data to channels."""
+        await self.send_redis_static_data_to_channel()
+        await self.send_redis_dynamic_data_to_channel()
+        await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
+
+    # -------------------------------SYNC-----------------------------------
+        
+    async def check_players_ready(self):
+        """Check if players are ready to start the game."""
+        players_ready = await self.wait_for_other_player()
+        if not players_ready:
+            print("Not enough players connected. Exiting game loop.")
+            return False
+        return True
+    
+    async def wait_for_other_players_resume(self):
+        """Wait for other players to reconnect or join for the game to resume."""
+        players_ready = await self.wait_for_other_player()
+        if players_ready:
+            print("Players are ready. Game can resume.")
+            await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
+            return True
+        return False
+    
     async def wait_for_other_player(self):
         connected_users_set_key = f"game:{self.room_name}:connected_users"
         print(f"Waiting for other players in room: {self.room_name}")
@@ -251,90 +286,84 @@ class GameLogic:
                 break
             await asyncio.sleep(1)
             
-    # *******************************GAME***************************************
-    # -------------------------------GAME LOOP-----------------------------------
+    # -------------------------------UPDATES-----------------------------------
+        
+    async def game_tick(self, last_update_time):
+        """Perform a single tick of the game loop."""
+        current_time = time.time()
+        delta_time = current_time - last_update_time
 
-    async def run_game_loop(self):
-        await self.connect_to_redis()
-        await self.init_redis_static_data()
+        await self.fetch_redis_paddle_pos()
+        if self.game_status == GameStatus.IN_PROGRESS:
+            self.update_ball_position(delta_time)
+        
         await self.update_redis_dynamic_data()
-        await self.reset_paddle_positions()
-        await self.reset_score()
+        await self.send_redis_dynamic_data_to_channel()
+        await self.handle_score_updates()
 
-        players_ready = await self.wait_for_other_player()
-        if not players_ready:
-            print("Not enough players connected. Exiting game loop.")
+        return delta_time
+
+    async def handle_score_updates(self):
+        """Handle score updates for each side."""
+        for side in ["left", "right"]:
+            try:
+                if self.players[side]["score"]["updated"]:
+                    await self.update_and_send_redis_score(side)
+                    self.players[side]["score"]["updated"] = False
+            except Exception as e:
+                print(f"Error updating or sending score for {side}: {e}")
+
+    async def handle_game_status_changes(self):
+        """Handle changes in game status, including suspensions and completions."""
+        if self.game_status == GameStatus.COMPLETED:
+            await self.update_and_send_redis_game_status(GameStatus.COMPLETED)
+
+        await self.fetch_redis_game_status()
+
+        if self.game_status == GameStatus.SUSPENDED:
+            players_ready = await self.wait_for_other_players_resume()
+            if not players_ready:
+                print("Not all players reconnected. Handling game suspension.")
+
+    # -------------------------------UTILS-----------------------------------
+
+    def calculate_sleep_duration(self, delta_time):
+            """Calculate sleep duration to maintain a consistent FPS."""
+            target_fps = 60
+            frame_duration = 1.0 / target_fps
+            return max(0, frame_duration - delta_time)
+
+    # -------------------------------LOOP-----------------------------------
+
+    async def run(self):
+        """The main game loop."""
+        await self.setup_game_environment()
+        if not await self.check_players_ready():
             return
 
-        await self.send_redis_static_data_to_channel()
-        await self.send_redis_dynamic_data_to_channel()
+        await self.game_preparation()
 
         last_update_time = time.time()
-        await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
-
         print("GAMELOGIC -> LOOP STARTED")
         try:
             while True:
-                current_time = time.time()
-                delta_time = current_time - last_update_time
-                
-                await self.fetch_redis_paddle_pos()
-                
-                # Update ball position only if the game is in progress
-                if self.game_status == GameStatus.IN_PROGRESS:
-                    self.update_ball_position(delta_time)
-
-                await self.update_redis_dynamic_data()
-                await self.send_redis_dynamic_data_to_channel()
-
-                for side in ["left", "right"]:
-                    try:
-                        if self.players[side]["score"]["updated"]:
-                            await self.update_and_send_redis_score(side)
-                            self.players[side]["score"]["updated"] = False
-                    except Exception as e:
-                        print(f"Error updating or sending score for {side}: {e}")
-
-                if self.game_status == GameStatus.COMPLETED:
-                    await self.update_and_send_redis_game_status(GameStatus.COMPLETED)
-
-                #WARNING MAKE INFINITE LOOP
-                await self.fetch_redis_game_status()
-
-                if self.game_status == GameStatus.SUSPENDED:
-                # Attempt to wait for other player(s) to reconnect or join
-                        players_ready = await self.wait_for_other_player()
-
-                        if players_ready:
-                            print("Players are ready. Game can resume.")
-                            # Optionally, update the game status to IN_PROGRESS or another appropriate status
-                            await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
-                        else:
-                            print("Not all players reconnected. Handling game suspension.")
-                            # Handle the scenario where not all players reconnected within the timeout
-                            # This could involve extending the suspension, ending the game, or other logic
-                            continue  # Or use break if you wish to exit the loop instead
+                delta_time = await self.game_tick(last_update_time)
+                await self.handle_game_status_changes()
 
                 if self.game_status != GameStatus.IN_PROGRESS:
                     print("GAMELOGIC -> LOOP EXITED status", self.game_status)
                     await self.update_and_send_redis_game_status(self.game_status)
                     break
 
-                # Calculate the sleep duration to achieve 60 FPS
-                target_fps = 60
-                target_frame_time = 1.0 / target_fps
-                sleep_duration = max(0, target_frame_time - delta_time)
-
-                # Adjust the sleep duration based on the delta time
-                await asyncio.sleep(sleep_duration)
-
-                last_update_time = current_time
+                last_update_time += delta_time
+                await asyncio.sleep(self.calculate_sleep_duration(delta_time))
 
         except asyncio.CancelledError:
             # Perform any necessary cleanup after cancellation
             print("Game loop was cancelled, cleaning up")
 
-    # -------------------------------GAME MECHANICS-----------------------------------
+    # *******************************GAME CALCULATIONS***************************************
+    # -------------------------------MECHANICS-----------------------------------
 
     def update_ball_position(self, delta_time):
         if self.game_status != GameStatus.IN_PROGRESS:

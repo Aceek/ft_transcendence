@@ -70,7 +70,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if self.handle_game_logic:
             self.game_logic_instance = GameLogic(self.room_name)
-            self.game_logic_task = asyncio.create_task(self.game_logic_instance.run_game_loop())
+            self.game_logic_task = asyncio.create_task(self.game_logic_instance.run())
 
     async def disconnect(self, close_code):
         print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
