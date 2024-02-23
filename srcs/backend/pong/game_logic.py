@@ -30,11 +30,10 @@ class GameLogic:
         self.ball_size = BALL_SIZE
 
         #---DYNAMIC VAR---
-        self.ready_to_play = 0
         self.game_status = GameStatus.NOT_STARTED
         self.left_player_score = self.right_player_score = INITIAL_SCORE
-        self.left_paddle = {"up": False, "down": False, "y": INITIAL_PADDLE_Y}
-        self.right_paddle = {"up": False, "down": False, "y": INITIAL_PADDLE_Y}
+        self.left_paddle = {"y": INITIAL_PADDLE_Y}
+        self.right_paddle = {"y": INITIAL_PADDLE_Y}
         self.ball = {
             "x": INITIAL_BALL_X,
             "y": INITIAL_BALL_Y,
@@ -64,8 +63,6 @@ class GameLogic:
     async def update_redis_dynamic_data(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         dynamic_data = {
-            # "lp_y": int(self.left_paddle['y']),
-			# "rp_y": int(self.right_paddle['y']),
 			"b_x": int(self.ball['x']),
 			"b_y": int(self.ball['y']),
 			"bs_x": int(self.ball['speedX']),
@@ -138,8 +135,6 @@ class GameLogic:
 
         # print(f"Sending static game data to client: {static_data}")
 
-        # Directly send the static game data to the frontend
-        # Note: The client will need to handle any necessary data parsing
         await self.channel_layer.group_send(
             self.room_group_name, 
             {
@@ -154,8 +149,6 @@ class GameLogic:
 
         # print(f"wSending dynamic game data to client: {dynamic_data}")
 
-        # Directly send the dynamic game data to the frontend
-        # Note: The client will need to handle deserialization of JSON fields
         await self.channel_layer.group_send(
             self.room_group_name, 
             {
@@ -164,46 +157,6 @@ class GameLogic:
             }
         )
 
-    # -------------------------------PADLLE UPDATE-----------------------------------
-
-    # async def update_paddle_position(self, paddle_side, new_y):
-    #     """
-    #     Update the paddle position for the specified side ('left' or 'right') to the new Y coordinate,
-    #     ensuring it remains within the game bounds and does not exceed the paddle speed limit.
-    #     """
-        
-    #     # Clamp the new Y position within the 0 to game_height range
-    #     new_y = max(0, min(new_y, self.canvas_height - self.paddle_height))
-        
-    #     if paddle_side == 'left':
-    #         # Calculate the difference between the new and current position
-    #         y_diff = abs(new_y - self.left_paddle['y'])
-            
-    #         # Ensure the paddle does not move more than the paddle speed limit
-    #         if y_diff <= self.paddle_speed:
-    #             self.left_paddle['y'] = new_y
-    #         else:
-    #             print("Attempted to move the paddle more than the speed limit.")
-                
-    #     elif paddle_side == 'right':
-    #         # Calculate the difference between the new and current position
-    #         y_diff = abs(new_y - self.right_paddle['y'])
-            
-    #         # Ensure the paddle does not move more than the paddle speed limit
-    #         if y_diff <= self.paddle_speed:
-    #             self.right_paddle['y'] = new_y
-    #         else:
-    #             print("Attempted to move the paddle more than the speed limit.")
-    #     else:
-    #         print(f"Invalid paddle side: {paddle_side}")
-    #         return
-
-    #     # Update Redis with the new paddle position
-    #     await self.update_redis_dynamic_data()
-
-    #     # Optionally, send updated game state to all connected clients
-    #     await self.send_redis_dynamic_data_to_client()
-
     # -------------------------------GAME LOOP-----------------------------------
 
     async def run_game_loop(self):
@@ -211,8 +164,6 @@ class GameLogic:
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
         await self.reset_paddle_positions()
-        print("PAD POS")
-        
 
         players_ready = await self.wait_for_other_player()
         if not players_ready:
@@ -256,13 +207,6 @@ class GameLogic:
                 await asyncio.sleep(sleep_duration)
 
                 last_update_time = current_time
-
-                # # Check the number of connected players before proceeding
-                # connected_users_set_key = f"game:{self.room_name}:connected_users"
-                # connected_users_count = await self.redis.scard(connected_users_set_key)
-                # if connected_users_count < 2:
-                #     await self.update_redis_game_status(GameStatus.SUSPENDED)
-                #     print("GAMELOGIC -> user below 2", self.game_status)
 
                 # await self.fetch_redis_game_status()
                 if self.game_status != GameStatus.IN_PROGRESS:

@@ -18,16 +18,11 @@ if (port) {
 
 var socket = new WebSocket(socketUrl);
 
-
 //----------------------WEBSOCKET-----------------------------------------
 
 socket.onopen = function (event) {
   console.log("WebSocket connection opened:", event);
 };
-
-// socket.onmessage = function (event) {
-//   console.log("WebSocket message received:", event.data);
-// };
 
 socket.onmessage = function (event) {
   var data = JSON.parse(event.data);
@@ -40,9 +35,9 @@ socket.onmessage = function (event) {
     case "game.dynamic_data":
       handleDynamicData(data.data); // Handle dynamic game data
       break;
-    // case "start_game":
-    //   socket.send(JSON.stringify({ type: "start_game", message: "ready_to_play" }));
-    //   break;
+    case "paddle_side_assignment": // Handle paddle side assignment
+      handlePaddleSideAssignment(data.paddle_side);
+      break;
     default:
       console.log("Unknown message type:", data.type);
   }
@@ -54,49 +49,69 @@ socket.onclose = function (event) {
 
 //----------------------EVENT LISTENERS-----------------------------------------
 
-// Global variables to track the last sent paddle positions
+// Function to handle paddle side assignment
+function handlePaddleSideAssignment(paddleSide) {
+  console.log("Assigned paddle side:", paddleSide);
+  // Assign the paddle side to your game state
+  game.paddle.side = paddleSide;
+}
+
+// Global variables to track the last sent paddle positions for both sides
 let lastSentPaddleY = null;
 
-// Function to handle paddle movements and send updates to the server
 function sendPaddlePositionUpdate() {
-    // Check if there's a significant change in paddle positions
-    if (game.players.left.paddleY !== lastSentPaddleY) {
-        // Update last sent positions
-        lastSentPaddleY = game.players.left.paddleY;
+  // Determine the current player's paddle and the corresponding variable for tracking
+  const isLeftSide = game.paddle.side === "left";
+  const currentPlayer = isLeftSide ? game.players.left : game.players.right;
+  // const lastSentPaddleY = isLeftSide ? lastSentLeftPaddleY : lastSentRightPaddleY;
 
-        // Send updated positions to the server
-        socket.send(JSON.stringify({
-            type: "paddle_position_update",
-            PaddleY: game.players.left.paddleY,
-        }));
+  // Check if there's a significant change in the current paddle's position
+  if (currentPlayer.paddleY !== lastSentPaddleY) {
+      lastSentLeftPaddleY = currentPlayer.paddleY;
+  }
 
-        console.log("Paddle positions sent:", lastSentPaddleY);
-    }
+  // Send updated position to the server
+  socket.send(JSON.stringify({
+      type: "paddle_position_update",
+      side: game.paddle.side,
+      PaddleY: currentPlayer.paddleY,
+  }));
+
+  console.log(`${game.paddle.side} paddle position sent:`, currentPlayer.paddleY);
 }
 
 // Event listeners for key presses
 document.addEventListener("keydown", function (event) {
-  console.log("Key down:", event.key);
+  // console.log("Key down:", event.key);
   handleKeyPress(event.key, true);
 });
 
 document.addEventListener("keyup", function (event) {
-  console.log("Key up:", event.key);
+  // console.log("Key up:", event.key);
   handleKeyPress(event.key, false);
 });
 
 function handleKeyPress(key, isPressed) {
-    // Determine the change in position
-    let change = game.paddle.speed * (isPressed ? 1 : 0); // Adjust speed based on key state
+  // Early exit if the paddle side is not set
+  if (!game.paddle.side) {
+    return;
+  }
 
-    // Update paddle position based on the key pressed
-    if (key === "ArrowUp") {
-        game.players.left.paddleY -= change;
-        sendPaddlePositionUpdate(); // Send position update
-    } else if (key === "ArrowDown") {
-        game.players.left.paddleY += change;
-        sendPaddlePositionUpdate(); // Send position update
-    }
+  // Determine the change in position
+  let change = game.paddle.speed * (isPressed ? 1 : 0);
+
+  // Select the correct paddle based on the assigned side
+  let paddleKey = game.paddle.side === "left" ? "left" : "right";
+
+  // Update paddle position based on the key pressed
+  if (key === "ArrowUp") {
+      game.players[paddleKey].paddleY -= change;
+  } else if (key === "ArrowDown") {
+      game.players[paddleKey].paddleY += change;
+  }
+
+  // Send position update
+  sendPaddlePositionUpdate();
 }
 
 //----------------------DATA INITALIZATION---------------------------------------
@@ -105,6 +120,7 @@ var game = {
   paddle: {
     width: 0,
     height: 0,
+    side: null,
   },
   ball: {
     size: 0,
@@ -148,7 +164,7 @@ function handleStaticData(staticData) {
 }
 
 function handleDynamicData(dynamicData) {
-  console.log("Handling dynamic data:", dynamicData);
+  // console.log("Handling dynamic data:", dynamicData);
   // Update the game state with parsed dynamic data
   game.ball.x = parseInt(dynamicData.b_x, 10);
   game.ball.y = parseInt(dynamicData.b_y, 10);
@@ -163,20 +179,8 @@ function handleDynamicData(dynamicData) {
 
 //----------------------GAME LOOP-----------------------------------------
 
-// // Main game loop
-// function mainLoop() {
-//   // Log the current game state for debugging
-//   // console.log("Current game state:", JSON.stringify(game, null, 2));
-
-//   draw();
-//   requestAnimationFrame(mainLoop);
-// }
-
-// // Start the main game loop
-// mainLoop();
-
 let lastUpdateTime = 0;
-const fps = 1000;
+const fps = 240;
 const frameDuration = 1000 / fps;
 
 function interpolatePosition(lastPosition, speed, deltaTime) {

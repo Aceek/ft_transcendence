@@ -48,8 +48,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
-        left_paddle_key = f"game:{self.room_name}:left_paddle"
-        right_paddle_key = f"game:{self.room_name}:right_paddle"
 
         # Add this user ID to the set of connected users
         await self.redis.sadd(connected_clients_set_key, self.user_id)
@@ -58,17 +56,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         connected_clients = await self.redis.scard(connected_clients_set_key)
 
         if connected_clients == 1:
-            # Assign current user to the left paddle if they are the first to connect
-            await self.redis.set(left_paddle_key, self.user_id)
             self.paddle_side = "left"
-        elif connected_clients == 2:
-            # Assign to right paddle if they are the second, but first check if left paddle is already assigned
-            if not await self.redis.exists(left_paddle_key):
-                await self.redis.set(left_paddle_key, self.user_id)
-                self.paddle_side = "left"
-            else:
-                await self.redis.set(right_paddle_key, self.user_id)
-                self.paddle_side = "right"
+        else:
+            self.paddle_side = "right"
+        
+        # After assigning the paddle side, notify the client
+        await self.send_paddle_side_assignment()
 
         print("CONSUMER -> check connected : ", self.user_id)
         print("CONSUMER -> nb connected : ", connected_clients)
@@ -78,7 +71,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.handle_game_logic:
             self.game_logic_instance = GameLogic(self.room_name)
             self.game_logic_task = asyncio.create_task(self.game_logic_instance.run_game_loop())
-
 
     async def disconnect(self, close_code):
         print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
@@ -106,38 +98,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-        connected_clients_set_key = f"game:{self.room_name}:connected_users"
-        left_paddle_key = f"game:{self.room_name}:left_paddle"
-        right_paddle_key = f"game:{self.room_name}:right_paddle"
-        
-        # Remove this user from the set of connected users
-        await self.redis.srem(connected_clients_set_key, self.user_id)
-        
-        # Remove paddle assignment if this user was assigned a paddle
-        if await self.redis.get(left_paddle_key) == self.user_id:
-            await self.redis.delete(left_paddle_key)
-        elif await self.redis.get(right_paddle_key) == self.user_id:
-            await self.redis.delete(right_paddle_key)
-
     async def receive(self, text_data):
         data = json.loads(text_data)
 
         # Handle "ready_to_play" message
         if "message" in data and data["message"] == "ready_to_play":
             print("Player is ready to play : ", self.user_id)
-            self.game_loop_task = asyncio.create_task(self.game_loop())
+            # self.game_loop_task = asyncio.create_task(self.game_loop())
 
         # Handle "paddle_position_update" message
         elif "type" in data and data["type"] == "paddle_position_update":
             paddle_y = data.get('PaddleY')
             if paddle_y is not None:
-                print(f"Received paddle position update: {paddle_y}")
+                # print(f"Received paddle position update: {paddle_y}")
                 # Update game logic with new paddle position
                 if self.paddle_side == "left":
                     await self.update_redis_paddle_position('left', paddle_y)
                 elif self.paddle_side == "right":
                     await self.update_redis_paddle_position('right', paddle_y)
-                    print("RIGHTTTTTTTTTTTTTTTTTTTT")
                 else:
                     print("Game logic instance not found or not initialized")
         else:
@@ -156,6 +134,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.handle_game_logic = False
 
     # -------------------------------PADLLE UPDATE-----------------------------------
+    
+    async def send_paddle_side_assignment(self):
+        """
+        Sends a message to the connected client with their paddle side assignment.
+        """
+        if self.paddle_side is not None:
+            await self.send(text_data=json.dumps({
+                'type': 'paddle_side_assignment',
+                'paddle_side': self.paddle_side
+            }))
+        else:
+            print(f"No paddle side assigned for user: {self.user_id}")
+
 
     async def update_redis_paddle_position(self, paddle_side, new_y):
         """
@@ -167,6 +158,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         
         # Fetch the current Y position from Redis
         current_y = await self.redis.hget(dynamic_data_key, paddle_key)
+        # print(f"fetched {paddle_side} paddle position from redis Redis: {current_y}")
+
         current_y = int(current_y) if current_y is not None else 0
         
         # Clamp the new Y position within the 0 to game_height range
@@ -178,52 +171,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Ensure the paddle does not move more than the paddle speed limit
         if y_diff <= PADDLE_SPEED:
             await self.redis.hset(dynamic_data_key, paddle_key, int(new_y))
-            print(f"Updated {paddle_side} paddle position to Redis: {new_y}")
+            current_y = await self.redis.hget(dynamic_data_key, paddle_key)
         else:
             print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
 
-        # # Optionally, send updated game state to all connected clients
-        # await self.send_redis_dynamic_data_to_client()
-
     # ----------------------------REDIS TO CLIENT-----------------------------------
-
-    # async def send_redis_static_data_to_client(self):
-    #     static_data_key = f"game:{self.room_name}:static"
-    #     static_data = await self.redis.hgetall(static_data_key)
-
-    #     # print(f"Sending static game data to client: {static_data}")
-        
-    #     static_data_str = json.dumps({"type": "game.static_data", "data": static_data})
-    #     await self.send(text_data=static_data_str)
-
-    #     # Directly send the static game data to the frontend
-    #     # Note: The client will need to handle any necessary data parsing
-    #     # await self.channel_layer.group_send(
-    #     #     self.room_group_name, 
-    #     #     {
-    #     #         "type": "game.static_data", 
-    #     #         "data": static_data  # Sending the Redis hash map as is
-    #     #     }
-    #     # )
-
-    # async def send_redis_dynamic_data_to_client(self):
-    #     dynamic_data_key = f"game:{self.room_name}:dynamic"
-    #     dynamic_data = await self.redis.hgetall(dynamic_data_key)
-
-    #     print(f"Sending dynamic game data to client: {dynamic_data}")
-        
-    #     dynamic_data_str = json.dumps({"type": "game.dynamic_data", "data": dynamic_data})
-    #     await self.send(text_data=dynamic_data_str)
-
-    #     # Directly send the dynamic game data to the frontend
-    #     # Note: The client will need to handle deserialization of JSON fields
-    #     # await self.channel_layer.group_send(
-    #     #     self.room_group_name, 
-    #     #     {
-    #     #         "type": "game.dynamic_data", 
-    #     #         "data": dynamic_data  # Sending the Redis hash map as is
-    #     #     }
-    #     # )
 
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
@@ -236,31 +188,31 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # -------------------------------GAME LOOP-----------------------------------
 
-    async def game_loop(self):
-        last_update_time = time.time()
-        print("CONSUMER -> LOOP STARTED for client : ", self.user_id)
+    # async def game_loop(self):
+    #     last_update_time = time.time()
+    #     print("CONSUMER -> LOOP STARTED for client : ", self.user_id)
 
-        while True:
-            # print("Game loop ongoing")
-            current_time = time.time()
-            delta_time = current_time - last_update_time
+    #     while True:
+    #         # print("Game loop ongoing")
+    #         current_time = time.time()
+    #         delta_time = current_time - last_update_time
 
-            # await self.send_redis_dynamic_data_to_client()
+    #         # await self.send_redis_dynamic_data_to_client()
 
-            target_fps = 60
-            target_frame_time = 1.0 / target_fps
-            sleep_duration = max(0, target_frame_time - delta_time)
+    #         target_fps = 60
+    #         target_frame_time = 1.0 / target_fps
+    #         sleep_duration = max(0, target_frame_time - delta_time)
 
-            # Adjust the sleep duration based on the delta time
-            await asyncio.sleep(sleep_duration)
+    #         # Adjust the sleep duration based on the delta time
+    #         await asyncio.sleep(sleep_duration)
 
-            last_update_time = current_time
+    #         last_update_time = current_time
 
-            await self.fetch_redis_game_status()
+    #         await self.fetch_redis_game_status()
 
-            if self.game_status != GameStatus.IN_PROGRESS:
-                print("CONSUMER -> LOOP EXITED for client : ", self.user_id)
-                break
+    #         if self.game_status != GameStatus.IN_PROGRESS:
+    #             print("CONSUMER -> LOOP EXITED for client : ", self.user_id)
+    #             break
 
 
     # -------------------------------CHANNEL LAYER-----------------------------------
