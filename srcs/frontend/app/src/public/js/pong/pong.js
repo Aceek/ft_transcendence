@@ -219,24 +219,25 @@ function mainLoop(timestamp) {
   // Calculate the delta time since the last frame
   const deltaTime = timestamp - lastUpdateTime;
 
-  if (game.status === "SUSPENDED") {
-    drawPausedMessage();
-    requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
-    return; // Skip the rest of the loop logic
-  }
-
-  if (game.status === "COMPLETED") {
-    drawGameOverMessage();
-    requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
-    return; // Skip the rest of the loop logic
-  }
-
+  
   if (deltaTime > frameDuration) {
     // Calculate the interpolated positions
     game.ball.x = interpolatePosition(game.ball.x, game.ball.speedX, deltaTime);
     game.ball.y = interpolatePosition(game.ball.y, game.ball.speedY, deltaTime);
     
     draw(); // Draw the frame with the interpolated positions
+    
+    if (game.status === "SUSPENDED") {
+      drawPausedMessage();
+      requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+      return; // Skip the rest of the loop logic
+    }
+  
+    if (game.status === "COMPLETED") {
+      drawGameOverMessage();
+      requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+      return; // Skip the rest of the loop logic
+    }
     
     lastUpdateTime = timestamp - (deltaTime % frameDuration); // Adjust for any overshoot of the frame duration
   }
@@ -343,7 +344,7 @@ function drawGameOverMessage() {
   // Calculate the position for the player winning message centered from the dash line
   var playerWinsText =
     "Player " +
-    (game.players.left.score > game.players.left.right ? "Left" : "Right") +
+    (game.players.left.score > game.players.right.score ? "Left" : "Right") +
     " Wins!";
   var playerWinsTextWidth = ctx.measureText(playerWinsText).width;
   var playerWinsTextX = middleDashLineX - playerWinsTextWidth / 2;
