@@ -14,6 +14,7 @@ class TwoFactorEmailModel(models.Model):
     token = models.UUIDField(default=uuid4, editable=False, unique=True)
 
     def save(self, *args, **kwargs):
+        TwoFactorEmailModel.objects.filter(user=self.user).delete()
         if not self.code:
             self.code = get_random_string(length=6, allowed_chars="0123456789")
         if not self.pk and not self.expiration:

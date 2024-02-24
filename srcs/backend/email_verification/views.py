@@ -12,7 +12,23 @@ class TwoFactorVerifyView(APIView):
     def post(self, request):
         serializer = TwoFactorValidateSerializer(data=request.data)
         if serializer.is_valid():
-            return Response(serializer.save(), status=status.HTTP_200_OK)
+            response = Response(status=status.HTTP_200_OK)
+            data = serializer.save()
+            response.set_cookie(
+                "access_token",
+                data["access"],
+                httponly=True,
+                samesite="strict",
+                secure=True,
+            )
+            response.set_cookie(
+                "refresh_token",
+                data["refresh"],
+                httponly=True,
+                samesite="strict",
+                secure=True,
+                )
+            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

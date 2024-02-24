@@ -13,14 +13,17 @@ class TwoFactorValidateSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         token = attrs["token"]
-        two_factor = TwoFactorEmailModel.objects.get(token=token)
+        try:
+            two_factor = TwoFactorEmailModel.objects.get(token=token)
+        except TwoFactorEmailModel.DoesNotExist:
+            raise serializers.ValidationError("Invalid 2FA token.")
         email = two_factor.user.email
         if two_factor.is_expired():
             raise serializers.ValidationError("2FA code expired.")
         if two_factor.code != attrs["code"]:
             raise serializers.ValidationError("Invalid 2FA code.")
         attrs["email"] = email
-        # two_factor.delete()
+        two_factor.delete()
         return attrs
 
     def save(self):

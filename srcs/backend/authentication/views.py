@@ -40,14 +40,14 @@ class LoginView(TokenObtainPairView):
                     "access_token",
                     data["access"],
                     httponly=True,
-                    samesite="Strict",
+                    samesite="strict",
                     secure=True,
                 )
                 response.set_cookie(
                     "refresh_token",
                     data["refresh"],
                     httponly=True,
-                    samesite="Strict",
+                    samesite="strict",
                     secure=True,
                 )
             return response
@@ -88,7 +88,7 @@ class TokenRefreshView(APIView):
                     "access_token",
                     data["access"],
                     httponly=True,
-                    samesite="Strict",
+                    samesite="strict",
                     secure=True,
                 )
                 return response
@@ -116,14 +116,14 @@ class OAuth42View(APIView):
             "access_token",
             data["access"],
             httponly=True,
-            samesite="Strict",
+            samesite="strict",
             secure=True,
         )
         response.set_cookie(
             "refresh_token",
             data["refresh"],
             httponly=True,
-            samesite="Strict",
+            samesite="strict",
             secure=True,
         )
         return response
