@@ -9,7 +9,7 @@ from uuid import uuid4
 class TwoFactorEmailModel(models.Model):
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
-    expiration = models.DateTimeField(default=now() + timedelta(minutes=10))
+    expiration = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(to="CustomUser.CustomUser", on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid4, editable=False, unique=True)
 
@@ -17,8 +17,7 @@ class TwoFactorEmailModel(models.Model):
         TwoFactorEmailModel.objects.filter(user=self.user).delete()
         if not self.code:
             self.code = get_random_string(length=6, allowed_chars="0123456789")
-        if not self.pk and not self.expiration:
-            self.expiration = now() + timedelta(minutes=10)
+        self.expiration = now() + timedelta(minutes=10)
         super().save(*args, **kwargs)
 
     def send_two_factor_email(self):
