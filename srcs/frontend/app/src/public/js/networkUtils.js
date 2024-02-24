@@ -6,7 +6,7 @@ export async function isAPIConnected() {
       method: "GET",
       credentials: credentialsOption,
     });
-    if (response.status === 200) {
+    if (response.ok) {
       return true;
     } else {
       response = await fetch(api_url + "auth/refresh/", {
