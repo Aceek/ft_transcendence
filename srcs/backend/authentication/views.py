@@ -31,24 +31,27 @@ class LoginView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            data = serializer.validated_data
             response = Response(status=status.HTTP_200_OK)
-            response.set_cookie(
-                "access_token",
-                serializer.validated_data["access"],
-                httponly=True,
-                samesite="Strict",
-                secure=True,
-            )
-            response.set_cookie(
-                "refresh_token",
-                serializer.validated_data["refresh"],
-                httponly=True,
-                samesite="Strict",
-                secure=True,
-            )
+            if '2FA' in data:
+                response.data = data
+            else:
+                response.set_cookie(
+                    "access_token",
+                    data["access"],
+                    httponly=True,
+                    samesite="Strict",
+                    secure=True,
+                )
+                response.set_cookie(
+                    "refresh_token",
+                    data["refresh"],
+                    httponly=True,
+                    samesite="Strict",
+                    secure=True,
+                )
             return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]

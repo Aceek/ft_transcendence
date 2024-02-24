@@ -49,10 +49,11 @@ function addEventListeners() {
 }
 
 export async function get2FAPage() {
-	// if (!sessionStorage.getItem("2fa_token")) {
-	// 	window.location.replace("/login");
-	// 	return;
-	// }
+	if (!sessionStorage.getItem("2fa_token")) {
+		window.location.replace("/login");
+		return;
+	}
+	console.log(sessionStorage.getItem("2fa_token"));
     const template = await fetchTemplate("/public/html/2fa.html");
 	document.getElementById("main").innerHTML = template;
 	loadProfileCss("/public/css/2fa.css");

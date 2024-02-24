@@ -26,12 +26,21 @@ function getFormData() {
   return { email: usr_email, password: usr_password };
 }
 
-function handleLoginResponse(response) {
+async function handleLoginResponse(response) {
   let errorMessage = document.getElementById("error-message");
   document.getElementById('info-message').textContent = '';
   if (response.status === 200) {
     errorMessage.textContent = "";
-    router("/home");
+    let data = null;
+    try {
+      data = await response.json();
+      if (data && '2FA' in data) {
+        sessionStorage.setItem("2fa_token", data['2FA']);
+        router("/2fa");
+      }
+    } catch (error) {
+      router("/home");
+    }
   } else if (response.status === 401) {
     errorMessage.textContent = "Invalid email or password";
   } else {
