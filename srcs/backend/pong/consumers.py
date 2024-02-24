@@ -20,7 +20,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ready_to_play = 0
         self.game_status = GameStatus.NOT_STARTED
         self.paddle_side = None
 
@@ -33,45 +32,70 @@ class GameConsumer(AsyncWebsocketConsumer):
             print(f"Failed to connect to Redis: {e}")
 
         await self.accept()
+        self.user_id = self.get_user_id()
+        self.room_name, self.room_group_name = self.get_room_names()
+        await self.join_room_group()
 
-        self.user_id = str(self.scope["user"].id if self.scope["user"].is_authenticated else "anonymous")
+        await self.handle_paddle_assignment()
+        await self.fetch_redis_game_status()
+        print("CONSUMER -> client connected : ", self.user_id)
+        print("CONSUMER -> game status : ", self.game_status)
 
-        # create a room based on the uid of the game
-        self.room_name = self.scope["url_route"]["kwargs"]["uid"]
-        self.room_group_name = f"pong_room_{self.room_name}"
+        await self.handle_game_logic_initialization()
 
+    async def handle_game_logic_initialization(self):
+        """Attempt to acquire game logic control and initialize game logic task if successful."""
+        await self.attempt_to_acquire_game_logic_control()
+        if self.handle_game_logic:
+            self.initialize_game_logic_task()
+
+    def get_user_id(self):
+        """Determine the user ID based on authentication status."""
+        return str(self.scope["user"].id if self.scope["user"].is_authenticated else "anonymous")
+
+    def get_room_names(self):
+        """Generate room and group names based on the game UID."""
+        room_name = self.scope["url_route"]["kwargs"]["uid"]
+        room_group_name = f"pong_room_{room_name}"
+        return room_name, room_group_name
+
+    async def join_room_group(self):
+        """Add the user to the room group in Channels and Redis."""
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-            
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
-
-        # Add this user ID to the set of connected users
         await self.redis.sadd(connected_clients_set_key, self.user_id)
-        
-        # Determine paddle assignment based on the number of connected clients
-        connected_clients = await self.redis.scard(connected_clients_set_key)
 
-        if connected_clients == 1:
-            self.paddle_side = "left"
-        else:
-            self.paddle_side = "right"
-        
-        # After assigning the paddle side, notify the client
+    async def handle_paddle_assignment(self):
+        """Assign paddle side based on the number of connected clients."""
+        connected_clients_set_key = f"game:{self.room_name}:connected_users"
+        connected_clients = await self.redis.scard(connected_clients_set_key)
+        self.paddle_side = "left" if connected_clients == 1 else "right"
         await self.send_paddle_side_assignment()
 
-        print("CONSUMER -> check connected : ", self.user_id)
-        print("CONSUMER -> nb connected : ", connected_clients)
+    async def attempt_to_acquire_game_logic_control(self):
+        print(f"Attempting to start game logic: {self.user_id}, Time: {time.time()}")
+        flag_key = f"game_logic_flag:{self.room_name}"
+        flag_set = await self.redis.setnx(flag_key, "true")
+        if flag_set:
+            print("CONSUMER -> client set the flag : ", self.user_id)
+            # This consumer handles the game logic for the room
+            self.handle_game_logic = True
+            # Set an expiration time for the flag
+            await self.redis.expire(flag_key, 60)  # Expires in 60 second
+        else:
+            self.handle_game_logic = False
 
-        await self.attempt_to_acquire_game_logic_control()
-
-        if self.handle_game_logic:
-            self.game_logic_instance = GameLogic(self.room_name)
-            self.game_logic_task = asyncio.create_task(self.game_logic_instance.run())
+    def initialize_game_logic_task(self):
+        """Initialize the game logic task."""
+        self.game_logic_instance = GameLogic(self.room_name)
+        self.game_logic_task = asyncio.create_task(self.game_logic_instance.run())
+        print("CONSUMER -> client started game logic : ", self.user_id)
 
     async def disconnect(self, close_code):
         print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
-        if self.handle_game_logic:
-                flag_key = f"game_logic_flag:{self.room_name}"
-                await self.redis.delete(flag_key)
+        # if self.handle_game_logic:
+        #         flag_key = f"game_logic_flag:{self.room_name}"
+        #         await self.redis.delete(flag_key)
         
         # Withdraw this user ID from the set of connected users
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
@@ -106,16 +130,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # -------------------------------SYNC-----------------------------------
 
-    async def attempt_to_acquire_game_logic_control(self):
-        flag_key = f"game_logic_flag:{self.room_name}"
-        flag_set = await self.redis.setnx(flag_key, "true")
-        if flag_set:
-            # This consumer handles the game logic for the room
-            self.handle_game_logic = True
-            # Optionally, set an expiration time for the flag
-            await self.redis.expire(flag_key, 60)  # Expires in 60 seconds
-        else:
-            self.handle_game_logic = False
 
     async def handle_restart_game_request(self):
         print(f"Player {self.user_id} requested to restart the game in room {self.room_name}.")
@@ -181,8 +195,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         game_status = await self.redis.hget(dynamic_data_key, "gs")
 
-        if game_status is not None:
+        if game_status:
             self.game_status = GameStatus(int(game_status))
+            return True
+        else:
+            return False
 
     async def send_redis_game_status_to_client(self):
         """

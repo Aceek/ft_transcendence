@@ -243,6 +243,8 @@ class GameLogic:
             
     async def setup_game_environment(self):
         """Initial game setup."""
+        # flag_key = f"game_logic_flag:{self.room_name}"
+        # await self.redis.delete(flag_key)
         self.game_status = GameStatus.NOT_STARTED
         self.players = self.init_players()
         self.ball = self.init_ball() 
@@ -298,34 +300,29 @@ class GameLogic:
     
     async def wait_for_other_players_restart(self):
         """Wait for other players to restart the game."""
-        try:
-            start_time = asyncio.get_event_loop().time()
-            while True:
-                # Optionally, check if all connected players in the room are ready to restart
-                connected_clients_set_key = f"game:{self.room_name}:connected_users"
-                restart_requests_set_key = f"game:{self.room_name}:restart_requests"
-                
-                restart_requests_count = await self.redis.scard(restart_requests_set_key)
-                connected_users_count = await self.redis.scard(connected_clients_set_key)
-                
-                if restart_requests_count == connected_users_count == 2:
-                    print("All players in room are ready to restart the game.")
-                    # Proceed with game reset logic...
-                    # Reset the game state, scores, etc.
-                    # Ensure to clear the restart_requests set after restarting the game
-                    await self.redis.delete(restart_requests_set_key)
-                    return True
-                
-                # Check if the timeout has been reached
-                if asyncio.get_event_loop().time() - start_time > 30:
-                    raise asyncio.TimeoutError
-                
-                await asyncio.sleep(1)  # Wait for one second before checking again
-        except asyncio.TimeoutError:
-            print("Timeout reached while waiting for players to restart.")
-            return False
-    
+        while True:
+            # Optionally, check if all connected players in the room are ready to restart
+            connected_clients_set_key = f"game:{self.room_name}:connected_users"
+            restart_requests_set_key = f"game:{self.room_name}:restart_requests"
             
+            restart_requests_count = await self.redis.scard(restart_requests_set_key)
+            connected_users_count = await self.redis.scard(connected_clients_set_key)
+            
+            if restart_requests_count == connected_users_count == 2:
+                print("All players in room are ready to restart the game.")
+                # Proceed with game reset logic...
+                # Reset the game state, scores, etc.
+                # Ensure to clear the restart_requests set after restarting the game
+                await self.redis.delete(restart_requests_set_key)
+                return True
+            
+            if connected_users_count == 0:
+                print("All players in room have left.")
+                await self.redis.delete(restart_requests_set_key)
+                return False
+            
+            await asyncio.sleep(1)  # Wait for one second before checking again
+    
     # -------------------------------UPDATES-----------------------------------
         
     async def game_tick(self, last_update_time):
