@@ -146,27 +146,29 @@ class GameLogic:
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
 
-        await self.send_redis_game_status_to_channel()
+        await self.send_redis_dynamic_data_to_channel()
+
+        # await self.send_redis_game_status_to_channel()
    
-    async def send_redis_game_status_to_channel(self):
-        """
-        Send the current game status to the channel.
-        """
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        game_status_key = "gs"
+    # async def send_redis_game_status_to_channel(self):
+    #     """
+    #     Send the current game status to the channel.
+    #     """
+    #     dynamic_data_key = f"game:{self.room_name}:dynamic"
+    #     game_status_key = "gs"
         
-        # Fetch the current game status from Redis
-        current_game_status = await self.redis.hget(dynamic_data_key, game_status_key)
+    #     # Fetch the current game status from Redis
+    #     current_game_status = await self.redis.hget(dynamic_data_key, game_status_key)
         
-        current_game_status = GameStatus(int(current_game_status)).name if current_game_status else "UNKNOWN"
+    #     current_game_status = GameStatus(int(current_game_status)).name if current_game_status else "UNKNOWN"
         
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "game.status_update",  # Ensure this type matches a handler in your consumer
-                "status": current_game_status
-            }
-        )
+    #     await self.channel_layer.group_send(
+    #         self.room_group_name,
+    #         {
+    #             "type": "game.status_update",  # Ensure this type matches a handler in your consumer
+    #             "status": current_game_status
+    #         }
+    #     )
 
     # -------------------------------SCORE-----------------------------------
         
@@ -191,6 +193,8 @@ class GameLogic:
         
         # Increment the score directly in Redis
         await self.redis.hincrby(dynamic_data_key, player_key, 1)
+
+        await self.send_redis_dynamic_data_to_channel()
 
         # await self.send_redis_score_to_channel(player_side)
 
@@ -243,8 +247,6 @@ class GameLogic:
             
     async def setup_game_environment(self):
         """Initial game setup."""
-        # flag_key = f"game_logic_flag:{self.room_name}"
-        # await self.redis.delete(flag_key)
         self.game_status = GameStatus.NOT_STARTED
         self.players = self.init_players()
         self.ball = self.init_ball() 
@@ -294,6 +296,7 @@ class GameLogic:
         players_ready = await self.wait_for_other_players()
         if players_ready:
             print("Players are ready. Game can resume.")
+            await self.game_preparation()
             await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
             return True
         return False
@@ -334,9 +337,9 @@ class GameLogic:
         if self.game_status == GameStatus.IN_PROGRESS:
             self.update_ball_position(delta_time)
         
+        await self.handle_score_updates()
         await self.update_redis_dynamic_data()
         await self.send_redis_dynamic_data_to_channel()
-        await self.handle_score_updates()
 
         return delta_time
 
@@ -369,6 +372,13 @@ class GameLogic:
             tickRate = 30
             frame_duration = 1.0 / tickRate
             return max(0, frame_duration - delta_time)
+    
+    async def clear_room_data(self):
+        """Clear all Redis data associated with the game room."""
+        room_key_pattern = f"game:{self.room_name}:*"
+        async for key in self.redis.scan_iter(match=room_key_pattern):
+            await self.redis.delete(key)
+    print("All room data cleared successfully.")
 
     # -------------------------------LOOP-----------------------------------
 
@@ -390,7 +400,6 @@ class GameLogic:
                 if self.game_status != GameStatus.IN_PROGRESS:
                     print("GAMELOGIC -> LOOP EXITED status", self.game_status)
                     await self.update_and_send_redis_game_status(self.game_status)
-                    # await asyncio.sleep(10)
                     break
 
                 last_update_time += delta_time
@@ -398,6 +407,7 @@ class GameLogic:
 
         except asyncio.CancelledError:
             # Perform any necessary cleanup after cancellation
+            await self.clear_room_data()
             print("Game loop was cancelled, cleaning up")
 
         # After exiting the main game loop, check if conditions are met to restart the game
@@ -408,7 +418,8 @@ class GameLogic:
             print("Conditions met. Restarting the game...")
         else:
         # Conditions are met to restart the game
-            print("Conditions to restart the game not met. Exiting.")
+            print("Conditions to restart the game not met. Exiting and cleaning redis data.")
+            await self.clear_room_data()
 
     # *******************************GAME CALCULATIONS***************************************
     # -------------------------------MECHANICS-----------------------------------

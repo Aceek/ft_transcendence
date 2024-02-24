@@ -64,13 +64,28 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
         await self.redis.sadd(connected_clients_set_key, self.user_id)
+        print(f"Add user {self.user_id} from connected users in room: {self.room_name}")
 
     async def handle_paddle_assignment(self):
-        """Assign paddle side based on the number of connected clients."""
-        connected_clients_set_key = f"game:{self.room_name}:connected_users"
-        connected_clients = await self.redis.scard(connected_clients_set_key)
-        self.paddle_side = "left" if connected_clients == 1 else "right"
+        # Keys for each paddle position
+        positions = ['left', 'right']
+        paddle_position_keys = {pos: f"game:{self.room_name}:paddle:{pos}" for pos in positions}
+
+        # Check if the player already has an assigned position
+        for position, key in paddle_position_keys.items():
+            if await self.redis.sismember(key, self.user_id):
+                self.paddle_side = position
+                break
+        else:
+            # Assign the player to the next available position
+            for position, key in paddle_position_keys.items():
+                if not await self.redis.scard(key):
+                    await self.redis.sadd(key, self.user_id)
+                    self.paddle_side = position
+                    break
+
         await self.send_paddle_side_assignment()
+        print(f"User {self.user_id} assigned to {self.paddle_side} paddle")
 
     async def attempt_to_acquire_game_logic_control(self):
         print(f"Attempting to start game logic: {self.user_id}, Time: {time.time()}")
@@ -114,7 +129,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if "type" in data and data["type"] == "paddle_position_update":
             paddle_y = data.get('PaddleY')
             if paddle_y is not None:
-                # print(f"Received paddle position update: {paddle_y}")
+                print(f"{self.user_id} -> Received paddle position update: {paddle_y}")
                 # Update game logic with new paddle position
                 if self.paddle_side == "left":
                     await self.update_redis_paddle_position('left', paddle_y)
@@ -146,7 +161,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         """
         Sends a message to the connected client with their paddle side assignment.
         """
-        if self.paddle_side is not None:
+        if self.paddle_side:
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',
                 'paddle_side': self.paddle_side
@@ -189,7 +204,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         dynamic_data_key = f"game:{self.room_name}:dynamic"
         await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
 
-        await self.send_redis_game_status_to_client()
+        # await self.send_redis_game_status_to_client()
 
     async def fetch_redis_game_status(self):
         dynamic_data_key = f"game:{self.room_name}:dynamic"

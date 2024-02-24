@@ -66,9 +66,9 @@ socket.onmessage = function (event) {
     // case "game.score_update": // Handle score update
     //   handleScoreUpdate(data.side, data.score);
     //   break;
-    case "game.status_update": // NEW: Handle game status update
-      handleGameStatusUpdate(data.status);
-      break;
+    // case "game.status_update": // NEW: Handle game status update
+    //   handleGameStatusUpdate(data.status);
+    //   break;
     default:
       console.log("Unknown message type:", data.type);
     }
@@ -101,7 +101,7 @@ socket.onmessage = function (event) {
   }
   
   function handleDynamicData(dynamicData) {
-    console.log("Handling dynamic data:", dynamicData);
+    // console.log("Handling dynamic data:", dynamicData);
     // Update the game state with parsed dynamic data
     game.ball.x = parseInt(dynamicData.b_x, 10);
     game.ball.y = parseInt(dynamicData.b_y, 10);
@@ -111,6 +111,7 @@ socket.onmessage = function (event) {
     game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
     game.players.left.score = parseInt(dynamicData.lp_s, 10);
     game.players.right.score = parseInt(dynamicData.rp_s, 10);
+    game.status = parseInt(dynamicData.gs, 10);
     // Log the updated game state for debugging
   //   console.log("Updated game state with dynamic data:", game);
   }
@@ -133,10 +134,10 @@ socket.onmessage = function (event) {
   //   // }
   // }
   
-  function handleGameStatusUpdate(status) {
-    console.log("Game status update received:", status);
-    game.status = status;
-  }
+  // function handleGameStatusUpdate(status) {
+  //   console.log("Game status update received:", status);
+  //   game.status = status;
+  // }
   
 //----------------------KEY EVENT-----------------------------------------
 
@@ -163,7 +164,7 @@ function handleKeyPress(key, isPressed) {
     game.players[paddleKey].paddleY -= change;
   } else if (key === "ArrowDown") {
     game.players[paddleKey].paddleY += change;
-  } else if (key === "Enter" && game.status === "COMPLETED" && isPressed) {
+  } else if (key === "Enter" && game.status == 4 && isPressed) {
     // Send message to the backend to restart the game
     socket.send(JSON.stringify({ type: "restart_game" }));
   }
@@ -216,28 +217,29 @@ function mainLoop(timestamp) {
     game.ball.x = interpolatePosition(game.ball.x, game.ball.speedX, deltaTime);
     game.ball.y = interpolatePosition(game.ball.y, game.ball.speedY, deltaTime);
     
+    // Print the ball's coordinates
+    // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}, drawing`);
     draw(); // Draw the frame with the interpolated positions
-    if (game.status === "WAITING_PLAYERS") {
+    if (game.status == 1) {
       console.log("waiting players");
       drawWaitingMessage();
       requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
       return; // Skip the rest of the loop logic
     }
     
-    if (game.status === "SUSPENDED") {
+    if (game.status == 3) {
       drawPausedMessage();
       requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
       return; // Skip the rest of the loop logic
     }
     
-    if (game.status === "COMPLETED") {
+    if (game.status == 4) {
       drawGameOverMessage();
       requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
       return; // Skip the rest of the loop logic
     
     }
-
-    
+   
     lastUpdateTime = timestamp - (deltaTime % frameDuration); // Adjust for any overshoot of the frame duration
   }
   
@@ -275,6 +277,7 @@ function drawPaddle(x, y) {
 }
 
 function drawBall(x, y) {
+  // console.log(`GS : ${game.status} - Drawing ball position - X: ${x.toFixed(2)}, Y: ${y.toFixed(2)}`);
   ctx.fillStyle = "#fff";
   ctx.fillRect(
     x - game.ball.size / 2,
