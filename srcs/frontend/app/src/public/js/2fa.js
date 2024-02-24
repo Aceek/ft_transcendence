@@ -1,3 +1,4 @@
+import { api_url, router } from "./main.js";
 import { fetchTemplate, loadProfileCss, changeUrlHistory } from "./pageUtils.js";
 
 
@@ -37,15 +38,41 @@ function enterValidate(inputs) {
 			const allFilled = inputs.every(input => input.value !== '');
 			if (allFilled) {
 				console.log('All filled');
+				// button.click(); do the same comportement as the button click
 			}
 		}
 	});
 }
 
+function buttonValidate(inputs, button) {
+	button.addEventListener('click', () => {
+		fetch(api_url + "mail/2fa", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				"2fa_token": sessionStorage.getItem("2fa_token"),
+				"code": inputs.map(input => input.value).join(''),
+			})
+			.then(response => {
+				if (response.status === 200) {
+					sessionStorage.removeItem("2fa_token")
+					router("/home");
+				} else {
+					console.log('Invalid 2FA code')
+				}
+			})
+		});
+	});
+}
+
 function addEventListeners() {
 	const inputs = Array.from(document.querySelectorAll('input'));
+	const button = document.getElementById("verify-btn");
 	inputsEvents(inputs);
-	enterValidate(inputs);
+	buttonValidate(inputs, button);
+	enterValidate(inputs, button);
 }
 
 export async function get2FAPage() {
