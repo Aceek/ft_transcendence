@@ -98,6 +98,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                     await self.update_redis_paddle_position('right', paddle_y)
                 else:
                     print("Game logic instance not found or not initialized")
+        elif "type" in data and data["type"] == "restart_game":
+            # Handle restart game request
+            await self.handle_restart_game_request()
         else:
             print("Received unknown message type or missing key.")
 
@@ -113,6 +116,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.redis.expire(flag_key, 60)  # Expires in 60 seconds
         else:
             self.handle_game_logic = False
+
+    async def handle_restart_game_request(self):
+        print(f"Player {self.user_id} requested to restart the game in room {self.room_name}.")
+        
+        # Define a Redis set key for tracking restart requests
+        restart_requests_set_key = f"game:{self.room_name}:restart_requests"
+        
+        # Add this user ID to the set of restart requests
+        await self.redis.sadd(restart_requests_set_key, self.user_id)
 
     # -------------------------------PADDLE UPDATE-----------------------------------
     
@@ -211,23 +223,23 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
 
-    async def game_score_update(self, event):
-        """
-        Handle score update messages.
-        """
-        # Extract the relevant data from the event
-        player_side = event['side']
-        score = event['score']
+    # async def game_score_update(self, event):
+    #     """
+    #     Handle score update messages.
+    #     """
+    #     # Extract the relevant data from the event
+    #     player_side = event['side']
+    #     score = event['score']
 
-        # Prepare the message to send to the client
-        message = {
-            'type': 'game.score_update',  # Confirming the message type
-            'side': player_side,  # Indicating which player's score is updated
-            'score': score  # The updated score
-        }
+    #     # Prepare the message to send to the client
+    #     message = {
+    #         'type': 'game.score_update',  # Confirming the message type
+    #         'side': player_side,  # Indicating which player's score is updated
+    #         'score': score  # The updated score
+    #     }
 
-        # Send the score update message to the client
-        await self.send(text_data=json.dumps(message))
+        # # Send the score update message to the client
+        # await self.send(text_data=json.dumps(message))
 
     async def game_status_update(self, event):
         """
