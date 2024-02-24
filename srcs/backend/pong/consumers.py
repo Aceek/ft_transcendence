@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404
 from .game_config import *
 from .game_logic import GameLogic
 from .game_status import GameStatus
-
+from .game_utils import *
 
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -26,11 +26,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     # -------------------------------WEBSOCKET-------------------------
 
     async def connect(self):
-        try:
-            self.redis = await aioredis.from_url("redis://redis:6379", db=0, encoding="utf-8", decode_responses=True)
-        except Exception as e:
-            print(f"Failed to connect to Redis: {e}")
-
+        self.redis = await connect_to_redis()
         await self.accept()
         self.user_id = self.get_user_id()
         self.room_name, self.room_group_name = self.get_room_names()
@@ -41,7 +37,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         print("CONSUMER -> client connected : ", self.user_id)
         print("CONSUMER -> game status : ", self.game_status)
 
-        await self.handle_game_logic_initialization()
+        if self.game_status == GameStatus.NOT_STARTED:
+            await self.handle_game_logic_initialization()
 
     async def handle_game_logic_initialization(self):
         """Attempt to acquire game logic control and initialize game logic task if successful."""
@@ -89,16 +86,17 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def attempt_to_acquire_game_logic_control(self):
         print(f"Attempting to start game logic: {self.user_id}, Time: {time.time()}")
-        flag_key = f"game_logic_flag:{self.room_name}"
+        flag_key = f"game:{self.room_name}:logic_flag"  # Updated to match the new pattern
         flag_set = await self.redis.setnx(flag_key, "true")
         if flag_set:
             print("CONSUMER -> client set the flag : ", self.user_id)
             # This consumer handles the game logic for the room
             self.handle_game_logic = True
             # Set an expiration time for the flag
-            await self.redis.expire(flag_key, 60)  # Expires in 60 second
+            await self.redis.expire(flag_key, 60)  # Expires in 60 seconds
         else:
             self.handle_game_logic = False
+
 
     def initialize_game_logic_task(self):
         """Initialize the game logic task."""
@@ -107,19 +105,25 @@ class GameConsumer(AsyncWebsocketConsumer):
         print("CONSUMER -> client started game logic : ", self.user_id)
 
     async def disconnect(self, close_code):
-        print(f"CONSUMER -> DISCONNECT for client: {self.user_id}")
-        # if self.handle_game_logic:
-        #         flag_key = f"game_logic_flag:{self.room_name}"
-        #         await self.redis.delete(flag_key)
         
+        await self.fetch_redis_game_status()
+        
+        if self.game_status != GameStatus.COMPLETED:
+            await self.update_redis_game_status(GameStatus.SUSPENDED)
+
         # Withdraw this user ID from the set of connected users
         connected_clients_set_key = f"game:{self.room_name}:connected_users"
         await self.redis.srem(connected_clients_set_key, self.user_id)
         print(f"Removed user {self.user_id} from connected users in room: {self.room_name}")
 
-        await self.update_redis_game_status(GameStatus.SUSPENDED)
+        # Check the number of connected users
+        connected_users_count = await self.redis.scard(connected_clients_set_key)
+        if connected_users_count == 0:
+            # If no users are connected, clear Redis room data
+            await clear_redis_room_data(self.room_name)
         
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
 
 
     async def receive(self, text_data):
@@ -145,7 +149,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     # -------------------------------SYNC-----------------------------------
 
-
     async def handle_restart_game_request(self):
         print(f"Player {self.user_id} requested to restart the game in room {self.room_name}.")
         
@@ -168,7 +171,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             }))
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
-
 
     async def update_redis_paddle_position(self, paddle_side, new_y):
         """
@@ -253,25 +255,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.dynamic_data',
             'data': data
         }))
-
-
-    # async def game_score_update(self, event):
-    #     """
-    #     Handle score update messages.
-    #     """
-    #     # Extract the relevant data from the event
-    #     player_side = event['side']
-    #     score = event['score']
-
-    #     # Prepare the message to send to the client
-    #     message = {
-    #         'type': 'game.score_update',  # Confirming the message type
-    #         'side': player_side,  # Indicating which player's score is updated
-    #         'score': score  # The updated score
-    #     }
-
-        # # Send the score update message to the client
-        # await self.send(text_data=json.dumps(message))
 
     async def game_status_update(self, event):
         """

@@ -11,14 +11,14 @@ from channels.layers import get_channel_layer
 
 from .game_config import *
 from .game_status import GameStatus
-
+from .game_utils import *
 
 class GameLogic:
     def __init__(self, room_name):
         self.room_name = room_name
         self.room_group_name = f'pong_room_{room_name}'
         self.channel_layer = get_channel_layer()
-       
+
         #---CONSTANT VAR---
         self.score_limit = SCORE_LIMIT
         self.canvas_height = SCREEN_HEIGHT
@@ -67,10 +67,6 @@ class GameLogic:
 
 
     # *******************************DATA TRANSFER***********************************
-        
-    async def connect_to_redis(self):
-        self.redis = await aioredis.from_url("redis://redis:6379", db=0, encoding="utf-8", decode_responses=True)
-            
     # -------------------------------STATIC DATA----------------------------------
         
     async def init_redis_static_data(self):
@@ -148,28 +144,6 @@ class GameLogic:
 
         await self.send_redis_dynamic_data_to_channel()
 
-        # await self.send_redis_game_status_to_channel()
-   
-    # async def send_redis_game_status_to_channel(self):
-    #     """
-    #     Send the current game status to the channel.
-    #     """
-    #     dynamic_data_key = f"game:{self.room_name}:dynamic"
-    #     game_status_key = "gs"
-        
-    #     # Fetch the current game status from Redis
-    #     current_game_status = await self.redis.hget(dynamic_data_key, game_status_key)
-        
-    #     current_game_status = GameStatus(int(current_game_status)).name if current_game_status else "UNKNOWN"
-        
-    #     await self.channel_layer.group_send(
-    #         self.room_group_name,
-    #         {
-    #             "type": "game.status_update",  # Ensure this type matches a handler in your consumer
-    #             "status": current_game_status
-    #         }
-    #     )
-
     # -------------------------------SCORE-----------------------------------
         
     async def reset_score(self):
@@ -195,27 +169,6 @@ class GameLogic:
         await self.redis.hincrby(dynamic_data_key, player_key, 1)
 
         await self.send_redis_dynamic_data_to_channel()
-
-        # await self.send_redis_score_to_channel(player_side)
-
-    # async def send_redis_score_to_channel(self, player_side):
-    #     """
-    #     Send the updated score of the specified player side ('left' or 'right') to the channel.
-    #     """
-    #     dynamic_data_key = f"game:{self.room_name}:dynamic"
-    #     score_key = "lp_s" if player_side == "left" else "rp_s"
-        
-    #     # Fetch the specific score from Redis
-    #     player_score = await self.redis.hget(dynamic_data_key, score_key)
-
-    #     await self.channel_layer.group_send(
-    #         self.room_group_name,
-    #         {
-    #             "type": "game.score_update",  # Note the underscore
-    #             "side": player_side,
-    #             "score": player_score
-    #         }
-    #     )
     
     # -------------------------------PADDLE-----------------------------------
 
@@ -250,82 +203,93 @@ class GameLogic:
         self.game_status = GameStatus.NOT_STARTED
         self.players = self.init_players()
         self.ball = self.init_ball() 
-        await self.connect_to_redis()
+        self.redis = await connect_to_redis()
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
         await self.reset_paddle_positions()
         await self.reset_score()
 
-    async def game_preparation(self):
+    async def send_redis_data_to_channel(self):
         """Prepare the game by sending initial data to channels."""
         await self.send_redis_static_data_to_channel()
         await self.send_redis_dynamic_data_to_channel()
-        await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
 
     # -------------------------------SYNC-----------------------------------
         
-    async def check_players_ready(self):
-        """Check if players are ready to start the game."""
-        players_ready = await self.wait_for_other_players()
-        if not players_ready:
-            print("Not enough players connected. Exiting game loop.")
-            return False
-        return True
-    
-    async def wait_for_other_players(self):
-        connected_users_set_key = f"game:{self.room_name}:connected_users"
-        print(f"Waiting for other players in room: {self.room_name}")
-        await self.update_and_send_redis_game_status(GameStatus.WAITING_PLAYERS)
-        try:
-            await asyncio.wait_for(self._check_for_other_players(connected_users_set_key), timeout=300.0)
-            print("Both players connected.")
-            return True
-        except asyncio.TimeoutError:
-            print("Timeout reached while waiting for another player.")
-            return False
+    async def wait_for_players(self, condition_check, status_message):
+        """Generic method to wait for players based on a custom condition."""
+        print(f"{status_message} in room: {self.room_name}")
         
-    async def _check_for_other_players(self, connected_users_set_key):
         while True:
-            connected_users_count = await self.redis.scard(connected_users_set_key)
-            if connected_users_count >= 2:
-                break
+            condition_met, message = await condition_check()
+            if condition_met:
+                print(message)
+                return True
+            elif condition_met is False:
+                print(message)
+                return False
             await asyncio.sleep(1)
 
-    async def wait_for_other_players_resume(self):
+    async def check_for_initial_players(self):
+        """Check condition for initial player waiting."""
+        connected_users_count = await self.redis.scard(f"game:{self.room_name}:connected_users")
+        if connected_users_count >= 2:
+            return True, "Both players connected."
+        elif connected_users_count == 0:
+            return False, "No player in the room anymore."
+        return None, "Waiting for players to start the game..."
+
+    async def check_for_restart_conditions(self):
+        """Check condition for game restart waiting."""
+        connected_users_count = await self.redis.scard(f"game:{self.room_name}:connected_users")
+        restart_requests_count = await self.redis.scard(f"game:{self.room_name}:restart_requests")
+        if restart_requests_count == connected_users_count == 2:
+            await self.redis.delete(f"game:{self.room_name}:restart_requests")
+            return True, "All players in room are ready to restart the game."
+        elif connected_users_count == 0:
+            return False, "All players in room have left."
+        return None, "Waiting for players to restart the game..."
+
+    async def wait_for_players_to_start(self):
+        """Check if players are ready to start the game."""
+        game_start = await self.wait_for_players(
+            self.check_for_initial_players, 
+            "Checking if players are ready"
+        )
+        if game_start:
+            print("Players are ready. Game can start.")
+            await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
+            return True
+        # await clear_redis_room_data(self.room_name)
+        return False
+
+    async def wait_for_players_to_resume(self):
         """Wait for other players to reconnect or join for the game to resume."""
-        players_ready = await self.wait_for_other_players()
-        if players_ready:
+        await self.update_and_send_redis_game_status(GameStatus.WAITING_PLAYERS)
+        game_resume = await self.wait_for_players(
+            self.check_for_initial_players, 
+            "Waiting for other players to resume"
+        )
+        if game_resume:
             print("Players are ready. Game can resume.")
-            await self.game_preparation()
+            await self.send_redis_data_to_channel()
             await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
             return True
         return False
-    
-    async def wait_for_other_players_restart(self):
+
+    async def wait_for_players_to_restart(self):
         """Wait for other players to restart the game."""
-        while True:
-            # Optionally, check if all connected players in the room are ready to restart
-            connected_clients_set_key = f"game:{self.room_name}:connected_users"
-            restart_requests_set_key = f"game:{self.room_name}:restart_requests"
-            
-            restart_requests_count = await self.redis.scard(restart_requests_set_key)
-            connected_users_count = await self.redis.scard(connected_clients_set_key)
-            
-            if restart_requests_count == connected_users_count == 2:
-                print("All players in room are ready to restart the game.")
-                # Proceed with game reset logic...
-                # Reset the game state, scores, etc.
-                # Ensure to clear the restart_requests set after restarting the game
-                await self.redis.delete(restart_requests_set_key)
-                return True
-            
-            if connected_users_count == 0:
-                print("All players in room have left.")
-                await self.redis.delete(restart_requests_set_key)
-                return False
-            
-            await asyncio.sleep(1)  # Wait for one second before checking again
-    
+        game_restart = await self.wait_for_players(
+            self.check_for_restart_conditions, 
+            "Checking if players are ready to restart"
+        )
+        if game_restart:
+            print("Players are ready. Game can restart.")
+            await self.run()
+            return True
+        # await clear_redis_room_data(self.room_name)
+        return False
+
     # -------------------------------UPDATES-----------------------------------
         
     async def game_tick(self, last_update_time):
@@ -361,65 +325,36 @@ class GameLogic:
         await self.fetch_redis_game_status()
 
         if self.game_status == GameStatus.SUSPENDED:
-            players_ready = await self.wait_for_other_players_resume()
-            if not players_ready:
-                print("Not all players reconnected. Handling game suspension.")
-
-    # -------------------------------UTILS-----------------------------------
-
-    def calculate_sleep_duration(self, delta_time):
-            """Calculate sleep duration to maintain a consistent FPS."""
-            tickRate = 30
-            frame_duration = 1.0 / tickRate
-            return max(0, frame_duration - delta_time)
-    
-    async def clear_room_data(self):
-        """Clear all Redis data associated with the game room."""
-        room_key_pattern = f"game:{self.room_name}:*"
-        async for key in self.redis.scan_iter(match=room_key_pattern):
-            await self.redis.delete(key)
-    print("All room data cleared successfully.")
+            await self.wait_for_players_to_resume()
 
     # -------------------------------LOOP-----------------------------------
 
     async def run(self):
         """The main game loop."""
         await self.setup_game_environment()
-        if not await self.check_players_ready():
-            return
 
-        await self.game_preparation()
+        game_start = await self.wait_for_players_to_start()
+        if not game_start:
+            return
+        
+        await self.send_redis_data_to_channel()
 
         last_update_time = time.time()
         print("GAMELOGIC -> LOOP STARTED")
-        try:
-            while True:
-                delta_time = await self.game_tick(last_update_time)
-                await self.handle_game_status_changes()
+        while True:
+            delta_time = await self.game_tick(last_update_time)
+            await self.handle_game_status_changes()
 
-                if self.game_status != GameStatus.IN_PROGRESS:
-                    print("GAMELOGIC -> LOOP EXITED status", self.game_status)
-                    await self.update_and_send_redis_game_status(self.game_status)
-                    break
+            if self.game_status != GameStatus.IN_PROGRESS:
+                print("GAMELOGIC -> LOOP EXITED status", self.game_status)
+                await self.update_and_send_redis_game_status(self.game_status)
+                break
 
-                last_update_time += delta_time
-                await asyncio.sleep(self.calculate_sleep_duration(delta_time))
+            last_update_time += delta_time
+            await asyncio.sleep(calculate_sleep_duration(delta_time, 30))
 
-        except asyncio.CancelledError:
-            # Perform any necessary cleanup after cancellation
-            await self.clear_room_data()
-            print("Game loop was cancelled, cleaning up")
 
-        # After exiting the main game loop, check if conditions are met to restart the game
-        print("Waiting for conditions to restart the game...")
-        game_restart = await self.wait_for_other_players_restart()
-        if game_restart:
-            await self.run()
-            print("Conditions met. Restarting the game...")
-        else:
-        # Conditions are met to restart the game
-            print("Conditions to restart the game not met. Exiting and cleaning redis data.")
-            await self.clear_room_data()
+        await self.wait_for_players_to_restart()
 
     # *******************************GAME CALCULATIONS***************************************
     # -------------------------------MECHANICS-----------------------------------

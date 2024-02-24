@@ -153,6 +153,15 @@ document.addEventListener("keyup", function (event) {
 });
 
 function handleKeyPress(key, isPressed) {
+  console.log(`GS: ${game.status}`);
+  if (key === "Enter" && game.status == 4 && isPressed) {
+    // Send message to the backend to restart the game
+    socket.send(JSON.stringify({ type: "restart_game" }));
+
+    console.log("trying to restart a game");
+    return;
+  }
+
   if (!game.paddle.side) {
     return;
   }
@@ -160,16 +169,10 @@ function handleKeyPress(key, isPressed) {
   let change = game.paddle.speed * (isPressed ? 1 : 0);
   let paddleKey = game.paddle.side === "left" ? "left" : "right";
   
-  if (key === "ArrowUp") {
-    game.players[paddleKey].paddleY -= change;
-  } else if (key === "ArrowDown") {
-    game.players[paddleKey].paddleY += change;
-  } else if (key === "Enter" && game.status == 4 && isPressed) {
-    // Send message to the backend to restart the game
-    socket.send(JSON.stringify({ type: "restart_game" }));
+  if (key === "ArrowUp" || key === "ArrowDown") {
+      game.players[paddleKey].paddleY += (key === "ArrowDown" ? change : -change);
+      sendPaddlePositionUpdate();
   }
-  
-  sendPaddlePositionUpdate();
 }
 
 // Global variables to track the last sent paddle positions for both sides
@@ -179,7 +182,6 @@ function sendPaddlePositionUpdate() {
   // Determine the current player's paddle and the corresponding variable for tracking
   const isLeftSide = game.paddle.side === "left";
   const currentPlayer = isLeftSide ? game.players.left : game.players.right;
-  // const lastSentPaddleY = isLeftSide ? lastSentLeftPaddleY : lastSentRightPaddleY;
   
   // Check if there's a significant change in the current paddle's position
   if (currentPlayer.paddleY !== lastSentPaddleY) {
