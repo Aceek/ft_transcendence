@@ -15,9 +15,14 @@ def check_scoring(ball, players):
     return True, players
 
 def check_game_over(players):
+    # Print the current scores for debugging or logging purposes
+    print(f"Left player score: {players['left']['score']['value']}, Right player score: {players['right']['score']['value']}")
+    
     if (
         players["left"]["score"]["value"] >= SCORE_LIMIT
         or players["right"]["score"]["value"] >= SCORE_LIMIT
     ):
+        print("Game Over: One of the players has reached the score limit.")
         return True
+    print("Game continues: No player has reached the score limit yet.")
     return False

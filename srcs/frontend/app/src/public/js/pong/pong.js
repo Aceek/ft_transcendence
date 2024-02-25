@@ -154,7 +154,7 @@ document.addEventListener("keyup", function (event) {
 
 function handleKeyPress(key, isPressed) {
   console.log(`GS: ${game.status}`);
-  if (key === "Enter" && game.status == 4 && isPressed) {
+  if (key === "Enter" && game.status == 3 && isPressed) {
     // Send message to the backend to restart the game
     socket.send(JSON.stringify({ type: "restart_game" }));
 
