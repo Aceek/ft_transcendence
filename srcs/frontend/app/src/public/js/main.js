@@ -68,6 +68,8 @@ async function matchRegex(path) {
   return false;
 }
 
+import { displayChatPage } from "./chat/chat.js";
+
 async function handleAuthenticatedRoutes(path) {
   if (await matchRegex(path)) {
   } else {
@@ -90,6 +92,10 @@ async function handleAuthenticatedRoutes(path) {
       case "/play":
         console.log("Loading play page");
         await displayPlayPage();
+        break;
+      case "/chat":
+        await displayChatPage()
+        console.log("Loading chat page");
         break;
       default:
         path = "/home";

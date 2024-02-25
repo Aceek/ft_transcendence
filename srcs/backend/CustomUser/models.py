@@ -25,6 +25,7 @@ class CustomUser(AbstractUser):
         validators=[validate_image],
     )
     friends = models.ManyToManyField("self", blank=True, symmetrical=False)
+    blocked_users = models.ManyToManyField("self", blank=True, symmetrical=False, related_name="blocked_by")
 
     def __str__(self):
         return self.username
