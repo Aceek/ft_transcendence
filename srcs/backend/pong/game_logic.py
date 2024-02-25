@@ -12,6 +12,7 @@ from channels.layers import get_channel_layer
 from .game_config import *
 from .game_status import GameStatus
 from .game_utils import *
+from .game_mechanics import *
 
 class GameLogic:
     def __init__(self, room_name):
@@ -299,7 +300,9 @@ class GameLogic:
 
         await self.fetch_redis_paddle_pos()
         if self.game_status == GameStatus.IN_PROGRESS:
-            self.update_ball_position(delta_time)
+            self.ball = update_ball_position(self.ball, self.players, delta_time)
+            # self.update_ball_position(delta_time)
+            self.check_scoring()
         
         await self.handle_score_updates()
         await self.update_redis_dynamic_data()
@@ -353,83 +356,9 @@ class GameLogic:
             last_update_time += delta_time
             await asyncio.sleep(calculate_sleep_duration(delta_time, 30))
 
-
         await self.wait_for_players_to_restart()
 
     # *******************************GAME CALCULATIONS***************************************
-    # -------------------------------MECHANICS-----------------------------------
-
-    def update_ball_position(self, delta_time):
-        if self.game_status != GameStatus.IN_PROGRESS:
-            return
-
-        # Calculate predicted next position
-        next_x = self.ball["x"] + self.ball["speedX"] * delta_time
-        next_y = self.ball["y"] + self.ball["speedY"] * delta_time
-
-        # Check for wall collisions based on predicted position
-        if next_y - self.ball_size / 2 < 0 or next_y + self.ball_size / 2 > self.canvas_height:
-            self.handle_wall_collision()
-            # Adjust ball position to the edge of the wall
-            adjusted_y = max(self.ball_size / 2, min(next_y, self.canvas_height - self.ball_size / 2))
-            self.ball["y"] = adjusted_y
-        else:
-            # No collision, update position normally
-            self.ball["x"] = next_x
-            self.ball["y"] = next_y
-
-        self.check_collisions()
-        self.check_scoring()
-
-    def check_collisions(self):
-        # Check for collisions with paddles
-        if (
-            self.ball["x"] - self.ball_size / 2 < self.paddle_width
-            and self.players["left"]["paddle"]["y"]
-            < self.ball["y"]
-            < self.players["left"]["paddle"]["y"]  + self.paddle_height
-        ) or (
-            self.ball["x"] + self.ball_size / 2 > self.canvas_width - self.paddle_width
-            and self.players["right"]["paddle"]["y"]
-            < self.ball["y"]
-            < self.players["right"]["paddle"]["y"]  + self.paddle_height
-        ):
-            self.handle_paddle_collision()
-
-        # Check for collisions with walls
-        if (
-
-            self.ball["y"] - self.ball_size / 2 < 0
-            or self.ball["y"] + self.ball_size / 2 > self.canvas_height
-        ):
-            self.handle_wall_collision()
-            print("wall collison")
-
-    def handle_paddle_collision(self):
-        # Determine which paddle was hit
-        if self.ball["x"] < self.canvas_width / 2:
-            paddle = self.players["left"]["paddle"]
-            direction = 1
-        else:
-            paddle = self.players["right"]["paddle"]
-            direction = -1
-
-        # Calculate the relative position of the collision point on the paddle
-        relative_collision_position = (
-            self.ball["y"] - paddle["y"]
-        ) / self.paddle_height
-
-        # Calculate the new angle of the ball's trajectory based on the relative position
-        angle = (relative_collision_position - 0.5) * math.pi / 2
-
-        # Update the ball's speed components based on the new angle
-        speed_magnitude = math.sqrt(self.ball["speedX"] ** 2 + self.ball["speedY"] ** 2)
-        self.ball["speedX"] = speed_magnitude * math.cos(angle) * direction
-        self.ball["speedY"] = speed_magnitude * math.sin(angle) * direction
-
-    def handle_wall_collision(self):
-        self.ball["speedY"] *= -1
-
     # -------------------------------GAME STATE-----------------------------------
 
     def check_scoring(self):
