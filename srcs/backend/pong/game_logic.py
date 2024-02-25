@@ -1,4 +1,3 @@
-import asyncio
 import json
 import aioredis
 import random
@@ -13,6 +12,7 @@ from .game_config import *
 from .game_status import GameStatus
 from .game_utils import *
 from .game_mechanics import *
+from .game_sync import GameSync
 from .game_score import *
 
 class GameLogic:
@@ -20,6 +20,9 @@ class GameLogic:
         self.room_name = room_name
         self.room_group_name = f'pong_room_{room_name}'
         self.channel_layer = get_channel_layer()
+        self.game_status = GameStatus.NOT_STARTED
+        self.players = self.init_players()
+        self.ball = self.init_ball() 
 
         #---CONSTANT VAR---
         self.score_limit = SCORE_LIMIT
@@ -202,10 +205,8 @@ class GameLogic:
             
     async def setup_game_environment(self):
         """Initial game setup."""
-        self.game_status = GameStatus.NOT_STARTED
-        self.players = self.init_players()
-        self.ball = self.init_ball() 
         self.redis = await connect_to_redis()
+        self.game_sync = GameSync(self.redis, self.room_name)
         await self.init_redis_static_data()
         await self.update_redis_dynamic_data()
         await self.reset_paddle_positions()
@@ -262,7 +263,6 @@ class GameLogic:
             print("Players are ready. Game can start.")
             await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
             return True
-        # await clear_redis_room_data(self.room_name)
         return False
 
     async def wait_for_players_to_resume(self):
@@ -341,9 +341,13 @@ class GameLogic:
         """The main game loop."""
         await self.setup_game_environment()
 
-        game_start = await self.wait_for_players_to_start()
-        if not game_start:
+        if await self.game_sync.wait_for_players_to_start():
+            await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
+        else:
             return
+        # game_start = await self.wait_for_players_to_start()
+        # if not game_start:
+        #     return
         
         await self.send_redis_data_to_channel()
 
@@ -362,45 +366,3 @@ class GameLogic:
             await asyncio.sleep(calculate_sleep_duration(delta_time, 30))
 
         await self.wait_for_players_to_restart()
-
-    # *******************************GAME CALCULATIONS***************************************
-    # -------------------------------GAME STATE-----------------------------------
-
-    # def check_scoring(self):
-    #     # Check for scoring (ball crossing left or right border)
-    #     if self.ball["x"] < 0 - self.ball_size / 2:
-    #         self.update_score("right")
-    #     elif self.ball["x"] > self.canvas_width + self.ball_size / 2:
-    #         self.update_score("left")
-
-    # def update_score(self, player_side):
-    #     """
-    #     Updates the score for the specified player side ('left' or 'right') and checks for game over.
-        
-    #     Args:
-    #         player_side (str): The side of the player ('left' or 'right') to update the score for.
-    #     """
-    #     # Increment the score based on the player side
-    #     self.players[player_side]["score"]["value"] += 1
-
-    #     # Mark that the score has been updated
-    #     self.players[player_side]["score"]["updated"] = True
-
-    #     # Check if the updated score results in the game being over
-    #     self.check_game_over()
-
-    # def check_game_over(self):
-    #     if (
-    #         self.players["left"]["score"]["value"] >= self.score_limit
-    #         or self.players["right"]["score"]["value"] >= self.score_limit
-    #     ):
-    #         print(f"Game Over: Left score {self.players['left']['score']['value']}, Right score {self.players['right']['score']['value']}, Score limit {self.score_limit}")
-    #         # Set game state to over
-    #         self.game_status = GameStatus.COMPLETED
-    #     else:
-    #         # Continue the game
-    #         self.reset_ball()
-
-    # def reset_ball(self):
-    #     # Set the ball to the initial position and choose a new random speed
-    #     self.ball = self.init_ball() 
