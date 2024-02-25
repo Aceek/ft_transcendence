@@ -222,20 +222,20 @@ function mainLoop(timestamp) {
     // Print the ball's coordinates
     // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}, drawing`);
     draw(); // Draw the frame with the interpolated positions
-    if (game.status == 1) {
+    if (game.status == 2) {
       console.log("waiting players");
       drawWaitingMessage();
       requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
       return; // Skip the rest of the loop logic
     }
     
-    if (game.status == 3) {
-      drawPausedMessage();
-      requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
-      return; // Skip the rest of the loop logic
-    }
+    // if (game.status == 2) {
+    //   drawPausedMessage();
+    //   requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+    //   return; // Skip the rest of the loop logic
+    // }
     
-    if (game.status == 4) {
+    if (game.status == 3) {
       drawGameOverMessage();
       requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
       return; // Skip the rest of the loop logic

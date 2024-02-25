@@ -267,7 +267,7 @@ class GameLogic:
 
     async def wait_for_players_to_resume(self):
         """Wait for other players to reconnect or join for the game to resume."""
-        await self.update_and_send_redis_game_status(GameStatus.WAITING_PLAYERS)
+        # await self.update_and_send_redis_game_status(GameStatus.WAITING_PLAYERS)
         game_resume = await self.wait_for_players(
             self.check_for_initial_players, 
             "Waiting for other players to resume"
@@ -325,15 +325,17 @@ class GameLogic:
             except Exception as e:
                 print(f"Error updating or sending score for {side}: {e}")
 
-    async def handle_game_status_changes(self):
+    async def check_game_completed(self):
         """Handle changes in game status, including suspensions and completions."""
         if self.game_status == GameStatus.COMPLETED:
-            await self.update_and_send_redis_game_status(GameStatus.COMPLETED)
+            return True
 
         await self.fetch_redis_game_status()
 
         if self.game_status == GameStatus.SUSPENDED:
-            await self.wait_for_players_to_resume()
+            if await self.game_sync.wait_for_players_to_start():
+                return False
+            return True
 
     # -------------------------------LOOP-----------------------------------
 
@@ -345,9 +347,6 @@ class GameLogic:
             await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
         else:
             return
-        # game_start = await self.wait_for_players_to_start()
-        # if not game_start:
-        #     return
         
         await self.send_redis_data_to_channel()
 
@@ -355,12 +354,17 @@ class GameLogic:
         print("GAMELOGIC -> LOOP STARTED")
         while True:
             delta_time = await self.game_tick(last_update_time)
-            await self.handle_game_status_changes()
-
-            if self.game_status != GameStatus.IN_PROGRESS:
-                print("GAMELOGIC -> LOOP EXITED status", self.game_status)
-                await self.update_and_send_redis_game_status(self.game_status)
+            
+            if await self.check_game_completed():
+                await self.update_and_send_redis_game_status(GameStatus.COMPLETED)
                 break
+            else:
+                await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
+
+            # if self.game_status != GameStatus.IN_PROGRESS:
+            #     print("GAMELOGIC -> LOOP EXITED status", self.game_status)
+            #     await self.update_and_send_redis_game_status(self.game_status)
+            #     break
 
             last_update_time += delta_time
             await asyncio.sleep(calculate_sleep_duration(delta_time, 30))
