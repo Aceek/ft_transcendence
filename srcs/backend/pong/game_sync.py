@@ -19,7 +19,7 @@ class GameSync:
                 return False
             await asyncio.sleep(1)
 
-#--------------------------------CONDITIONS-------------------------------------------
+#--------------------------------CONDITION-------------------------------------------
 
     async def check_for_players_ready(self):
         connected_users_count = await self.redis.scard(f"game:{self.room_name}:connected_users")

@@ -101,7 +101,7 @@ socket.onmessage = function (event) {
   }
   
   function handleDynamicData(dynamicData) {
-    // console.log("Handling dynamic data:", dynamicData);
+    console.log("Handling dynamic data:", dynamicData);
     // Update the game state with parsed dynamic data
     game.ball.x = parseInt(dynamicData.b_x, 10);
     game.ball.y = parseInt(dynamicData.b_y, 10);

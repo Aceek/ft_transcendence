@@ -14,27 +14,31 @@ from .game_utils import *
 from .game_mechanics import *
 from .game_sync import GameSync
 from .game_score import *
+from .redis_ops import RedisOps
 
 class GameLogic:
     def __init__(self, room_name):
         self.room_name = room_name
         self.room_group_name = f'pong_room_{room_name}'
         self.channel_layer = get_channel_layer()
+
+    # -------------------------------INIT-----------------------------------
+
+    async def init_env(self):
+        """Initial env setup."""
+        self.redis_ops = await RedisOps.create(self.room_name)
+        self.game_sync = GameSync(self.redis_ops.connection, self.room_name)
+
+    async def init_game(self):
+        """Initial game setup."""
         self.game_status = GameStatus.NOT_STARTED
         self.players = self.init_players()
         self.ball = self.init_ball() 
-
-        #---CONSTANT VAR---
-        self.score_limit = SCORE_LIMIT
-        self.canvas_height = SCREEN_HEIGHT
-        self.canvas_width = SCREEN_WIDTH
-        #to be send to client
-        self.paddle_width = PADDLE_WIDTH
-        self.paddle_height = PADDLE_HEIGHT
-        self.paddle_speed = PADDLE_SPEED
-        self.ball_size = BALL_SIZE
-
-
+        await self.set_static_data()
+        await self.set_ball()
+        await self.set_scores()
+        await self.set_paddles()
+        await self.send_channel_static_data()
 
     def init_players(self):
         players = {
@@ -67,13 +71,11 @@ class GameLogic:
             "speedY": random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE]),
         }
         return ball
+    
 
-
-    # *******************************DATA TRANSFER***********************************
-    # -------------------------------STATIC DATA----------------------------------
+    # -----------------------------REDIS SETTERS----------------------------------
         
-    async def init_redis_static_data(self):
-        static_data_key = f"game:{self.room_name}:static"
+    async def set_static_data(self):
         static_data = {
             "scoreLimit": int(SCORE_LIMIT),
             "canvasHeight": int(SCREEN_HEIGHT),
@@ -83,101 +85,44 @@ class GameLogic:
             "paddleSpeed": int(PADDLE_SPEED),
             "ballSize": int(BALL_SIZE),
         }
-        await self.redis.hset(static_data_key, mapping=static_data)
-        # print(f"-------Initiating static data from Redis: {static_data}")
+        await self.redis_ops.set_static_data(self.room_name, static_data)
 
-    async def send_redis_static_data_to_channel(self):
-        static_data_key = f"game:{self.room_name}:static"
-        static_data = await self.redis.hgetall(static_data_key)
-
-        # print(f"Sending static game data to channel: {static_data}")
-
-        await self.channel_layer.group_send(
-            self.room_group_name, 
-            {
-                "type": "game.static_data", 
-                "data": static_data  # Sending the Redis hash map as is
-            }
-        )
-
-    # -------------------------------DYNAMIC DATA---------------------------------
-    
-    async def update_redis_dynamic_data(self):
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
+    async def set_ball(self):
         dynamic_data = {
 			"b_x": int(self.ball['x']),
 			"b_y": int(self.ball['y']),
 			"bs_x": int(self.ball['speedX']),
 			"bs_y": int(self.ball['speedY']),
         }
-        await self.redis.hset(dynamic_data_key, mapping=dynamic_data)
-        # print(f"-------Update dynamic data from Redis: {dynamic_data}")
+        await self.redis_ops.set_dynamic_data(self.room_name, dynamic_data)
+        
+    async def set_score(self, side):
+        key = "lp_s" if side == "left" else "rp_s"
+        score = self.players[side]["score"]["value"]
+
+        await self.redis_ops.set_dynamic_value(self.room_name, key, score)
+
+    async def set_scores(self):
+        await self.redis_ops.set_dynamic_value(self.room_name, "lp_s", self.players["left"]["score"]["value"])
+        await self.redis_ops.set_dynamic_value(self.room_name, "rp_s", self.players["left"]["score"]["value"])
     
-    async def send_redis_dynamic_data_to_channel(self):
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        dynamic_data = await self.redis.hgetall(dynamic_data_key)
+    async def set_paddles(self):
+        await self.redis_ops.set_dynamic_value(self.room_name, "lp_y", self.players["left"]["paddle"]["y"])
+        await self.redis_ops.set_dynamic_value(self.room_name, "rp_y", self.players["left"]["paddle"]["y"])
 
-        # print(f"wSending dynamic game data to channel: {dynamic_data}")
-
-        await self.channel_layer.group_send(
-            self.room_group_name, 
-            {
-                "type": "game.dynamic_data", 
-                "data": dynamic_data  # Sending the Redis hash map as is
-            }
-        )
-
-    # -------------------------------GAME STATUS---------------------------------
-    
-    async def fetch_redis_game_status(self):
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        game_status = await self.redis.hget(dynamic_data_key, "gs")
-
-        if game_status is not None:
-            self.game_status = GameStatus(int(game_status))
-            if self.game_status != GameStatus.IN_PROGRESS:
-                print(f"Fetched game status from Redis: {self.game_status}")  # Added print statement
-        # else:
-        #     print("Game status not found in Redis.")  # Added to handle case where game status is None
-                
-    async def update_and_send_redis_game_status(self, new_status: GameStatus):
+    async def set_game_status(self, new_status: GameStatus):
         self.game_status = new_status
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        await self.redis.hset(dynamic_data_key, "gs", int(self.game_status.value))
-
-        await self.send_redis_dynamic_data_to_channel()
-
-    # -------------------------------SCORE-----------------------------------
+        await self.redis_ops.set_dynamic_value(self.room_name, "gs", int(new_status.value))
         
-    async def reset_score(self):
-        """
-        Reset the paddle positions for both sides to the initial Y coordinate.
-        """
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
+    # -----------------------------REDIS GETTERS----------------------------------
         
-        # Reset both paddle positions to the initial Y value
-        await self.redis.hset(dynamic_data_key, "lp_s", INITIAL_SCORE)
-        await self.redis.hset(dynamic_data_key, "rp_s", INITIAL_SCORE)
-        
-        print(f"Reset score: {INITIAL_SCORE}")
-
-    async def update_and_send_redis_score(self, player_side):
+    async def get_paddles(self):
         """
-        Increment the score of the specified player side ('left' or 'right').
+        Get the Y positions of the paddles from Redis and update the players' positions.
         """
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        player_key = "lp_s" if player_side == "left" else "rp_s"
-        
-        # Increment the score directly in Redis
-        await self.redis.hincrby(dynamic_data_key, player_key, 1)
-
-        await self.send_redis_dynamic_data_to_channel()
-    
-    # -------------------------------PADDLE-----------------------------------
-
-    async def fetch_redis_paddle_pos(self):
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        lp_y, rp_y = await self.redis.hmget(dynamic_data_key, "lp_y", "rp_y")
+        # Fetch the Y positions using the get_dynamic_value method
+        lp_y = await self.redis_ops.get_dynamic_value(self.room_name, "lp_y")
+        rp_y = await self.redis_ops.get_dynamic_value(self.room_name, "rp_y")
         
         # Update the Y positions of the paddles if they exist
         if lp_y is not None:
@@ -185,86 +130,68 @@ class GameLogic:
         if rp_y is not None:
             self.players["right"]["paddle"]["y"] = int(rp_y)
 
-    async def reset_paddle_positions(self):
-        """
-        Reset the paddle positions for both sides to the initial Y coordinate.
-        """
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        
-        # Reset both paddle positions to the initial Y value
-        await self.redis.hset(dynamic_data_key, "lp_y", INITIAL_PADDLE_Y)
-        await self.redis.hset(dynamic_data_key, "rp_y", INITIAL_PADDLE_Y)
-        
-        print(f"Reset both paddle positions to initial Y: {INITIAL_PADDLE_Y}")
-
+    # -----------------------------CHANNEL SEND----------------------------------
             
-    # *******************************MAIN LOOP***************************************
-    # -------------------------------INIT-----------------------------------
-            
-    async def init_env(self):
-        """Initial env setup."""
-        self.redis = await connect_to_redis()
-        self.game_sync = GameSync(self.redis, self.room_name)
+    async def send_channel_static_data(self):
+        # Fetch static data using the RedisOps class method
+        static_data = await self.redis_ops.get_static_data(self.room_name)
 
-    async def init_game(self):
-        """Initial game setup."""
-        await self.init_redis_static_data()
-        await self.update_redis_dynamic_data()
-        await self.reset_paddle_positions()
-        await self.reset_score()
-        self.game_status = GameStatus.NOT_STARTED
-        self.players = self.init_players()
-        self.ball = self.init_ball() 
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "game.static_data",
+                "data": static_data  # Sending the Redis hash map as is
+            }
+        )
 
-    async def send_redis_data_to_channel(self):
-        """Prepare the game by sending initial data to channels."""
-        await self.send_redis_static_data_to_channel()
-        await self.send_redis_dynamic_data_to_channel()
+    async def send_channel_dynamic_data(self):
+        # Fetch dynamic data using the RedisOps class method
+        dynamic_data = await self.redis_ops.get_dynamic_data(self.room_name)
 
-    # -------------------------------UPDATES-----------------------------------
-        
-    async def game_tick(self, last_update_time):
-        """Perform a single tick of the game loop."""
-        current_time = time.time()
-        delta_time = current_time - last_update_time
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "game.dynamic_data",
+                "data": dynamic_data  # Sending the Redis hash map as is
+            }
+        )
 
-        await self.fetch_redis_paddle_pos()
-        if self.game_status == GameStatus.IN_PROGRESS:
-            self.ball = update_ball_position(self.ball, self.players, delta_time)
-            scored, self.players = check_scoring(self.ball, self.players)
-            if scored:
-                if check_game_over(self.players):
-                    self.game_status = GameStatus.COMPLETED
-                else:
-                    self.ball = self.init_ball()
-        
-        await self.handle_score_updates()
-        await self.update_redis_dynamic_data()
-        await self.send_redis_dynamic_data_to_channel()
+    # -------------------------------CHECK-----------------------------------
 
-        return delta_time
+    async def check_game_completed(self):
+        """Handle changes in game status, including suspensions and completions."""
+        if self.game_status == GameStatus.COMPLETED:
+            return True
 
-    async def handle_score_updates(self):
+        if await self.check_game_status_change():
+            await self.send_channel_dynamic_data()
+
+        if self.game_status == GameStatus.SUSPENDED:
+            if await self.game_sync.wait_for_players_to_start():
+                await self.set_game_status(GameStatus.IN_PROGRESS)
+                await self.send_channel_static_data()
+                return False
+            return True
+        return False
+
+    async def check_game_status_change(self):
+        current_status = await self.redis_ops.get_dynamic_value(self.room_name, "gs")
+        if current_status:
+            current_status = GameStatus(int(current_status))
+            if current_status != self.game_status:
+                self.game_status = current_status
+                return True
+        return False  
+
+    async def check_score_updates(self):
         """Handle score updates for each side."""
         for side in ["left", "right"]:
             try:
                 if self.players[side]["score"]["updated"]:
-                    await self.update_and_send_redis_score(side)
+                    await self.set_score(side)
                     self.players[side]["score"]["updated"] = False
             except Exception as e:
                 print(f"Error updating or sending score for {side}: {e}")
-
-    async def check_game_completed(self):
-        """Handle changes in game status, including suspensions and completions."""
-        if self.game_status == GameStatus.COMPLETED:            
-            return True
-
-        await self.fetch_redis_game_status()
-
-        if self.game_status == GameStatus.SUSPENDED:
-            if await self.game_sync.wait_for_players_to_start():
-                return False
-            return True
 
     # -------------------------------LOOP-----------------------------------
 
@@ -273,30 +200,47 @@ class GameLogic:
         await self.init_env()
 
         if await self.game_sync.wait_for_players_to_start():
-            await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
             await self.game_loop()
-        
 
     async def game_loop(self):
         """The main game loop."""
         print("GAMELOGIC -> LOOP STARTED")
 
         await self.init_game()
-        await self.send_redis_data_to_channel()
-
+        await self.set_game_status(GameStatus.IN_PROGRESS)
+        await self.send_channel_dynamic_data()
         last_update_time = time.time()
+
         while True:
-            delta_time = await self.game_tick(last_update_time)
-            
+            await self.get_paddles()
+            delta_time = self.game_tick(last_update_time)
+            await self.check_score_updates()
+
             if await self.check_game_completed():
-                await self.update_and_send_redis_game_status(GameStatus.COMPLETED)
+                await self.set_game_status(GameStatus.COMPLETED)
+                await self.send_channel_dynamic_data()
                 break
             else:
-                await self.update_and_send_redis_game_status(GameStatus.IN_PROGRESS)
+                await self.set_ball()
+                await self.send_channel_dynamic_data()
 
             last_update_time += delta_time
-            await asyncio.sleep(calculate_sleep_duration(delta_time, 30))
+            await asyncio.sleep(1/30)
 
         if await self.game_sync.wait_for_players_to_restart():
             await self.game_loop()
 
+    def game_tick(self, last_update_time):
+        """Perform a single tick of the game loop."""
+        current_time = time.time()
+        delta_time = current_time - last_update_time
+        
+        if self.game_status == GameStatus.IN_PROGRESS:
+            self.ball = update_ball(self.ball, self.players, delta_time)
+            scored, self.players = check_scoring(self.ball, self.players)
+            if scored:
+                if check_game_over(self.players):
+                    self.game_status = GameStatus.COMPLETED
+                else:
+                    self.ball = self.init_ball()
+        return delta_time

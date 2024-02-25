@@ -2,7 +2,7 @@ import math
 
 from .game_config import *
 
-def update_ball_position(ball, players, delta_time):
+def update_ball(ball, players, delta_time):
     # Calculate the next position of the ball
     next_x = ball["x"] + ball["speedX"] * delta_time
     next_y = ball["y"] + ball["speedY"] * delta_time
