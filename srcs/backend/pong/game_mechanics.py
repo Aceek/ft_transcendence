@@ -1,11 +1,6 @@
-import random
-import asyncio
-import time
 import math
 
 from .game_config import *
-from .game_status import GameStatus
-from .game_utils import *
 
 def update_ball_position(ball, players, delta_time):
     # Calculate the next position of the ball

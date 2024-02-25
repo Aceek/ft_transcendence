@@ -13,6 +13,7 @@ from .game_config import *
 from .game_status import GameStatus
 from .game_utils import *
 from .game_mechanics import *
+from .game_score import *
 
 class GameLogic:
     def __init__(self, room_name):
@@ -301,8 +302,12 @@ class GameLogic:
         await self.fetch_redis_paddle_pos()
         if self.game_status == GameStatus.IN_PROGRESS:
             self.ball = update_ball_position(self.ball, self.players, delta_time)
-            # self.update_ball_position(delta_time)
-            self.check_scoring()
+            scored, self.players = check_scoring(self.ball, self.players)
+            if scored:
+                if check_game_over(self.players):
+                    self.game_status = GameStatus.COMPLETED
+                else:
+                    self.ball = self.init_ball()
         
         await self.handle_score_updates()
         await self.update_redis_dynamic_data()
@@ -361,41 +366,41 @@ class GameLogic:
     # *******************************GAME CALCULATIONS***************************************
     # -------------------------------GAME STATE-----------------------------------
 
-    def check_scoring(self):
-        # Check for scoring (ball crossing left or right border)
-        if self.ball["x"] < 0 - self.ball_size / 2:
-            self.update_score("right")
-        elif self.ball["x"] > self.canvas_width + self.ball_size / 2:
-            self.update_score("left")
+    # def check_scoring(self):
+    #     # Check for scoring (ball crossing left or right border)
+    #     if self.ball["x"] < 0 - self.ball_size / 2:
+    #         self.update_score("right")
+    #     elif self.ball["x"] > self.canvas_width + self.ball_size / 2:
+    #         self.update_score("left")
 
-    def update_score(self, player_side):
-        """
-        Updates the score for the specified player side ('left' or 'right') and checks for game over.
+    # def update_score(self, player_side):
+    #     """
+    #     Updates the score for the specified player side ('left' or 'right') and checks for game over.
         
-        Args:
-            player_side (str): The side of the player ('left' or 'right') to update the score for.
-        """
-        # Increment the score based on the player side
-        self.players[player_side]["score"]["value"] += 1
+    #     Args:
+    #         player_side (str): The side of the player ('left' or 'right') to update the score for.
+    #     """
+    #     # Increment the score based on the player side
+    #     self.players[player_side]["score"]["value"] += 1
 
-        # Mark that the score has been updated
-        self.players[player_side]["score"]["updated"] = True
+    #     # Mark that the score has been updated
+    #     self.players[player_side]["score"]["updated"] = True
 
-        # Check if the updated score results in the game being over
-        self.check_game_over()
+    #     # Check if the updated score results in the game being over
+    #     self.check_game_over()
 
-    def check_game_over(self):
-        if (
-            self.players["left"]["score"]["value"] >= self.score_limit
-            or self.players["right"]["score"]["value"] >= self.score_limit
-        ):
-            print(f"Game Over: Left score {self.players['left']['score']['value']}, Right score {self.players['right']['score']['value']}, Score limit {self.score_limit}")
-            # Set game state to over
-            self.game_status = GameStatus.COMPLETED
-        else:
-            # Continue the game
-            self.reset_ball()
+    # def check_game_over(self):
+    #     if (
+    #         self.players["left"]["score"]["value"] >= self.score_limit
+    #         or self.players["right"]["score"]["value"] >= self.score_limit
+    #     ):
+    #         print(f"Game Over: Left score {self.players['left']['score']['value']}, Right score {self.players['right']['score']['value']}, Score limit {self.score_limit}")
+    #         # Set game state to over
+    #         self.game_status = GameStatus.COMPLETED
+    #     else:
+    #         # Continue the game
+    #         self.reset_ball()
 
-    def reset_ball(self):
-        # Set the ball to the initial position and choose a new random speed
-        self.ball = self.init_ball() 
+    # def reset_ball(self):
+    #     # Set the ball to the initial position and choose a new random speed
+    #     self.ball = self.init_ball() 
