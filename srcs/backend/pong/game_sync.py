@@ -3,8 +3,8 @@ import asyncio
 from .game_status import *
 
 class GameSync:
-    def __init__(self, redis, room_name):
-        self.redis = redis
+    def __init__(self, redis_ops, room_name):
+        self.redis_ops = redis_ops
         self.room_name = room_name
 
     async def wait_for_players(self, condition_check, status_message):
@@ -22,8 +22,8 @@ class GameSync:
 #--------------------------------CONDITION-------------------------------------------
 
     async def check_for_players_ready(self):
-        connected_users_count = await self.redis.scard(f"game:{self.room_name}:connected_users")
-        if connected_users_count >= 2:
+        connected_users_count = await self.redis_ops.get_connected_users(self.room_name)
+        if connected_users_count == 2:
             return True, "Both players connected."
         elif connected_users_count == 0:
             return False, "No player in the room anymore."
@@ -31,10 +31,9 @@ class GameSync:
 
     async def check_for_restart_conditions(self):
         """Check condition for game restart waiting."""
-        connected_users_count = await self.redis.scard(f"game:{self.room_name}:connected_users")
-        restart_requests_count = await self.redis.scard(f"game:{self.room_name}:restart_requests")
+        connected_users_count = await self.redis_ops.get_connected_users(self.room_name)
+        restart_requests_count = await self.redis_ops.get_restart_requests(self.room_name)
         if restart_requests_count == connected_users_count == 2:
-            await self.redis.delete(f"game:{self.room_name}:restart_requests")
             return True, "All players in room are ready to restart the game."
         elif connected_users_count == 0:
             return False, "All players in room have left."

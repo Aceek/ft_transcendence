@@ -27,8 +27,8 @@ var game = {
     size: 0,
     x: 0,
     y: 0,
-    speedX: 0,
-    speedY: 0,
+    vx: 0,
+    vy: 0,
   },
   players: {
     left: {
@@ -105,8 +105,8 @@ socket.onmessage = function (event) {
     // Update the game state with parsed dynamic data
     game.ball.x = parseInt(dynamicData.b_x, 10);
     game.ball.y = parseInt(dynamicData.b_y, 10);
-    game.ball.speedX = parseInt(dynamicData.bs_x, 10);
-    game.ball.speedY = parseInt(dynamicData.bs_y, 10);
+    game.ball.vx = parseInt(dynamicData.b_vx, 10);
+    game.ball.vy = parseInt(dynamicData.b_vy, 10);
     game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
     game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
     game.players.left.score = parseInt(dynamicData.lp_s, 10);
@@ -216,8 +216,8 @@ function mainLoop(timestamp) {
   
   if (deltaTime > frameDuration) {
     // Calculate the interpolated positions
-    game.ball.x = interpolatePosition(game.ball.x, game.ball.speedX, deltaTime);
-    game.ball.y = interpolatePosition(game.ball.y, game.ball.speedY, deltaTime);
+    game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
+    game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
     
     // Print the ball's coordinates
     // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}, drawing`);

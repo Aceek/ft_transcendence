@@ -4,15 +4,15 @@ from .game_config import *
 
 def update_ball(ball, players, delta_time):
     # Calculate the next position of the ball
-    next_x = ball["x"] + ball["speedX"] * delta_time
-    next_y = ball["y"] + ball["speedY"] * delta_time
+    next_x = ball["x"] + ball["vx"] * delta_time
+    next_y = ball["y"] + ball["vy"] * delta_time
 
     # Create a new ball object with the next position
     next_ball = {
         "x": next_x,
         "y": next_y,
-        "speedX": ball["speedX"],  # Preserving the current speed
-        "speedY": ball["speedY"]
+        "vx": ball["vx"],  # Preserving the current speed
+        "vy": ball["vy"]
     }
 
     # Check and handle wall collision
@@ -70,13 +70,13 @@ def handle_paddle_collision(next_ball, players):
     angle = (relative_collision_position - 0.5) * math.pi / 2
 
     # Update the ball's speed components based on the new angle
-    speed_magnitude = math.sqrt(next_ball["speedX"] ** 2 + next_ball["speedY"] ** 2)
-    next_ball["speedX"] = speed_magnitude * math.cos(angle) * direction
-    next_ball["speedY"] = speed_magnitude * math.sin(angle) * direction
+    speed_magnitude = math.sqrt(next_ball["vx"] ** 2 + next_ball["vy"] ** 2)
+    next_ball["vx"] = speed_magnitude * math.cos(angle) * direction
+    next_ball["vy"] = speed_magnitude * math.sin(angle) * direction
     return next_ball
 
 def handle_wall_collision(next_ball):
     adjusted_y = max(BALL_SIZE / 2, min(next_ball["y"], SCREEN_HEIGHT - BALL_SIZE / 2))
     next_ball["y"] = adjusted_y
-    next_ball["speedY"] *= -1
+    next_ball["vy"] *= -1
     return next_ball
