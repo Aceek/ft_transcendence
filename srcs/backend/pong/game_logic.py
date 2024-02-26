@@ -12,8 +12,8 @@ from .game_config import *
 from .game_status import GameStatus
 from .game_mechanics import *
 from .game_sync import GameSync
-from .game_score import *
 from .redis_ops import RedisOps
+from .channel_com import ChannelCom
 
 class GameLogic:
     def __init__(self, room_name):
@@ -26,20 +26,22 @@ class GameLogic:
     async def init_env(self):
         """Initial env setup."""
         self.redis_ops = await RedisOps.create(self.room_name)
+        self.channel_com = ChannelCom(self.room_name)
         self.game_sync = GameSync(self.redis_ops, self.room_name)
 
     async def init_game(self):
         """Initial game setup."""
-        self.game_status = GameStatus.NOT_STARTED
         self.static_data = self.init_static_data() 
         self.players = self.init_players()
         self.ball = self.init_ball() 
         
+        await self.redis_ops.set_game_status(self.room_name, GameStatus.NOT_STARTED)
         await self.redis_ops.set_static_data(self.room_name, self.static_data)
         await self.redis_ops.set_ball(self.room_name, self.ball)
         await self.redis_ops.set_scores(self.room_name, self.players)
         await self.redis_ops.set_paddles(self.room_name, self.players)
         await self.send_channel_static_data()
+        # await self.channel_com.send_static_data(self.static_data)
 
     def init_static_data(self):
         static_data = {
@@ -116,40 +118,42 @@ class GameLogic:
 
     # -------------------------------CHECK-----------------------------------
 
-    async def check_game_completed(self):
-        """Handle changes in game status, including suspensions and completions."""
-        if self.game_status == GameStatus.COMPLETED:
-            return True
-
-        if await self.check_game_status_change():
-            await self.send_channel_dynamic_data()
-
-        if self.game_status == GameStatus.SUSPENDED:
-            if await self.game_sync.wait_for_players_to_start():
-                await self.redis_ops.set_game_status(self.room_name, GameStatus.IN_PROGRESS)
-                await self.send_channel_static_data()
-                return False
-            return True
-        return False
-
-    async def check_game_status_change(self):
-        
+    async def is_game_active(self):
         current_status = await self.redis_ops.get_game_status(self.room_name)
-        if current_status != self.game_status:
-            self.game_status = current_status
-            return True
-        return False  
+        
+        if current_status == GameStatus.COMPLETED:
+            return False
+        
+        if current_status == GameStatus.SUSPENDED:
+            await self.send_channel_dynamic_data()
+            return await self.is_game_resuming()
+        
+        return True
+
+    async def is_game_resuming(self):
+        game_resuming = await self.game_sync.wait_for_players_to_start()
+        new_status = GameStatus.IN_PROGRESS if game_resuming else GameStatus.COMPLETED
+        
+        await self.redis_ops.set_game_status(self.room_name, new_status)
+        await self.send_channel_static_data()
+        
+        return game_resuming
 
     async def check_score_updates(self):
         """Handle score updates for each side."""
         for side in ["left", "right"]:
-            try:
-                if self.players[side]["score"]["updated"]:
-                    await self.redis_ops.set_score(self.room_name, side,
-                                                   self.players[side]["score"]["value"])
-                    self.players[side]["score"]["updated"] = False
-            except Exception as e:
-                print(f"Error updating or sending score for {side}: {e}")
+            if self.players[side]["score"]["updated"]:
+                await self.redis_ops.set_score(self.room_name, side,
+                                                self.players[side]["score"]["value"])
+                self.players[side]["score"]["updated"] = False
+                await self.check_score_limit(side)
+
+    async def check_score_limit(self, side):
+        """Check if the score limit is reached; update game status or reset ball."""
+        if self.players[side]["score"]["value"] >= SCORE_LIMIT:
+            await self.redis_ops.set_game_status(self.room_name, GameStatus.COMPLETED)
+            await self.send_channel_dynamic_data()
+            print("Game completed due to score limit reached.")
 
     # -------------------------------LOOP-----------------------------------
 
@@ -170,22 +174,22 @@ class GameLogic:
         last_update_time = time.time()
 
         while True:
+
             self.players = await self.redis_ops.get_paddles(self.room_name, self.players)
             delta_time = self.game_tick(last_update_time)
             await self.check_score_updates()
 
-            if await self.check_game_completed():
-                await self.redis_ops.set_game_status(self.room_name, GameStatus.COMPLETED)
-                await self.send_channel_dynamic_data()
+            if not await self.is_game_active():
                 break
-            else:
-                await self.redis_ops.set_ball(self.room_name, self.ball)
-                await self.send_channel_dynamic_data()
 
+            await self.redis_ops.set_ball(self.room_name, self.ball)
+            await self.send_channel_dynamic_data()
+   
             last_update_time += delta_time
             await asyncio.sleep(1/TICK_RATE)
 
         if await self.game_sync.wait_for_players_to_restart():
+            await self.redis_ops.clear_all_restart_requests(self.room_name)
             await self.game_loop()
 
     def game_tick(self, last_update_time):
@@ -193,12 +197,6 @@ class GameLogic:
         current_time = time.time()
         delta_time = current_time - last_update_time
         
-        if self.game_status == GameStatus.IN_PROGRESS:
-            self.ball = update_ball(self.ball, self.players, delta_time)
-            scored, self.players = check_scoring(self.ball, self.players)
-            if scored:
-                if check_game_over(self.players):
-                    self.game_status = GameStatus.COMPLETED
-                else:
-                    self.ball = self.init_ball()
+        self.ball, self.players = update_ball(self.ball, self.players, delta_time)
+        
         return delta_time

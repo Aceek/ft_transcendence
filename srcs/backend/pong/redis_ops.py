@@ -136,6 +136,11 @@ class RedisOps:
         await self.connection.srem(key, user_id)
         print(f"Removed user {user_id} to restart requests in room: {room_name}")
     
+    async def clear_all_restart_requests(self, room_name):
+        key = f"game:{room_name}:restart_requests"
+        await self.connection.delete(key)
+        print(f"Cleared all restart requests for room: {room_name}")
+
     async def del_connected_users(self, room_name, user_id):
         key = f"game:{room_name}:connected_users"
         await self.connection.srem(key, user_id)

@@ -1,4 +1,5 @@
 import math
+import random
 
 from .game_config import *
 
@@ -22,8 +23,19 @@ def update_ball(ball, players, delta_time):
     # Check and handle paddle collision
     elif check_paddle_collisons(next_ball, players):
         next_ball = handle_paddle_collision(next_ball, players)
+    
+    scored, side = check_score(next_ball, players)
+    if scored:
+        players[side]["score"]["value"] += 1
+        players[side]["score"]["updated"] = True
+        next_ball = {
+            "x": INITIAL_BALL_X,
+            "y": INITIAL_BALL_Y,
+            "vx": random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE]),
+            "vy": random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE]),
+        }
 
-    return next_ball
+    return next_ball, players
 
     # check_scoring()
 
@@ -80,3 +92,11 @@ def handle_wall_collision(next_ball):
     next_ball["y"] = adjusted_y
     next_ball["vy"] *= -1
     return next_ball
+
+def check_score(ball, players):
+    if ball["x"] < 0 - BALL_SIZE / 2:
+        return True, "right"
+    elif ball["x"] > SCREEN_WIDTH + BALL_SIZE / 2:
+        return True, "left"
+    
+    return False, None
