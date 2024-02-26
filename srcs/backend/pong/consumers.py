@@ -115,9 +115,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         if "type" in data and data["type"] == "paddle_position_update":
             paddle_y = data.get('PaddleY')
             if paddle_y is not None and self.paddle_side is not None:
-                print(f"{self.user_id} -> Received paddle position update: {paddle_y}")
                 # Update game logic with new paddle position
-                if self.check_paddle_move(self.paddle_side, paddle_y):
+                if await self.check_paddle_move(self.paddle_side, paddle_y):
                     await self.redis_ops.set_paddle(self.room_name, self.paddle_side, paddle_y)
 
         elif "type" in data and data["type"] == "restart_game":
@@ -130,15 +129,21 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def check_paddle_move(self, paddle_side, new_y):
         """
-        Simplified method to update the paddle position for the specified side ('left' or 'right')
+        Method to update the paddle position for the specified side ('left' or 'right')
         to the new Y coordinate, using the existing RedisOps functionality.
         """
+
+        # Early checks for requested Y position out of bounds
+        if new_y < 0:
+            print(f"Requested paddle move for {paddle_side} is below 0. Clamping to 0.")
+            return False
+        elif new_y > SCREEN_HEIGHT - PADDLE_HEIGHT:
+            print(f"Requested paddle move for {paddle_side} exceeds screen height. Clamping to {SCREEN_HEIGHT - PADDLE_HEIGHT}.")
+            return False
+
         # Fetch the current Y position from Redis using the RedisOps class
         current_y = await self.redis_ops.get_dynamic_value(self.room_name, f"{paddle_side[0]}p_y")  # lp_y or rp_y based on paddle_side
         current_y = int(current_y) if current_y is not None else 0
-
-        # Clamp the new Y position within the 0 to game_height range
-        new_y = max(0, min(new_y, SCREEN_HEIGHT - PADDLE_HEIGHT))
 
         # Calculate the difference between the new and current position
         y_diff = abs(new_y - current_y)
@@ -147,8 +152,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         if y_diff <= PADDLE_SPEED:
             # Use the RedisOps method to update the paddle's position
             return True
-        print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
-        return False
+        else:
+            print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
+            return False
     
     # ----------------------------CHANNEL SEND-----------------------------------
 
