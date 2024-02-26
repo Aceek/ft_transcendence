@@ -5,9 +5,6 @@ import asyncio
 import time
 import math
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-
 from .game_config import *
 from .game_status import GameStatus
 from .game_mechanics import *
@@ -19,7 +16,6 @@ class GameLogic:
     def __init__(self, room_name):
         self.room_name = room_name
         self.room_group_name = f'pong_room_{room_name}'
-        self.channel_layer = get_channel_layer()
 
     # -------------------------------INIT-----------------------------------
 
@@ -40,8 +36,7 @@ class GameLogic:
         await self.redis_ops.set_ball(self.room_name, self.ball)
         await self.redis_ops.set_scores(self.room_name, self.players)
         await self.redis_ops.set_paddles(self.room_name, self.players)
-        await self.send_channel_static_data()
-        # await self.channel_com.send_static_data(self.static_data)
+        await self.channel_com.send_static_data(self.static_data)
 
     def init_static_data(self):
         static_data = {
@@ -86,36 +81,7 @@ class GameLogic:
             "vy": random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE]),
         }
         return ball
-
-    # -----------------------------CHANNEL SEND----------------------------------
-            
-    async def send_channel_static_data(self):
-        # Fetch static data using the RedisOps class method
-        static_data = await self.redis_ops.get_static_data(self.room_name)
-
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "game.static_data",
-                "data": static_data  # Sending the Redis hash map as is
-            }
-        )
-
-    async def send_channel_dynamic_data(self):
-        # Fetch dynamic data using the RedisOps class method
-        dynamic_data = await self.redis_ops.get_dynamic_data(self.room_name)
-
-        # Print the fetched dynamic data for debugging or logging purposes
-        # print(f"Sending dynamic data for room {self.room_name}: {dynamic_data}")
-
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "game.dynamic_data",
-                "data": dynamic_data  # Sending the Redis hash map as is
-            }
-        )
-
+    
     # -------------------------------CHECK-----------------------------------
 
     async def is_game_active(self):
@@ -125,7 +91,8 @@ class GameLogic:
             return False
         
         if current_status == GameStatus.SUSPENDED:
-            await self.send_channel_dynamic_data()
+            dynamic_data = await self.redis_ops.get_dynamic_data(self.room_name)
+            await self.channel_com.send_dynamic_data(dynamic_data)
             return await self.is_game_resuming()
         
         return True
@@ -152,7 +119,8 @@ class GameLogic:
         """Check if the score limit is reached; update game status or reset ball."""
         if self.players[side]["score"]["value"] >= SCORE_LIMIT:
             await self.redis_ops.set_game_status(self.room_name, GameStatus.COMPLETED)
-            await self.send_channel_dynamic_data()
+            dynamic_data = await self.redis_ops.get_dynamic_data(self.room_name)
+            await self.channel_com.send_dynamic_data(dynamic_data)
             print("Game completed due to score limit reached.")
 
     # -------------------------------LOOP-----------------------------------
@@ -170,7 +138,8 @@ class GameLogic:
 
         await self.init_game()
         await self.redis_ops.set_game_status(self.room_name, GameStatus.IN_PROGRESS)
-        await self.send_channel_dynamic_data()
+        dynamic_data = await self.redis_ops.get_dynamic_data(self.room_name)
+        await self.channel_com.send_dynamic_data(dynamic_data)
         last_update_time = time.time()
 
         while True:
@@ -183,7 +152,8 @@ class GameLogic:
                 break
 
             await self.redis_ops.set_ball(self.room_name, self.ball)
-            await self.send_channel_dynamic_data()
+            dynamic_data = await self.redis_ops.get_dynamic_data(self.room_name)
+            await self.channel_com.send_dynamic_data(dynamic_data)
    
             last_update_time += delta_time
             await asyncio.sleep(1/TICK_RATE)

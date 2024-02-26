@@ -20,8 +20,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.paddle_side = None
-
     # -------------------------------WEBSOCKET-------------------------
 
     async def connect(self):
@@ -30,14 +28,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_name, self.room_group_name = self.get_room_names()
         print("CONSUMER -> client connected : ", self.user_id)
 
-        # Initialize Redis operations
         self.redis_ops = await RedisOps.create(self.room_name)
 
-        # Join the game room group and assign paddle
-        await self.join_room_group()
+        await self.add_client_channel_and_redis()
         await self.handle_paddle_assignment()
 
-        # Check the current game status
         await self.start_game_logic_task()
 
     def get_user_id(self):
@@ -50,7 +45,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         room_group_name = f"pong_room_{room_name}"
         return room_name, room_group_name
 
-    async def join_room_group(self):
+    async def add_client_channel_and_redis(self):
         """Add the user to the room group in Channels and Redis."""
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.redis_ops.add_connected_users(self.room_name, self.user_id)
@@ -73,7 +68,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     self.paddle_side = position
                     break
 
-        await self.send_paddle_side_assignment()
+        await self.game_paddle_side_assignment()
         print(f"User {self.user_id} assigned to {self.paddle_side} paddle")
 
     async def attempt_to_acquire_game_logic_control(self):
@@ -156,40 +151,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
             return False
     
-    # ----------------------------CHANNEL SEND-----------------------------------
-
-    async def send_redis_game_status_to_client(self):
-        """
-        Send the current game status to the client.
-        """
-        dynamic_data_key = f"game:{self.room_name}:dynamic"
-        game_status_key = "gs"
-        
-        # Fetch the current game status from Redis
-        current_game_status = await self.redis.hget(dynamic_data_key, game_status_key)
-        
-        current_game_status = GameStatus(int(current_game_status)).name if current_game_status else "UNKNOWN"
-        
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "game.status_update",  # Ensure this type matches a handler in your consumer
-                "status": current_game_status
-            }
-        )
-    
-    async def send_paddle_side_assignment(self):
-        """
-        Sends a message to the connected client with their paddle side assignment.
-        """
-        if self.paddle_side:
-            await self.send(text_data=json.dumps({
-                'type': 'game.paddle_side',
-                'paddle_side': self.paddle_side
-            }))
-        else:
-            print(f"No paddle side assigned for user: {self.user_id}")
-
     # -------------------------------CHANNEL MESSAGE-------------------------------------
 
     async def game_static_data(self, event):
@@ -208,15 +169,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             'data': data
         }))
 
-    async def game_status_update(self, event):
+    async def game_paddle_side_assignment(self):
         """
-        Handle receiving a game status update from the game logic.
+        Sends a message to the connected client with their paddle side assignment.
         """
-        # Extract the status from the event
-        game_status = event['status']
-        
-        # Send the status to the WebSocket client
-        await self.send(text_data=json.dumps({
-            'type': 'game.status_update',
-            'status': game_status
-        }))
+        if self.paddle_side is not None:
+            await self.send(text_data=json.dumps({
+                'type': 'game.paddle_side',
+                'paddle_side': self.paddle_side
+            }))
+        else:
+            print(f"No paddle side assigned for user: {self.user_id}")
