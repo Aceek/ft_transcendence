@@ -15,6 +15,8 @@ class Message(models.Model):
     read = models.BooleanField(default=False)
 
 
+
+
 class TournamentNotifications(models.Model):
     user = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="tournament_notifications"

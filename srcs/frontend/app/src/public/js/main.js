@@ -11,6 +11,7 @@ import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
 import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
+import { chatSocket, displayChatPage, resetCurrentFriendId } from "./chat/chat.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url = "https://" + window.location.hostname + portString + "/api/";
@@ -19,6 +20,13 @@ export const credentialsOption = "include";
 window.addEventListener("popstate", (event) => {
   router(window.location.pathname, false);
 });
+
+export function closeChatWebSocket(path) {
+  if (chatSocket && chatSocket.readyState === WebSocket.OPEN && path !== "/chat") {
+    chatSocket.close();
+    resetCurrentFriendId();
+  }
+}
 
 export async function router(path, updateHistory = true) {
   if (!path) {
@@ -30,6 +38,8 @@ export async function router(path, updateHistory = true) {
   if (updateHistory) {
     history.pushState(null, "", path + window.location.search);
   }
+
+  closeChatWebSocket(path);
 
   if (await isAPIConnected()) {
     await injectNavBar();
@@ -68,7 +78,6 @@ async function matchRegex(path) {
   return false;
 }
 
-import { displayChatPage } from "./chat/chat.js";
 
 async function handleAuthenticatedRoutes(path) {
   if (await matchRegex(path)) {
