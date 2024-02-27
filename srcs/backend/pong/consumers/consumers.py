@@ -54,7 +54,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             paddle_y = data.get('PaddleY')
             if paddle_y is not None and self.paddle.side is not None:
                 if await self.paddle.check_movement(paddle_y):
-                    await self.paddle.set_to_data_redis(paddle_y)
+                    await self.paddle.set_data_to_redis(paddle_y)
 
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)

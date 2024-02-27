@@ -63,12 +63,6 @@ socket.onmessage = function (event) {
     case "game.paddle_side": // Handle paddle side assignment
       handlePaddleSideAssignment(data.paddle_side);
       break;
-    // case "game.score_update": // Handle score update
-    //   handleScoreUpdate(data.side, data.score);
-    //   break;
-    // case "game.status_update": // NEW: Handle game status update
-    //   handleGameStatusUpdate(data.status);
-    //   break;
     default:
       console.log("Unknown message type:", data.type);
     }
@@ -107,8 +101,18 @@ socket.onmessage = function (event) {
     game.ball.y = parseInt(dynamicData.b_y, 10);
     game.ball.vx = parseInt(dynamicData.b_vx, 10);
     game.ball.vy = parseInt(dynamicData.b_vy, 10);
-    game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
-    game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
+
+	// // Only update the opponent's paddle position
+	// if (game.paddle.side === "LEFT") {
+	// 	// If this client controls the left paddle, update only the right paddle position
+	// 	game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
+	// } else if (game.paddle.side === "RIGHT") {
+	// 	// If this client controls the right paddle, update only the left paddle position
+	// 	game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
+	// }
+	
+	game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
+	game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
     game.players.left.score = parseInt(dynamicData.lp_s, 10);
     game.players.right.score = parseInt(dynamicData.rp_s, 10);
     game.status = parseInt(dynamicData.gs, 10);
@@ -123,79 +127,74 @@ socket.onmessage = function (event) {
     game.paddle.side = paddleSide;
   }
   
-  // function handleScoreUpdate(side, score) {
-  //   console.log(`Score update for ${side} side:`, score);
-    
-  //   // // Assuming you have elements with IDs 'leftScore' and 'rightScore' to display scores
-  //   // if (side === "left") {
-  //   //   game.players.left.score = score;
-  //   // } else if (side === "right") {
-  //   //   game.players.right.score = score;
-  //   // }
-  // }
-  
-  // function handleGameStatusUpdate(status) {
-  //   console.log("Game status update received:", status);
-  //   game.status = status;
-  // }
-  
 //----------------------KEY EVENT-----------------------------------------
 
 // Event listeners for key presses
 document.addEventListener("keydown", function (event) {
-  // console.log("Key down:", event.key);
+  console.log("Key down:", event.key);
   handleKeyPress(event.key, true);
 });
 
 document.addEventListener("keyup", function (event) {
-  // console.log("Key up:", event.key);
+  console.log("Key up:", event.key);
   handleKeyPress(event.key, false);
 });
 
 function handleKeyPress(key, isPressed) {
-  console.log(`GS: ${game.status}`);
-  if (key === "Enter" && game.status == 3 && isPressed) {
-    // Send message to the backend to restart the game
-    socket.send(JSON.stringify({ type: "restart_game" }));
-
-    console.log("trying to restart a game");
-    return;
-  }
-
-  if (!game.paddle.side) {
-    return;
-  }
+	console.log(`Key Event: ${key}, Pressed: ${isPressed}`);
   
-  let change = game.paddle.speed * (isPressed ? 1 : 0);
-  let paddleKey = game.paddle.side === "LEFT" ? "left" : "right";
+    // Early return if the key is not pressed
+    if (!isPressed) {
+        console.log("Key is not pressed, exiting handleKeyPress");
+        return;
+    }
+
+	if (key === "Enter" && game.status == 3 && isPressed) {
+	  console.log("Enter pressed to restart game");
+	  socket.send(JSON.stringify({ type: "restart_game" }));
+	  return;
+	}
   
-  if (key === "ArrowUp" || key === "ArrowDown") {
-      game.players[paddleKey].paddleY += (key === "ArrowDown" ? change : -change);
-      sendPaddlePositionUpdate();
+	if (!game.paddle.side) {
+	  console.log("Paddle side not set, exiting handleKeyPress");
+	  return;
+	}
+  
+	let change = game.paddle.speed
+	let paddleKey = game.paddle.side === "LEFT" ? "left" : "right";
+  
+	if (key === "ArrowUp" || key === "ArrowDown") {
+	  console.log(`Attempting to move ${paddleKey} paddle, Key: ${key}, Change: ${change}`);
+	  let potentialNewY = game.players[paddleKey].paddleY + (key === "ArrowDown" ? change : -change);
+  
+	  if (potentialNewY >= 0 && (potentialNewY + game.paddle.height) <= canvas.height) {
+		console.log(`Updating ${paddleKey} paddle position: ${potentialNewY}`);
+		game.players[paddleKey].paddleY = potentialNewY;
+		sendPaddlePositionUpdate();
+	  } else {
+		console.log(`New position out of bounds: ${potentialNewY}, not updating.`);
+	  }
+	}
   }
-}
 
 // Global variables to track the last sent paddle positions for both sides
 let lastSentPaddleY = null;
 
 function sendPaddlePositionUpdate() {
-  // Determine the current player's paddle and the corresponding variable for tracking
-  const isLeftSide = game.paddle.side === "LEFT";
-  const currentPlayer = isLeftSide ? game.players.left : game.players.right;
+	const currentPlayerY = game.paddle.side === "LEFT" ? game.players.left.paddleY : game.players.right.paddleY;
   
-  // Check if there's a significant change in the current paddle's position
-  if (currentPlayer.paddleY !== lastSentPaddleY) {
-    lastSentLeftPaddleY = currentPlayer.paddleY;
-  }
-  
-  // Send updated position to the server
-  socket.send(JSON.stringify({
-    type: "paddle_position_update",
-    side: game.paddle.side,
-      PaddleY: currentPlayer.paddleY,
-  }));
-
-  console.log(`${game.paddle.side} paddle position sent:`, currentPlayer.paddleY);
+	// Check if there's a significant change in the current paddle's position before sending
+	if (lastSentPaddleY !== currentPlayerY) {
+	  console.log(`Sending ${game.paddle.side} paddle position update: ${currentPlayerY}`);
+	  socket.send(JSON.stringify({
+		type: "paddle_position_update",
+		side: game.paddle.side,
+		PaddleY: currentPlayerY,
+	  }));
+	  lastSentPaddleY = currentPlayerY; // Update the last sent position
+	} else {
+	  console.log(`No significant change in ${game.paddle.side} paddle position. Not sending update.`);
+	}
 }
 
 //----------------------MAIN LOOP-----------------------------------------

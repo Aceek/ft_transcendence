@@ -36,13 +36,11 @@ class Ball:
         # Check collision with left paddle
         if (self.x - BALL_SIZE / 2 <= PADDLE_WIDTH and
                 players[PlayerPosition.LEFT.value].paddle_y <= self.y <= players[PlayerPosition.LEFT.value].paddle_y + PADDLE_HEIGHT):
-            print(f"Collision with LEFT paddle: Paddle Y range={players[PlayerPosition.LEFT.value].paddle_y} to {players[PlayerPosition.LEFT.value].paddle_y + PADDLE_HEIGHT}")
             return True, PlayerPosition.LEFT
 
         # Check collision with right paddle
         elif (self.x + BALL_SIZE / 2 >= SCREEN_WIDTH - PADDLE_WIDTH and
             players[PlayerPosition.RIGHT.value].paddle_y <= self.y <= players[PlayerPosition.RIGHT.value].paddle_y + PADDLE_HEIGHT):
-            print(f"Collision with RIGHT paddle: Paddle Y range={players[PlayerPosition.RIGHT.value].paddle_y} to {players[PlayerPosition.RIGHT.value].paddle_y + PADDLE_HEIGHT}")
             return True, PlayerPosition.RIGHT
 
         return False, None
