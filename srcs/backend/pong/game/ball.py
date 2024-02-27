@@ -15,7 +15,7 @@ class Ball:
         self.vx = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
         self.vy = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
 
-    async def set_to_redis(self):
+    async def set_data_to_redis(self):
         await self.set_ball_to_redis()
 
     def update_position(self, delta_time):
@@ -33,13 +33,6 @@ class Ball:
         return False
 
     def check_paddle_collision(self, players):
-        # Initial debugging information
-        # print("Checking paddle collision")
-        # print(f"Ball position: x={self.x}, y={self.y}")
-        # # Print paddle positions for debugging
-        # print(f"Left Paddle Position: {players[PlayerPosition.LEFT.value].paddle_y}")
-        # print(f"Right Paddle Position: {players[PlayerPosition.RIGHT.value].paddle_y}")
-
         # Check collision with left paddle
         if (self.x - BALL_SIZE / 2 <= PADDLE_WIDTH and
                 players[PlayerPosition.LEFT.value].paddle_y <= self.y <= players[PlayerPosition.LEFT.value].paddle_y + PADDLE_HEIGHT):
@@ -52,10 +45,7 @@ class Ball:
             print(f"Collision with RIGHT paddle: Paddle Y range={players[PlayerPosition.RIGHT.value].paddle_y} to {players[PlayerPosition.RIGHT.value].paddle_y + PADDLE_HEIGHT}")
             return True, PlayerPosition.RIGHT
 
-        # No collision detected
-        # print("No collision detected")
         return False, None
-
 
     def check_score(self):
         if self.x < 0 - BALL_SIZE / 2:

@@ -5,7 +5,6 @@ from .ball import Ball
 from .player import Player
 from .config import *
 from .enum import GameStatus, PlayerPosition
-from .mechanics import *
 from .sync import GameSync
 from .channel_com import ChannelCom
 from ..redis.redis_ops import RedisOps
@@ -29,9 +28,9 @@ class GameLogic:
         self.players = [Player(PlayerPosition.LEFT, self.redis_ops), 
                         Player(PlayerPosition.RIGHT, self.redis_ops)]
         for player in self.players:
-                await player.set_to_redis()
+                await player.set_data_to_redis()
         self.ball = Ball(self.redis_ops) 
-        await self.ball.set_to_redis()
+        await self.ball.set_data_to_redis()
 
         await self.redis_ops.set_game_status(GameStatus.NOT_STARTED)
         await self.redis_ops.set_static_data(self.static_data)
@@ -48,39 +47,7 @@ class GameLogic:
             "ballSize": int(BALL_SIZE),
         }
         return static_data
-    
-    # def init_players(self):
-    #     players = {
-    #         "left": {
-    #             "score": {
-    #                 "value": INITIAL_SCORE,
-    #                 "updated": False
-    #             },
-    #             "paddle": {
-    #                 "y": INITIAL_PADDLE_Y
-    #             }
-    #         },
-    #         "right": {
-    #             "score": {
-    #                 "value": INITIAL_SCORE,
-    #                 "updated": False
-    #             },
-    #             "paddle": {
-    #                 "y": INITIAL_PADDLE_Y
-    #             }
-    #         }
-    #     }
-    #     return players
-    
-    # def init_ball(self):
-    #     ball = {
-    #         "x": INITIAL_BALL_X,
-    #         "y": INITIAL_BALL_Y,
-    #         "vx": random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE]),
-    #         "vy": random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE]),
-    #     }
-    #     return ball
-    
+
     # -------------------------------CHECK-----------------------------------
 
     async def is_game_active(self):
@@ -104,23 +71,6 @@ class GameLogic:
         await self.channel_com.send_static_data(self.static_data)
         
         return game_resuming
-
-    # async def check_score_updates(self):
-    #     """Handle score updates for each side."""
-    #     for side in ["left", "right"]:
-    #         if self.players[side]["score"]["updated"]:
-    #             await self.redis_ops.set_score(, side,
-    #                                             self.players[side]["score"]["value"])
-    #             self.players[side]["score"]["updated"] = False
-    #             await self.check_score_limit(side)
-
-    # async def check_score_limit(self, side):
-    #     """Check if the score limit is reached; update game status or reset ball."""
-    #     if self.players[side]["score"]["value"] >= SCORE_LIMIT:
-    #         await self.redis_ops.set_game_status(, GameStatus.COMPLETED)
-    #         dynamic_data = await self.redis_ops.get_dynamic_data()
-    #         await self.channel_com.send_dynamic_data(dynamic_data)
-    #         print("Game completed due to score limit reached.")
 
     # -------------------------------LOOP-----------------------------------
 
@@ -146,13 +96,12 @@ class GameLogic:
                 for player in self.players:
                     await player.get_paddle_from_redis()
 
-                delta_time = self.game_tick(last_update_time)
-                # await self.check_score_updates()
+                delta_time = await self.game_tick(last_update_time)
 
                 if not await self.is_game_active():
                     break
 
-                await self.ball.set_to_redis()
+                await self.ball.set_data_to_redis()
                 dynamic_data = await self.redis_ops.get_dynamic_data()
                 await self.channel_com.send_dynamic_data(dynamic_data)
     
@@ -172,11 +121,30 @@ class GameLogic:
               print(f"An unexpected error occurred: {e}")
               self.redis_ops.clear_all_data()
 
-    def game_tick(self, last_update_time):
+    async def game_tick(self, last_update_time):
         """Perform a single tick of the game loop."""
         current_time = time.time()
         delta_time = current_time - last_update_time
         
-        update_ball(self.ball, self.players, delta_time)
+        self.ball.update_position(delta_time)
+
+        # Check and handle wall collision
+        if self.ball.check_wall_collision():
+            self.ball.handle_wall_collision()
+
+        # Check and handle paddle collision
+        collision, position = self.ball.check_paddle_collision(self.players)
+        if collision:
+            self.ball.handle_paddle_collision(position, self.players)
+        
+        # Check and handle goal scored
+        scored, scorer_position = self.ball.check_score()
+        if scored:
+            self.ball.reset_value()
+            await self.players[scorer_position.value].update_score()
+            if self.players[scorer_position.value].check_win():
+                await self.redis_ops.set_game_status(GameStatus.COMPLETED)
+                dynamic_data = await self.redis_ops.get_dynamic_data()
+                await self.channel_com.send_dynamic_data(dynamic_data)
         
         return delta_time
