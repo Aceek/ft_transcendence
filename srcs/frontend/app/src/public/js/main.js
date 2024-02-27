@@ -132,9 +132,16 @@ async function handleAuthenticatedRoutes(path) {
 
 async function handleUnauthenticatedRoutes(path) {
   deleteNavbar();
-  if (await checkOAuthCode()) {
-    console.log("User has OAuth code, redirecting to home page");
-    router("/home");
+  const oauth = await checkOAuthCode()
+
+  if (oauth.success) {
+    if (oauth.requires2FA) {
+      console.log("User has OAuth code, redirecting to 2fa page");
+      router("/2fa");
+    } else {
+      console.log("User has OAuth code, redirecting to home page");
+      router("/home");
+    }
   } else if (path === "/register") {
     console.log("Loading register page");
     getRegisterPage();

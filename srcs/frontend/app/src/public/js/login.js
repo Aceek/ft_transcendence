@@ -106,19 +106,22 @@ export async function checkOAuthCode() {
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
 
-  if (code) {
-    changeUrlHistory("/");
-    return fetch(api_url + "auth/oauth2/" + `?code=${code}`, {
-      method: "GET",
-      credentials: credentialsOption,
-    })
-      .then((response) => {
-        return response.status === 200;
-      })
-      .catch((error) => {
-        console.error(error);
-        return false;
-      });
+  if (!code) {
+    return { success: false, requires2FA: false };
   }
-  return Promise.resolve(false);
+  changeUrlHistory("/");
+  const response = await fetch(api_url + "auth/oauth2/" + `?code=${code}`, {
+    method: "GET",
+    credentials: credentialsOption,
+  });
+  if (response.ok) {
+    const data = await response.json();
+    if (data && '2FA' in data) {
+      sessionStorage.setItem("2fa_token", data['2FA']);
+      return { success: true, requires2FA: true };
+    } else {
+      return { success: true, requires2FA: false };
+    }
+  }
+  return { success: false, requires2FA: false };
 }
