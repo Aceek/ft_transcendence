@@ -5,8 +5,7 @@ class Paddle:
     def __init__(self, user_id, redis_ops):
         self.user_id = user_id
         self.redis_ops = redis_ops
-        self.side = None  # Will be an instance of PlayerPosition or None
-        # Initialize the position key map
+        self.side = None
         self.position_key_map = {
             PlayerPosition.LEFT: "lp_y",
             PlayerPosition.RIGHT: "rp_y"
@@ -28,12 +27,10 @@ class Paddle:
         print(f"User {self.user_id} assigned to {self.side.name} paddle")
 
     async def check_movement(self, new_y):
-        # First, check if the requested Y is outside the game boundaries
         if new_y < 0 or new_y > SCREEN_HEIGHT - PADDLE_HEIGHT:
             print(f"Requested Y: {new_y} is outside the game boundaries.")
-            return False  # Return False directly if requested Y is outside boundaries
-
-        # If within boundaries, proceed with checking against current position and speed limit
+            return False 
+        
         key = self.position_key_map[self.side]
         current_y_str = await self.redis_ops.get_dynamic_value(key)
         current_y = int(current_y_str) if current_y_str is not None else 0
@@ -43,7 +40,6 @@ class Paddle:
 
         # Check if the movement is within the allowed speed limit
         if movement_distance <= PADDLE_SPEED:
-            # await self.set_to_data_redis(new_y)  # If the movement is valid, update the paddle position in Redis
             return True
         else:
             print(f"Attempted to move the paddle more than the speed limit ({PADDLE_SPEED}). Movement Distance: {movement_distance}")  # Print error message

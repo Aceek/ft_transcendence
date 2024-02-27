@@ -13,7 +13,7 @@ class GameLogic:
     def __init__(self, room_name, room_group_name):
         self.room_name = room_name
         self.room_group_name = room_group_name
-        
+
     # -------------------------------INIT-----------------------------------
 
     async def init_env(self):
@@ -24,17 +24,28 @@ class GameLogic:
 
     async def init_game(self):
         """Initial game setup."""
+        # Init static data
         self.static_data = self.init_static_data() 
+        await self.redis_ops.set_static_data(self.static_data)
+
+        # Init players
         self.players = [Player(PlayerPosition.LEFT, self.redis_ops), 
                         Player(PlayerPosition.RIGHT, self.redis_ops)]
         for player in self.players:
                 await player.set_data_to_redis()
+
+        # Init ball
         self.ball = Ball(self.redis_ops) 
         await self.ball.set_data_to_redis()
 
-        await self.redis_ops.set_game_status(GameStatus.NOT_STARTED)
-        await self.redis_ops.set_static_data(self.static_data)
+        # Init status
+        await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
+
+        # Send initial data to clients
         await self.channel_com.send_static_data(self.static_data)
+        await self.channel_com.send_dynamic_data(\
+            await self.redis_ops.get_dynamic_data())
+
 
     def init_static_data(self):
         static_data = {
@@ -55,12 +66,10 @@ class GameLogic:
         
         if current_status == GameStatus.COMPLETED:
             return False
-        
-        if current_status == GameStatus.SUSPENDED:
-            dynamic_data = await self.redis_ops.get_dynamic_data()
-            await self.channel_com.send_dynamic_data(dynamic_data)
-            return await self.is_game_resuming()
-        
+        elif current_status == GameStatus.SUSPENDED:
+            await self.channel_com.send_dynamic_data(\
+                await self.redis_ops.get_dynamic_data())
+
         return True
 
     async def is_game_resuming(self):
@@ -83,13 +92,9 @@ class GameLogic:
 
     async def game_loop(self):
         """The main game loop."""
-        print("GAMELOGIC -> LOOP STARTED")
-
         await self.init_game()
-        await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
-        dynamic_data = await self.redis_ops.get_dynamic_data()
-        await self.channel_com.send_dynamic_data(dynamic_data)
         last_update_time = time.time()
+        print("Game loop started.")
 
         try:
             while True:
@@ -100,10 +105,6 @@ class GameLogic:
 
                 if not await self.is_game_active():
                     break
-
-                await self.ball.set_data_to_redis()
-                dynamic_data = await self.redis_ops.get_dynamic_data()
-                await self.channel_com.send_dynamic_data(dynamic_data)
     
                 last_update_time += delta_time
                 await asyncio.sleep(1/TICK_RATE)
@@ -126,6 +127,7 @@ class GameLogic:
         current_time = time.time()
         delta_time = current_time - last_update_time
         
+        # Update the ball position in fucntion on vellocity and delta time
         self.ball.update_position(delta_time)
 
         # Check and handle wall collision
@@ -144,7 +146,12 @@ class GameLogic:
             await self.players[scorer_position.value].update_score()
             if self.players[scorer_position.value].check_win():
                 await self.redis_ops.set_game_status(GameStatus.COMPLETED)
-                dynamic_data = await self.redis_ops.get_dynamic_data()
-                await self.channel_com.send_dynamic_data(dynamic_data)
         
+        # Set the ball data to Redis
+        await self.ball.set_data_to_redis()
+
+        # Send the Redis data to clients
+        await self.channel_com.send_dynamic_data(\
+            await self.redis_ops.get_dynamic_data())
+
         return delta_time
