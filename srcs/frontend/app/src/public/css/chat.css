@@ -4,6 +4,17 @@ body{
     background-color: #e2e8f0;    
 }
 
+.profile-link-chat {
+    color: #007bff;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .profile-link-chat:hover {
+    color: #0056b3;
+    text-decoration: none;
+}
+
 .chat-link:hover {
     background-color: #f0f0f0;
     cursor: pointer;
@@ -100,3 +111,4 @@ li::marker {
 .border-top {
     border-top: 1px solid #dee2e6!important;
 }
+

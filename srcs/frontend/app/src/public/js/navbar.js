@@ -3,11 +3,11 @@ import { router, credentialsOption, api_url } from "./main.js";
 import { getProfile } from "./profile/getProfile.js";
 
 export async function injectNavBar() {
-  loadProfileCss("/public/css/navbar.css");
   if (document.getElementById("navbar")) {
     return;
   }
   try {
+    loadProfileCss("/public/css/navbar.css");
     const navbarDivString = await fetchTemplate("/public/html/navbar.html");
     document.body.insertAdjacentHTML("afterbegin", navbarDivString);
     const profile = await getProfile();

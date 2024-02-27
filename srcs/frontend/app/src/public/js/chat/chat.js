@@ -3,22 +3,26 @@ import { fetchTemplate } from "../pageUtils.js";
 import { loadProfileCss, requestDataWithToken } from "../pageUtils.js";
 import { getFriendList, getProfile } from "../profile/getProfile.js";
 import { router, api_url } from "../main.js";
+import { sendUpdateRequest } from "../profile/profileUtils.js";
 
 let conversations = {};
 let currentFriendId;
 export let chatSocket;
 let senderId;
 let clientSender;
+let blocked_users = [];
 
 export async function displayChatPage() {
   try {
+    resetCurrentFriendId();
     clientSender = await getProfile();
+    blocked_users = clientSender.blocked_users;
     senderId = clientSender.id;
     loadProfileCss("/public/css/chat.css");
     const chatTemplate = await fetchTemplate("/public/html/chat.html");
     document.getElementById("main").innerHTML = chatTemplate;
     const friends = await getFriendList();
-    const friendsListIds = constructFriendsListId(friends);
+    let friendsListIds = constructFriendsListId(friends);
     await injectFriendsInChat(friends);
     await injectUsersNotFriendsInChat(friendsListIds);
     await handleSendButton();
@@ -209,6 +213,7 @@ export function subscribeToStatusUpdates(friendsListIds) {
 export function handleStatusUpdate(data) {
   const { user_id, status } = data;
   const friendLink = document.querySelector(`[data-uid="${user_id}"]`);
+
   if (friendLink) {
     const statusElement = friendLink.querySelector(".connection-status");
     if (status === "online") {
@@ -227,8 +232,17 @@ function isSenderFriend(sender, friendsListIds) {
   return friendsListIds.includes(sender);
 }
 
+export function getStatusUpdatesFromServer() {
+  chatSocket.send(
+    JSON.stringify({
+      action: "get_status_updates",
+    })
+  );
+}
+
 export async function etablishConnectionWebSocket(friendsListIds) {
   if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+    getStatusUpdatesFromServer();
     return;
   }
   chatSocket = new WebSocket("wss://localhost/ws/chat");
@@ -285,10 +299,11 @@ export async function handleIncomingMessage(data) {
 }
 
 export async function injectNewUserInChat(uid) {
-  const userInChat = document.querySelector(`li[data-uid="${uid}"]`);
+  const userInChat = document.querySelector(`[data-uid="${uid}"]`);
   if (userInChat) {
     return;
   }
+
 
   const newUser = await getProfile(uid);
   const friendsInChat = document.getElementById("users_in_chat");
@@ -318,6 +333,8 @@ export async function injectNewUserInChat(uid) {
 
   friendsInChat.appendChild(listItem);
   await attachLinkListenerChat();
+  uid = [uid]
+  subscribeToStatusUpdates(uid);
 }
 
 function incressBadgeBgSuccess(uid) {
@@ -424,6 +441,7 @@ function resetBadgeBgSuccess(uid) {
   badge.textContent = "0";
 }
 
+
 export async function attachLinkListenerChat() {
   const chatLinks = document.querySelectorAll(".chat-link");
   chatLinks.forEach((link) => {
@@ -433,13 +451,192 @@ export async function attachLinkListenerChat() {
         chatLinks.forEach((link) => link.classList.remove("selected"));
 
         event.currentTarget.classList.add("selected");
-        console.log("Chat link clicked:", link);
 
         const uid = link.getAttribute("data-uid");
         currentFriendId = uid;
         injectChatRoom(uid);
+        injectInfoOnUserChat(uid);
       });
       link.setAttribute("data-listener-added", "true");
     }
   });
+}
+
+export async function injectInfoOnUserChat(uid) {
+  const conversation = conversations[uid];
+  if (!conversation) {
+    return;
+  }
+  const userName = conversation.friend_name;
+  const userAvatar = conversation.friend_avatar;
+  const userUID = conversation.friend_id;
+
+  const chatInfo = document.getElementById("info-user-chat");
+  chatInfo.innerHTML = "";
+  const info = document.createElement("div");
+  info.classList.add("py-2", "px-4", "border-bottom");
+  info.innerHTML = `
+      <div class="d-flex align-items-center py-1">
+          <div class="position-relative">
+              <img src="${userAvatar}" class="rounded-circle me-1" alt="${userName}" width="40" height="40">
+          </div>
+          <div class="flex-grow-1 ps-3">
+              <span class="profile-link-chat" data-uid="${userUID}"><strong>${userName}</strong></span>
+          </div>
+          <div class="d-flex align-items-center">
+              <button id="invite-to-play-button" class="btn btn-outline-secondary btn-sm">Invite to play</button>
+              <button id="add-remove-friend-chat" class="btn btn-outline-secondary btn-sm">Add friend</button>
+              <button id="block-unblock-chat" class="btn btn-outline-secondary btn-sm">Block</button>
+          </div>
+      </div>
+  `;
+  chatInfo.appendChild(info);
+  await attachLinkListenerProfileChat();
+  await setupAddRemoveFriendButton(userUID);
+  await setupBlockUnblockButton(userUID);
+  await setupInviteToPlayButton(userUID);
+}
+
+export async function setupInviteToPlayButton(uid) {
+  const inviteToPlayButton = document.getElementById("invite-to-play-button");
+  inviteToPlayButton.addEventListener("click", async () => {
+    console.log("Invite to play button clicked user = ", uid);
+    // router("/play/" + uid);
+  });
+}
+
+export async function checkIfBlocked(uid) {
+  return blocked_users.includes(uid);
+}
+
+export async function setupBlockUnblockButton(uid) {
+  const blockUnblockButton = document.getElementById("block-unblock-chat");
+  const isBlocked = await checkIfBlocked(uid);
+  if (isBlocked) {
+    blockUnblockButton.textContent = "Unblock";
+  } else {
+    blockUnblockButton.textContent = "Block";
+  }
+  blockUnblockButton.addEventListener("click", async () => {
+    if (isBlocked) {
+      await unblockUser(uid);
+    } else {
+      await blockUser(uid);
+    }
+  });
+}
+
+export async function blockUser(uid) {
+  try {
+    const dataToUpdate = {};
+    dataToUpdate["blocked_users"] = [uid];
+    const updateSuccess = await sendUpdateRequest(
+      api_url + "users/profile/update",
+      dataToUpdate
+    );
+    if (updateSuccess) {
+      console.log("User blocked successfully");
+      await displayChatPage();
+    } else {
+      console.error("Error blocking user");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function unblockUser(uid) {
+  try {
+    const dataToUpdate = {};
+    dataToUpdate["blocked_users"] = [uid];
+    const updateSuccess = await sendUpdateRequest(
+      api_url + "users/remove_blocked",
+      dataToUpdate
+    );
+    if (updateSuccess) {
+      console.log("User unblocked successfully");
+      await displayChatPage();
+    } else {
+      console.error("Error unblocking user");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function attachLinkListenerProfileChat() {
+  const profileLinks = document.querySelectorAll(".profile-link-chat");
+  profileLinks.forEach((link) => {
+    if (!link.getAttribute("data-listener-added")) {
+      link.addEventListener("click", () => {
+        const uid = link.getAttribute("data-uid");
+        router("/profile/" + uid);
+      });
+      link.setAttribute("data-listener-added", "true");
+    }
+  });
+}
+
+export async function checkIfFriend(uid) {
+  const friends = await getFriendList(0);
+  return friends.results.some((friend) => friend.id === uid);
+}
+
+export async function addFriend(uid) {
+  try {
+    const dataToUpdate = {};
+    dataToUpdate["friends"] = [uid];
+    const updateSuccess = await sendUpdateRequest(
+      api_url + "users/profile/update",
+      dataToUpdate
+    );
+    if (updateSuccess) {
+      console.log("Friend added successfully");
+      await displayChatPage();
+    } else {
+      console.error("Error adding friend");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function removeFriend(uid) {
+  try {
+    const dataToUpdate = {};
+    dataToUpdate["friends"] = [uid];
+    const updateSuccess = await sendUpdateRequest(
+      api_url + "users/remove_friends",
+      dataToUpdate
+    );
+    if (updateSuccess) {
+      console.log("Friend removed successfully");
+      await displayChatPage();
+    } else {
+      console.error("Error removing friend");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+export async function setupAddRemoveFriendButton(uid) {
+  try {
+    const addRemoveButton = document.getElementById("add-remove-friend-chat");
+    const isFriend = await checkIfFriend(uid);
+    if (isFriend) {
+      addRemoveButton.textContent = "Remove friend";
+    } else {
+      addRemoveButton.textContent = "Add friend";
+    }
+    addRemoveButton.addEventListener("click", async () => {
+      if (isFriend) {
+        await removeFriend(uid);
+      } else {
+        await addFriend(uid);
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }

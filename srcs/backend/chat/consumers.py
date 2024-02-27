@@ -9,6 +9,10 @@ from django.utils import timezone
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.followed_users = []
+
     async def connect(self):
         self.user = self.scope["user"]
         if self.user.is_authenticated:
@@ -22,7 +26,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         else:
             await self.close()
-
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
@@ -50,29 +53,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             "receiver": receiver_id,
                         },
                     )
+        elif action == "get_status_updates":
+            await self.send_status_updates()
+
     @database_sync_to_async
     def get_unread_messages(self, user_id):
         from chat.models import Message
-        return list(Message.objects.filter(receiver_id=user_id, read=False).order_by('timestamp').select_related('sender', 'receiver'))
 
-
+        return list(
+            Message.objects.filter(receiver_id=user_id, read=False)
+            .order_by("timestamp")
+            .select_related("sender", "receiver")
+        )
 
     async def send_unread_messages(self, user_id):
-            unread_messages = await self.get_unread_messages(user_id)
-            for message in unread_messages:
-                local_timestamp = timezone.localtime(message.timestamp)
-                await self.send(text_data=json.dumps({
-                    "type": "chat_message",
-                    "sender": str(message.sender.id),
-                    "receiver": str(message.receiver.id),
-                    "message": message.message,
-                    "time": local_timestamp.strftime("%H:%M:%S"),
-                }))
-            await self.mark_message_as_read(user_id)
+        unread_messages = await self.get_unread_messages(user_id)
+        for message in unread_messages:
+            local_timestamp = timezone.localtime(message.timestamp)
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "chat_message",
+                        "sender": str(message.sender.id),
+                        "receiver": str(message.receiver.id),
+                        "message": message.message,
+                        "time": local_timestamp.strftime("%H:%M:%S"),
+                    }
+                )
+            )
+        await self.mark_message_as_read(user_id)
 
     @database_sync_to_async
     def mark_message_as_read(self, user_id):
         from chat.models import Message
+
         messages = Message.objects.filter(receiver_id=user_id, read=False)
         for message in messages:
             message.read = True
@@ -94,11 +108,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
             )
 
+    async def send_status_updates(self):
+        for user_id in self.followed_users:
+            status = await self.get_user_status(user_id)
+            await self.send(
+                text_data=json.dumps(
+                    {"type": "status_update", "user_id": user_id, "status": status}
+                )
+            )
+
     async def subscribe_to_status_updates(self, user_ids):
         for user_id in user_ids:
             await self.channel_layer.group_add(
                 f"user_status_{user_id}", self.channel_name
             )
+            if user_id not in self.followed_users:
+                self.followed_users.append(user_id)
 
             status = await self.get_user_status(user_id)
 
@@ -117,8 +142,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return "offline"
 
     async def can_send_message(self, receiver_id):
+        sender = self.user
         receiver = await self.get_user_by_id(receiver_id)
-        return not await self.is_user_blocked(receiver)
+        return not await self.is_user_blocked_by_receiver(sender, receiver)
 
     @database_sync_to_async
     def get_user_by_id(self, user_id):
@@ -131,9 +157,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return None
 
     @database_sync_to_async
-    def is_user_blocked(self, receiver):
+    def is_user_blocked_by_receiver(self, sender, receiver):
         if receiver:
-            return self.user.blocked_users.filter(id=receiver.id).exists()
+            return receiver.blocked_users.filter(id=sender.id).exists()
         return False
 
     async def store_message(self, receiver_id, message):
@@ -180,4 +206,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def status_update(self, event):
         await self.send(text_data=json.dumps(event))
-

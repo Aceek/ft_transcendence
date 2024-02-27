@@ -11,10 +11,15 @@ import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
 import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
-import { chatSocket, displayChatPage, resetCurrentFriendId } from "./chat/chat.js";
+import {
+  chatSocket,
+  displayChatPage,
+  resetCurrentFriendId,
+} from "./chat/chat.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
-export const api_url = "https://" + window.location.hostname + portString + "/api/";
+export const api_url =
+  "https://" + window.location.hostname + portString + "/api/";
 
 export const credentialsOption = "include";
 window.addEventListener("popstate", (event) => {
@@ -22,10 +27,33 @@ window.addEventListener("popstate", (event) => {
 });
 
 export function closeChatWebSocket(path) {
-  if (chatSocket && chatSocket.readyState === WebSocket.OPEN && path !== "/chat") {
+  if (
+    chatSocket &&
+    chatSocket.readyState === WebSocket.OPEN &&
+    path !== "/chat"
+  ) {
     chatSocket.close();
     resetCurrentFriendId();
   }
+}
+
+export function clearLoadedCss() {
+  const head = document.head;
+  const links = Array.from(head.querySelectorAll("link"));
+  links.forEach((link) => {
+    if (link.href.includes("profile.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("tournament.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("tournamentsAll.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("chat.css")) {
+      head.removeChild(link);
+    }
+  });
 }
 
 export async function router(path, updateHistory = true) {
@@ -40,6 +68,7 @@ export async function router(path, updateHistory = true) {
   }
 
   closeChatWebSocket(path);
+  clearLoadedCss();
 
   if (await isAPIConnected()) {
     await injectNavBar();
@@ -78,7 +107,6 @@ async function matchRegex(path) {
   return false;
 }
 
-
 async function handleAuthenticatedRoutes(path) {
   if (await matchRegex(path)) {
   } else {
@@ -103,7 +131,7 @@ async function handleAuthenticatedRoutes(path) {
         await displayPlayPage();
         break;
       case "/chat":
-        await displayChatPage()
+        await displayChatPage();
         console.log("Loading chat page");
         break;
       default:

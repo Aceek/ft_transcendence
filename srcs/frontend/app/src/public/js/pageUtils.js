@@ -41,7 +41,6 @@ export async function requestDataWithToken(url = "", data, method = "GET") {
     !(data instanceof FormData)
   ) {
     requestOptions.body = JSON.stringify(data);
-    console.log("requestOptions", requestOptions);
   } else if (data instanceof FormData) {
     headers.delete("Content-Type");
     requestOptions.body = data;

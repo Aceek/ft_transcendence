@@ -1,10 +1,14 @@
 from .models import CustomUser
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CustomUserSerializer, CustomUserSerializerFriend
+from .serializers import (
+    CustomUserSerializer,
+    CustomUserSerializerFriend,
+    CustomUserSerializerBlocked,
+)
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from .services import remove_friend
+from .services import remove_friend, remove_blocked_users
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveAPIView, UpdateAPIView, ListAPIView
 from rest_framework.pagination import PageNumberPagination
@@ -57,6 +61,24 @@ class CustomUserDetailView(RetrieveAPIView):
         return (
             get_object_or_404(CustomUser, id=user_id) if user_id else self.request.user
         )
+
+
+class CustomUserBlockedView(APIView):
+    serializer_class = CustomUserSerializerBlocked
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        """ "
+        UnBlock users from user
+        """
+        user = request.user
+        serializer = CustomUserSerializerBlocked(data=request.data)
+
+        if serializer.is_valid():
+            remove_blocked_users(user, serializer.validated_data["blocked_users"])
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomUserFriendView(APIView):
