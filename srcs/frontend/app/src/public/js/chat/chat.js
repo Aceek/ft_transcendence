@@ -24,11 +24,11 @@ export async function displayChatPage() {
     const friends = await getFriendList();
     let friendsListIds = constructFriendsListId(friends);
     await injectFriendsInChat(friends);
+    await etablishConnectionWebSocket(friendsListIds);
     await injectUsersNotFriendsInChat(friendsListIds);
     await handleSendButton();
     createConversationObjects(friends, clientSender);
     await attachSearchListenerChat(friendsListIds);
-    await etablishConnectionWebSocket(friendsListIds);
   } catch (error) {
     console.error("Error:", error);
     // router("/home");
@@ -202,6 +202,9 @@ export function sendMessageWebSocket(message) {
 }
 
 export function subscribeToStatusUpdates(friendsListIds) {
+  if (chatSocket.readyState !== WebSocket.OPEN) {
+    return;
+  }
   chatSocket.send(
     JSON.stringify({
       action: "subscribe",
@@ -211,6 +214,7 @@ export function subscribeToStatusUpdates(friendsListIds) {
 }
 
 export function handleStatusUpdate(data) {
+  console.log("Status update:", data);
   const { user_id, status } = data;
   const friendLink = document.querySelector(`[data-uid="${user_id}"]`);
 
@@ -240,35 +244,58 @@ export function getStatusUpdatesFromServer() {
   );
 }
 
-export async function etablishConnectionWebSocket(friendsListIds) {
-  if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-    getStatusUpdatesFromServer();
-    return;
-  }
-  chatSocket = new WebSocket("wss://localhost/ws/chat");
-  chatSocket.onopen = function () {
-    console.log("Connection opened");
-    subscribeToStatusUpdates(friendsListIds);
-  };
-  chatSocket.onmessage = async function (event) {
-    const data = JSON.parse(event.data);
-    if (data.type && data.type === "chat_message") {
-      if (!isSenderFriend(data.sender, friendsListIds)) {
-        await injectNewUserInChat(data.sender);
-      }
-      handleIncomingMessage(data);
-    } else if (data.type && data.type === "status_update") {
+function handleWebSocketOpen(friendsListIds, resolve) {
+  console.log("Connection opened");
+  subscribeToStatusUpdates(friendsListIds);
+  resolve();
+}
+
+function handleWebSocketMessage(event, friendsListIds) {
+  const data = JSON.parse(event.data);
+  switch (data.type) {
+    case "chat_message":
+      processChatMessage(data, friendsListIds);
+      break;
+    case "status_update":
       handleStatusUpdate(data);
-    } else {
+      break;
+    default:
       console.log("Unknown message type:", data);
+  }
+}
+
+async function processChatMessage(data, friendsListIds) {
+  if (!isSenderFriend(data.sender, friendsListIds)) {
+    await injectNewUserInChat(data.sender);
+  }
+  handleIncomingMessage(data);
+}
+
+function handleWebSocketClose(reject) {
+  console.log("Connection closed");
+  reject(new Error("Connection closed"));
+}
+
+function handleWebSocketError(error, reject) {
+  console.error("WebSocket error:", error);
+  reject(error);
+}
+
+export function etablishConnectionWebSocket(friendsListIds) {
+  return new Promise((resolve, reject) => {
+    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+      getStatusUpdatesFromServer();
+      resolve();
+      return;
     }
-  };
-  chatSocket.onclose = function () {
-    console.log("Connection closed");
-  };
-  chatSocket.onerror = function (error) {
-    console.error("Error:", error);
-  };
+    chatSocket = new WebSocket("wss://localhost/ws/chat");
+
+    chatSocket.onopen = () => handleWebSocketOpen(friendsListIds, resolve);
+    chatSocket.onmessage = (event) =>
+      handleWebSocketMessage(event, friendsListIds);
+    chatSocket.onclose = () => handleWebSocketClose(reject);
+    chatSocket.onerror = (error) => handleWebSocketError(error, reject);
+  });
 }
 
 export async function handleIncomingMessage(data) {
@@ -304,7 +331,6 @@ export async function injectNewUserInChat(uid) {
     return;
   }
 
-
   const newUser = await getProfile(uid);
   const friendsInChat = document.getElementById("users_in_chat");
 
@@ -333,7 +359,7 @@ export async function injectNewUserInChat(uid) {
 
   friendsInChat.appendChild(listItem);
   await attachLinkListenerChat();
-  uid = [uid]
+  uid = [uid];
   subscribeToStatusUpdates(uid);
 }
 
@@ -440,7 +466,6 @@ function resetBadgeBgSuccess(uid) {
 
   badge.textContent = "0";
 }
-
 
 export async function attachLinkListenerChat() {
   const chatLinks = document.querySelectorAll(".chat-link");
