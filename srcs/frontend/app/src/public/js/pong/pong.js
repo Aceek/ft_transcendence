@@ -31,7 +31,7 @@ var game = {
     vy: 0,
   },
   players: {
-    left: {
+	left: {
       paddleY: 0,
       score: 0,
     },
@@ -167,7 +167,7 @@ function handleKeyPress(key, isPressed) {
   }
   
   let change = game.paddle.speed * (isPressed ? 1 : 0);
-  let paddleKey = game.paddle.side === "left" ? "left" : "right";
+  let paddleKey = game.paddle.side === "LEFT" ? "left" : "right";
   
   if (key === "ArrowUp" || key === "ArrowDown") {
       game.players[paddleKey].paddleY += (key === "ArrowDown" ? change : -change);
@@ -180,7 +180,7 @@ let lastSentPaddleY = null;
 
 function sendPaddlePositionUpdate() {
   // Determine the current player's paddle and the corresponding variable for tracking
-  const isLeftSide = game.paddle.side === "left";
+  const isLeftSide = game.paddle.side === "LEFT";
   const currentPlayer = isLeftSide ? game.players.left : game.players.right;
   
   // Check if there's a significant change in the current paddle's position
@@ -348,7 +348,7 @@ function drawGameOverMessage() {
   // Calculate the position for the player winning message centered from the dash line
   var playerWinsText =
     "Player " +
-    (game.players.left.score > game.players.right.score ? "Left" : "Right") +
+    (game.players.left.score > game.players.right.score ? "LEFT" : "RIGHT") +
     " Wins!";
   var playerWinsTextWidth = ctx.measureText(playerWinsText).width;
   var playerWinsTextX = middleDashLineX - playerWinsTextWidth / 2;

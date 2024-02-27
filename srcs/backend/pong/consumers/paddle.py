@@ -1,44 +1,51 @@
 from ..game.config import SCREEN_HEIGHT, PADDLE_HEIGHT, PADDLE_SPEED
+from ..game.enum import PlayerPosition
 
 class Paddle:
-    def __init__(self, room_name, user_id, redis_ops):
-        self.room_name = room_name
+    def __init__(self, user_id, redis_ops):
         self.user_id = user_id
         self.redis_ops = redis_ops
-        self.side = None
+        self.side = None  # Will be an instance of PlayerPosition or None
+        # Initialize the position key map
+        self.position_key_map = {
+            PlayerPosition.LEFT: "lp_y",
+            PlayerPosition.RIGHT: "rp_y"
+        }
 
     async def assignment(self):
-        positions = ['left', 'right']
-        paddle_position_keys = {pos: f"game:{self.room_name}:paddle:{pos}" for pos in positions}
-
-        for position, key in paddle_position_keys.items():
+        for position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
+            key = f"game:{self.redis_ops.room_name}:paddle:{self.position_key_map[position]}"
             if await self.redis_ops.connection.sismember(key, self.user_id):
                 self.side = position
                 break
         else:
-            for position, key in paddle_position_keys.items():
+            for position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
+                key = f"game:{self.redis_ops.room_name}:paddle:{self.position_key_map[position]}"
                 if not await self.redis_ops.connection.scard(key):
                     await self.redis_ops.connection.sadd(key, self.user_id)
                     self.side = position
                     break
+        print(f"User {self.user_id} assigned to {self.side.name} paddle")
 
-        # Assuming you have a method to notify about paddle side assignment
-        print(f"User {self.user_id} assigned to {self.side} paddle")
-
-    async def check_movement(self, side, new_y):
+    async def check_movement(self, new_y):
         if new_y < 0:
-            print(f"Requested paddle move for {side} is below 0. Clamping to 0.")
-            return False
+            new_y = 0
+            print(f"Clamping paddle move to 0.")
         elif new_y > SCREEN_HEIGHT - PADDLE_HEIGHT:
-            print(f"Requested paddle move for {side} exceeds screen height. Clamping to {SCREEN_HEIGHT - PADDLE_HEIGHT}.")
-            return False
+            new_y = SCREEN_HEIGHT - PADDLE_HEIGHT
+            print(f"Clamping paddle move to {SCREEN_HEIGHT - PADDLE_HEIGHT}.")
 
-        current_y = await self.redis_ops.get_dynamic_value(self.room_name, f"{side[0]}p_y")
+        key = self.position_key_map[self.side]
+        current_y = await self.redis_ops.get_dynamic_value(key)
         current_y = int(current_y) if current_y is not None else 0
 
-        y_diff = abs(new_y - current_y)
-        if y_diff <= PADDLE_SPEED:
+        if abs(new_y - current_y) <= PADDLE_SPEED:
             return True
         else:
-            print(f"Attempted to move the {side} paddle more than the speed limit.")
+            print(f"Attempted to move the paddle more than the speed limit.")
             return False
+
+    async def set_to_redis(self, paddle_y):
+        key = self.position_key_map[self.side]
+        await self.redis_ops.set_dynamic_value(key, paddle_y)
+        # print(f"Set paddle position {paddle_y} for player {self.side.name} in Redis with key {key}")

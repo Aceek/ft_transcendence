@@ -5,3 +5,7 @@ class GameStatus(Enum):
     IN_PROGRESS = 1
     SUSPENDED = 2
     COMPLETED = 3
+
+class PlayerPosition(Enum):
+    LEFT = 0
+    RIGHT = 1
