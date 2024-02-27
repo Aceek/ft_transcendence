@@ -1,9 +1,8 @@
 from channels.layers import get_channel_layer
 
 class ChannelCom:
-    def __init__(self, room_name):
-        self.room_name = room_name
-        self.room_group_name = f'pong_room_{room_name}'
+    def __init__(self, room_group_name):
+        self.room_group_name = room_group_name
         self.channel_layer = get_channel_layer()
 
     async def send_static_data(self, static_data):

@@ -48,27 +48,6 @@ class RedisOps:
 
     async def set_game_status(self, room_name, new_status: GameStatus):
         await self.set_dynamic_value(room_name, "gs", int(new_status.value))
-        
-    # async def set_score(self, room_name, side, score):
-    #     key = "lp_s" if side == "left" else "rp_s"
-    #     await self.set_dynamic_value(room_name, key, score)
-
-    # async def set_scores(self, room_name, players):
-    #     await self.set_dynamic_value(room_name, "lp_s", players["left"]["score"]["value"])
-    #     await self.set_dynamic_value(room_name, "rp_s", players["right"]["score"]["value"])
-
-    # async def set_ball(self, room_name, ball):
-    #     # Prefix each key in the ball dictionary with 'b_' and convert values to int
-    #     prefixed_ball = {f'b_{key}': int(value) for key, value in ball.items()}
-    #     await self.set_dynamic_data(room_name, prefixed_ball)
-
-    # async def set_paddle(self, room_name, side, paddle_y):
-    #     key = "lp_y" if side == "left" else "rp_y"
-    #     await self.set_dynamic_value(room_name, key, paddle_y)
-
-    # async def set_paddles(self, room_name, players):
-    #     await self.set_dynamic_value(room_name, "lp_y", players["left"]["paddle"]["y"])
-    #     await self.set_dynamic_value(room_name, "rp_y", players["left"]["paddle"]["y"])
 
 # -------------------------------GET-----------------------------------
 
@@ -91,22 +70,6 @@ class RedisOps:
         if current_status:
             return GameStatus(int(current_status))
         return None
-
-    # async def get_paddles(self, room_name, players):
-    #     """
-    #     Get the Y positions of the paddles from Redis and update the players' positions.
-    #     """
-    #     # Fetch the Y positions using the get_dynamic_value method
-    #     lp_y = await self.get_dynamic_value(room_name, "lp_y")
-    #     rp_y = await self.get_dynamic_value(room_name, "rp_y")
-        
-    #     # Update the Y positions of the paddles if they exist
-    #     if lp_y is not None:
-    #         players["left"]["paddle"]["y"] = int(lp_y)
-    #     if rp_y is not None:
-    #         players["right"]["paddle"]["y"] = int(rp_y)
-
-    #     return players
     
     async def get_connected_users(self, room_name):
         key = f"game:{room_name}:connected_users"

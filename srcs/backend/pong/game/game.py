@@ -10,16 +10,16 @@ from .channel_com import ChannelCom
 from ..redis.redis_ops import RedisOps
 
 class GameLogic:
-    def __init__(self, room_name):
+    def __init__(self, room_name, room_group_name):
         self.room_name = room_name
-        self.room_group_name = f'pong_room_{room_name}'
-
+        self.room_group_name = room_group_name
+        
     # -------------------------------INIT-----------------------------------
 
     async def init_env(self):
         """Initial env setup."""
         self.redis_ops = await RedisOps.create(self.room_name)
-        self.channel_com = ChannelCom(self.room_name)
+        self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self.redis_ops, self.room_name)
 
     async def init_game(self):

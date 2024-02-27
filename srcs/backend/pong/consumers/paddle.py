@@ -45,7 +45,7 @@ class Paddle:
             print(f"Attempted to move the paddle more than the speed limit.")
             return False
 
-    async def set_to_redis(self, paddle_y):
+    async def set_to_data_redis(self, paddle_y):
         key = self.position_key_map[self.side]
         await self.redis_ops.set_dynamic_value(key, paddle_y)
         # print(f"Set paddle position {paddle_y} for player {self.side.name} in Redis with key {key}")

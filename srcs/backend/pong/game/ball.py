@@ -83,8 +83,4 @@ class Ball:
             'b_vx': int(self.vx),
             'b_vy': int(self.vy)
         }
-        
-        # Set each attribute in Redis
-        for key, value in ball_attributes.items():
-            # Assuming the redis_ops object has a method set_dynamic_value for setting values
-            await self.redis_ops.set_dynamic_value(key, value)
+        await self.redis_ops.set_dynamic_data(ball_attributes)
