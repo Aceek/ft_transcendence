@@ -33,23 +33,35 @@ class Ball:
         return False
 
     def check_paddle_collision(self, players):
+        # Initial debugging information
+        # print("Checking paddle collision")
+        # print(f"Ball position: x={self.x}, y={self.y}")
+        # # Print paddle positions for debugging
+        # print(f"Left Paddle Position: {players[PlayerPosition.LEFT.value].paddle_y}")
+        # print(f"Right Paddle Position: {players[PlayerPosition.RIGHT.value].paddle_y}")
+
         # Check collision with left paddle
         if (self.x - BALL_SIZE / 2 <= PADDLE_WIDTH and
                 players[PlayerPosition.LEFT.value].paddle_y <= self.y <= players[PlayerPosition.LEFT.value].paddle_y + PADDLE_HEIGHT):
+            print(f"Collision with LEFT paddle: Paddle Y range={players[PlayerPosition.LEFT.value].paddle_y} to {players[PlayerPosition.LEFT.value].paddle_y + PADDLE_HEIGHT}")
             return True, PlayerPosition.LEFT
 
         # Check collision with right paddle
         elif (self.x + BALL_SIZE / 2 >= SCREEN_WIDTH - PADDLE_WIDTH and
             players[PlayerPosition.RIGHT.value].paddle_y <= self.y <= players[PlayerPosition.RIGHT.value].paddle_y + PADDLE_HEIGHT):
+            print(f"Collision with RIGHT paddle: Paddle Y range={players[PlayerPosition.RIGHT.value].paddle_y} to {players[PlayerPosition.RIGHT.value].paddle_y + PADDLE_HEIGHT}")
             return True, PlayerPosition.RIGHT
 
+        # No collision detected
+        # print("No collision detected")
         return False, None
+
 
     def check_score(self):
         if self.x < 0 - BALL_SIZE / 2:
-            return True, PlayerPosition.RIGHT  # Score for right player
+            return True, PlayerPosition.RIGHT
         elif self.x > SCREEN_WIDTH + BALL_SIZE / 2:
-            return True, PlayerPosition.LEFT  # Score for left player
+            return True, PlayerPosition.LEFT
         return False, None
 
 #------------------------------HANDLER-------------------------------------
@@ -63,8 +75,12 @@ class Ball:
         paddle_y = player.paddle_y
         relative_position = (self.y - paddle_y) / PADDLE_HEIGHT
         angle = (relative_position - 0.5) * math.pi / 2
+
+        # Calculate speed based on the current velocity
         speed = math.sqrt(self.vx**2 + self.vy**2)
-        self.vx = speed * math.cos(angle) * (-1 if player_position == PlayerPosition.LEFT else 1)
+
+        # Adjust velocity based on the collision with the paddle
+        self.vx = speed * math.cos(angle) * (-1 if player_position == PlayerPosition.RIGHT else 1)
         self.vy = speed * math.sin(angle)
 
 #------------------------------REDIS-------------------------------------
