@@ -1,10 +1,10 @@
 import json
 import asyncio
-import time
-
-from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from .game_start import *
+from .paddle import Paddle
+from .connect_utils import *
 from ..game.config import *
 from ..game.logic import GameLogic
 from ..game.status import GameStatus
@@ -14,79 +14,27 @@ class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    # -------------------------------WEBSOCKET-------------------------
-
     async def connect(self):
         await self.accept()
-        self.user_id = self.get_user_id()
-        self.room_name, self.room_group_name = self.get_room_names()
-        print("CONSUMER -> client connected : ", self.user_id)
-
-        self.redis_ops = await RedisOps.create(self.room_name)
-
-        await self.add_client_channel_and_redis()
-        await self.handle_paddle_assignment()
-
-        await self.start_game_logic_task()
-
-    def get_user_id(self):
-        """Determine the user ID based on authentication status."""
-        return str(self.scope["user"].id if self.scope["user"].is_authenticated else "anonymous")
-
-    def get_room_names(self):
-        """Generate room and group names based on the game UID."""
-        room_name = self.scope["url_route"]["kwargs"]["uid"]
-        room_group_name = f"pong_room_{room_name}"
-        return room_name, room_group_name
-
-    async def add_client_channel_and_redis(self):
-        """Add the user to the room group in Channels and Redis."""
+        
+        self.user_id = get_user_id(self.scope)
+        self.room_name, self.room_group_name = get_room_names(self.scope)
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        
+        self.redis_ops = await RedisOps.create(self.room_name)
         await self.redis_ops.add_connected_users(self.room_name, self.user_id)
+        
+        self.paddle = Paddle(self.room_name, self.user_id, self.redis_ops)
+        await self.paddle.assignment()
+        await self.send_client_paddle_side()
 
-    async def handle_paddle_assignment(self):
-        # Keys for each paddle position
-        positions = ['left', 'right']
-        paddle_position_keys = {pos: f"game:{self.room_name}:paddle:{pos}" for pos in positions}
-
-        # Check if the player already has an assigned position
-        for position, key in paddle_position_keys.items():
-            if await self.redis_ops.connection.sismember(key, self.user_id):
-                self.paddle_side = position
-                break
-        else:
-            # Assign the player to the next available position
-            for position, key in paddle_position_keys.items():
-                if not await self.redis_ops.connection.scard(key):
-                    await self.redis_ops.connection.sadd(key, self.user_id)
-                    self.paddle_side = position
-                    break
-
-        await self.game_paddle_side_assignment()
-        print(f"User {self.user_id} assigned to {self.paddle_side} paddle")
-
-    async def attempt_to_acquire_game_logic_control(self):
-        print(f"Attempting to start game logic: {self.user_id}, Time: {time.time()}")
-        flag_key = f"game:{self.room_name}:logic_flag"  # Updated to match the new pattern
-        flag_set = await self.redis_ops.connection.setnx(flag_key, "true")
-        if flag_set:
-            print("CONSUMER -> client set the flag : ", self.user_id)
-            await self.redis_ops.connection.expire(flag_key, 60)
-            return True
-        return False
-
-    async def start_game_logic_task(self):
-        """Check the current game status and initiate game logic if necessary."""
-        current_status = await self.redis_ops.get_game_status(self.room_name)
-        if current_status is None:
-            if await self.attempt_to_acquire_game_logic_control():
-                asyncio.create_task(GameLogic(self.room_name).run())
-                print("CONSUMER -> client started game logic : ", self.user_id)
+        if await attempt_to_start_game(self.redis_ops, self.room_name):
+            asyncio.create_task(GameLogic(self.room_name).run())
 
     async def disconnect(self, close_code):
         
         current_status = await self.redis_ops.get_game_status(self.room_name)
-        if current_status != GameStatus.COMPLETED:
+        if current_status == GameStatus.IN_PROGRESS:
             await self.redis_ops.set_game_status(self.room_name, GameStatus.SUSPENDED)
 
         await self.redis_ops.del_connected_users(self.room_name, self.user_id)
@@ -103,49 +51,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Handle "paddle_position_update" message
         if "type" in data and data["type"] == "paddle_position_update":
             paddle_y = data.get('PaddleY')
-            if paddle_y is not None and self.paddle_side is not None:
-                # Update game logic with new paddle position
-                if await self.check_paddle_move(self.paddle_side, paddle_y):
-                    await self.redis_ops.set_paddle(self.room_name, self.paddle_side, paddle_y)
+            if paddle_y is not None and self.paddle.side is not None:
+                if await self.paddle.check_movement(self.paddle.side, paddle_y):
+                    await self.redis_ops.set_paddle(self.room_name, self.paddle.side, paddle_y)
 
         elif "type" in data and data["type"] == "restart_game":
-            # Handle restart game request
             await self.redis_ops.add_restart_requests(self.room_name, self.user_id)
         else:
             print("Received unknown message type or missing key.")
-
-    # -------------------------------CHECK-----------------------------------
-
-    async def check_paddle_move(self, paddle_side, new_y):
-        """
-        Method to update the paddle position for the specified side ('left' or 'right')
-        to the new Y coordinate, using the existing RedisOps functionality.
-        """
-
-        # Early checks for requested Y position out of bounds
-        if new_y < 0:
-            print(f"Requested paddle move for {paddle_side} is below 0. Clamping to 0.")
-            return False
-        elif new_y > SCREEN_HEIGHT - PADDLE_HEIGHT:
-            print(f"Requested paddle move for {paddle_side} exceeds screen height. Clamping to {SCREEN_HEIGHT - PADDLE_HEIGHT}.")
-            return False
-
-        # Fetch the current Y position from Redis using the RedisOps class
-        current_y = await self.redis_ops.get_dynamic_value(self.room_name, f"{paddle_side[0]}p_y")  # lp_y or rp_y based on paddle_side
-        current_y = int(current_y) if current_y is not None else 0
-
-        # Calculate the difference between the new and current position
-        y_diff = abs(new_y - current_y)
-
-        # Ensure the paddle does not move more than the paddle speed limit
-        if y_diff <= PADDLE_SPEED:
-            # Use the RedisOps method to update the paddle's position
-            return True
-        else:
-            print(f"Attempted to move the {paddle_side} paddle more than the speed limit.")
-            return False
     
-    # -------------------------------CHANNEL MESSAGE-------------------------------------
+    # -----------------------MESSAGE-------------------------------------
 
     async def game_static_data(self, event):
         # Logic to handle static data message
@@ -163,14 +78,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             'data': data
         }))
 
-    async def game_paddle_side_assignment(self):
+    async def send_client_paddle_side(self):
         """
         Sends a message to the connected client with their paddle side assignment.
         """
-        if self.paddle_side is not None:
+        if self.paddle.side is not None:
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',
-                'paddle_side': self.paddle_side
+                'paddle_side': self.paddle.side
             }))
         else:
             print(f"No paddle side assigned for user: {self.user_id}")

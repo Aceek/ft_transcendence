@@ -99,7 +99,7 @@ class GameLogic:
         new_status = GameStatus.IN_PROGRESS if game_resuming else GameStatus.COMPLETED
         
         await self.redis_ops.set_game_status(self.room_name, new_status)
-        await self.send_channel_static_data()
+        await self.channel_com.send_static_data(self.static_data)
         
         return game_resuming
 
