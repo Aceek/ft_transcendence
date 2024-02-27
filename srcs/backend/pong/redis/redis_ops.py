@@ -124,6 +124,14 @@ class RedisOps:
 
 # -------------------------------ADD-----------------------------------
 
+    async def set_game_logic_flag(self):
+        """Set the game logic flag, indicating that the game logic can proceed."""
+        flag_key = f"game:{self.room_name}:logic_flag"
+        flag_set = await self.connection.setnx(flag_key, "true")
+        if flag_set:
+            print(f"Logic flag set for room: {self.room_name}")
+        return flag_set
+
     async def add_connected_users(self, user_id):
         key = f"game:{self.room_name}:connected_users"
         await self.connection.sadd(key, user_id)
@@ -135,22 +143,26 @@ class RedisOps:
         print(f"Add user {user_id} to restart requests in room: {self.room_name}")
 
 # -------------------------------DEL-----------------------------------
-
-    async def del_restart_requests(self, user_id):
-        key = f"game:{self.room_name}:restart_requests"
-        await self.connection.srem(key, user_id)
-        print(f"Removed user {user_id} to restart requests in room: {self.room_name}")
     
-    async def clear_all_restart_requests(self):
-        key = f"game:{self.room_name}:restart_requests"
-        await self.connection.delete(key)
-        print(f"Cleared all restart requests for room: {self.room_name}")
+    async def del_game_logic_flag(self):
+        flag_key = f"game:{self.room_name}:logic_flag"
+        await self.connection.delete(flag_key)
+        print(f"Logic flag deleted for room: {self.room_name}")
 
     async def del_connected_users(self, user_id):
         key = f"game:{self.room_name}:connected_users"
         await self.connection.srem(key, user_id)
         print(f"Removed user {user_id} from connected users in room: {self.room_name}")
+        
+    async def del_restart_requests(self, user_id):
+        key = f"game:{self.room_name}:restart_requests"
+        await self.connection.srem(key, user_id)
+        print(f"Removed user {user_id} to restart requests in room: {self.room_name}")
     
+    async def del_all_restart_requests(self):
+        key = f"game:{self.room_name}:restart_requests"
+        await self.connection.delete(key)
+        print(f"Cleared all restart requests for room: {self.room_name}")
 
 
 

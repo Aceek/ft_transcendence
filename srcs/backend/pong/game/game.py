@@ -45,6 +45,9 @@ class GameLogic:
         await self.channel_com.send_static_data(self.static_data)
         await self.channel_com.send_dynamic_data(\
             await self.redis_ops.get_dynamic_data())
+        
+        # Delete redis gamelogic flag
+        self.redis_ops.del_game_logic_flag()
 
 
     def init_static_data(self):
@@ -69,17 +72,24 @@ class GameLogic:
         elif current_status == GameStatus.SUSPENDED:
             await self.channel_com.send_dynamic_data(\
                 await self.redis_ops.get_dynamic_data())
+            print(await self.redis_ops.get_dynamic_data())
+            return await self.is_game_resuming()
 
         return True
 
     async def is_game_resuming(self):
+        print("Checking if the game is resuming...")  # Print at the beginning to indicate the method has started
         game_resuming = await self.game_sync.wait_for_players_to_start()
+        print(f"Game resuming status: {game_resuming}")  # Print the status of game_resuming
+
         new_status = GameStatus.IN_PROGRESS if game_resuming else GameStatus.COMPLETED
-        
-        await self.redis_ops.set_game_status(new_status)
-        await self.channel_com.send_static_data(self.static_data)
-        
-        return game_resuming
+        print(f"Setting new game status to: {'IN_PROGRESS' if game_resuming else 'COMPLETED'}")  # Print the new status being set
+
+        await self.redis_ops.set_game_status(new_status)  # Set the new status in Redis
+        await self.channel_com.send_static_data(self.static_data)  # Send the static data to clients
+        print("Static data sent to clients.")  # Print after sending static data
+
+        return game_resuming  # Return the status of game resuming
 
     # -------------------------------LOOP-----------------------------------
 
@@ -110,7 +120,7 @@ class GameLogic:
                 await asyncio.sleep(1/TICK_RATE)
 
             if await self.game_sync.wait_for_players_to_restart():
-                await self.redis_ops.clear_all_restart_requests()
+                await self.redis_ops.del_all_restart_requests()
                 await self.game_loop()
                     
         except asyncio.CancelledError:
@@ -153,5 +163,5 @@ class GameLogic:
         # Send the Redis data to clients
         await self.channel_com.send_dynamic_data(\
             await self.redis_ops.get_dynamic_data())
-
+        
         return delta_time

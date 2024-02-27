@@ -29,7 +29,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.paddle.assignment()
         await self.send_client_paddle_side()
 
-        if await attempt_to_start_game(self.redis_ops):
+        if await self.redis_ops.set_game_logic_flag():
             asyncio.create_task(GameLogic(self.room_name, self.room_group_name).run())
 
     async def disconnect(self, close_code):
