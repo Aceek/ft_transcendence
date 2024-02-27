@@ -16,7 +16,6 @@ export async function isAPIConnected() {
       return response.status === 200;
     }
   } catch (error) {
-    console.error("Error:", error);
     return false;
   }
 }

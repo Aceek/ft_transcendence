@@ -114,6 +114,16 @@ export function loadProfileCss(url) {
   }
 }
 
+export function delProfileCss(url){
+  const head = document.head;
+  const existingLink = Array.from(head.querySelectorAll("link")).find((link) =>
+    link.href.includes(url)
+  );
+  if (existingLink) {
+    existingLink.remove();
+  }
+}
+
 export function changeUrlHistory(pathname) {
   const url = new URL(window.location.href);
   url.pathname = pathname;
@@ -141,5 +151,28 @@ export function deleteNavbar() {
   if (document.getElementById('navbar')) {
     console.log("Deleting navbar");
     document.getElementById('navbar').remove();
+  }
+}
+
+export function addEventListenerByIdPreventDouble(id, eventType, callback) {
+  const element = document.getElementById(id);
+  addEventListenerDOMElem(element, eventType, callback);
+}
+
+export function addEventListenerDOMElem(element, eventType, callback) {
+  if (element) {
+    if (!element.dataset.listenerAdded) {
+        element.addEventListener(eventType, async (event) => {
+            event.preventDefault();
+            if (callback.constructor.name === "AsyncFunction") {
+                await callback(event);
+            } else {
+                callback(event);
+            }
+        });
+        element.dataset.listenerAdded = "true";
+    }
+  } else {
+    console.error(`Element not found`);
   }
 }

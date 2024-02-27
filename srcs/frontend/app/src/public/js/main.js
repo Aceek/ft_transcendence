@@ -21,6 +21,28 @@ window.addEventListener("popstate", (event) => {
   router(window.location.pathname, false);
 });
 
+export function clearLoadedCss() {
+  const head = document.head;
+  const links = Array.from(head.querySelectorAll("link"));
+  links.forEach((link) => {
+    if (link.href.includes("profile.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("tournament.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("tournamentsAll.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("chat.css")) {
+      head.removeChild(link);
+    }
+    if (link.href.includes("2fa.css")) {
+      head.removeChild(link);
+    }
+  });
+}
+
 export async function router(path, updateHistory = true) {
   if (!path) {
     path = window.location.pathname;
@@ -31,6 +53,8 @@ export async function router(path, updateHistory = true) {
   if (updateHistory) {
     history.pushState(null, "", path + window.location.search);
   }
+
+  clearLoadedCss();
 
   if (await checkEmailVerification()) {
     sessionStorage.setItem('validate', 'true');
@@ -118,6 +142,7 @@ async function handleUnauthenticatedRoutes(path) {
     console.log("Loading 2fa page");
     get2FAPage();
   } else {
+    path = "/login";
     console.log("Loading login page");
     getLoginPage();
   }

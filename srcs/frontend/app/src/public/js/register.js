@@ -6,6 +6,7 @@ import {
   postData,
   fieldsMatch,
   changeUrlHistory,
+  addEventListenerByIdPreventDouble
 } from "./pageUtils.js";
 
 function emailMatch() {
@@ -97,12 +98,10 @@ function getFormData() {
 }
 
 function addEventListeners() {
-  addEventListenerById("loginLink", "click", (event) => {
-    event.preventDefault();
+  addEventListenerByIdPreventDouble("loginLink", "click", (event) => {
     router("/login");
   });
-  addEventListenerByClass(".card-body", "submit", async (event) => {
-    event.preventDefault();
+  addEventListenerByIdPreventDouble("registerBtn", "submit", async (event) => {
     if (!validateForm()) {
       return;
     }
@@ -119,7 +118,7 @@ export async function getRegisterPage() {
   try {
     const template = await fetchTemplate("/public/html/register-form.html");
     document.getElementById("main").innerHTML = template;
-    changeUrlHistory("/register");
+    // changeUrlHistory("/register");
     addEventListeners();
   } catch (error) {
     console.error("Error:", error);

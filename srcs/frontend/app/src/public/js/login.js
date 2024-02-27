@@ -5,7 +5,8 @@ import {
   addEventListenerByClass,
   postData,
   changeUrlHistory,
-  deleteNavbar
+  deleteNavbar,
+  addEventListenerByIdPreventDouble
 } from "./pageUtils.js";
 
 async function fetch42AuthLink() {
@@ -49,16 +50,13 @@ async function handleLoginResponse(response) {
 }
 
 function addEventListeners() {
-  addEventListenerById("registerLink", "click", function (event) {
-    event.preventDefault();
+  addEventListenerByIdPreventDouble("registerLink", "click", function (event) {
     router("/register");
   });
-  addEventListenerById("42button", "click", async function (event) {
-    event.preventDefault();
+  addEventListenerByIdPreventDouble("42button", "click", async function (event) {
     window.location.href = await fetch42AuthLink();
   });
-  addEventListenerByClass(".card-body", "submit", async function (event) {
-    event.preventDefault();
+  addEventListenerByIdPreventDouble("loginBtn", "click", async function (event) {
     let formData = getFormData();
     let response = await postData(api_url + "auth/login/", formData);
     handleLoginResponse(response);
@@ -77,7 +75,6 @@ export async function getLoginPage() {
       document.getElementById('info-message').textContent = 'Email successfully validated, you can now login !';
       sessionStorage.removeItem('validate');
     }
-    changeUrlHistory("/login");
     addEventListeners();
   } catch (error) {
     console.error(error);

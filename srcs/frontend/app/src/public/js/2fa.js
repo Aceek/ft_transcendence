@@ -1,6 +1,7 @@
 import { api_url, router } from "./main.js";
-import { fetchTemplate, loadProfileCss, changeUrlHistory } from "./pageUtils.js";
+import { fetchTemplate, loadProfileCss, changeUrlHistory, postData, delProfileCss, addEventListenerDOMElem, addEventListenerByIdPreventDouble } from "./pageUtils.js";
 
+let keydownHandler = null;
 
 function inputsEvents(inputs) {
 	inputs.forEach((input, index) => {
@@ -32,46 +33,76 @@ function inputsEvents(inputs) {
     });
 }
 
-function enterValidate(inputs) {
-	document.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
-			const allFilled = inputs.every(input => input.value !== '');
-			if (allFilled) {
-				console.log('All filled');
-				// button.click(); do the same comportement as the button click
-			}
+function enterValidate(inputs, button) {
+    keydownHandler = (event) => {
+        if (event.key === 'Enter') {
+            const allFilled = inputs.every(input => input.value !== '');
+            if (allFilled) {
+                button.click();
+            }
+        }
+    };
+    document.addEventListener('keydown', keydownHandler);
+}
+
+function removeEnterValidate() {
+    if (keydownHandler) {
+        document.removeEventListener('keydown', keydownHandler);
+        keydownHandler = null;
+    }
+}
+
+async function buttonValidate(inputs, button) {
+	addEventListenerDOMElem(button ,'click', async () => {
+		let combinedValue = inputs.map(input => input.value).join('');
+		const data = {
+			"token": sessionStorage.getItem("2fa_token"),
+			"code": combinedValue,
+		}
+		const response = await postData(api_url + "mail/2fa/", data)
+		if (response.ok) {
+			sessionStorage.removeItem("2fa_token");
+			removeEnterValidate();
+			setTimeout(() => {
+				router("/home");
+			}, 1000);
+		} else {
+			handle2FAValidationErrors(response);
 		}
 	});
 }
 
-function buttonValidate(inputs, button) {
-	button.addEventListener('click', () => {
-		fetch(api_url + "mail/2fa", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				"2fa_token": sessionStorage.getItem("2fa_token"),
-				"code": inputs.map(input => input.value).join(''),
-			})
-			.then(response => {
-				if (response.status === 200) {
-					sessionStorage.removeItem("2fa_token")
-					router("/home");
-				} else {
-					console.log('Invalid 2FA code')
-				}
-			})
-		});
-	});
+async function handle2FAValidationErrors(response) {
+	let data = null;
+	try {
+		data = await response.json();
+	} catch (error) {
+		return ;
+	}
+	if (data && 'non_field_errors' in data) {
+		if (data['non_field_errors'][0] === "2FA code expired.") {
+			console.log("2FA code expired.");
+			sessionStorage.removeItem("2fa_token");
+			removeEnterValidate();
+			router("/login");
+		} else if (data['non_field_errors'][0] === "Invalid 2FA code.") {
+			console.log("Invalid 2FA code.");
+		} else if (data['non_field_errors'][0] === "Invalid 2FA token.") {
+			console.log("Invalid token.");
+			sessionStorage.removeItem("2fa_token");
+			removeEnterValidate();
+			router("/login");
+		}
+	} else if (data) {
+		console.log(data);
+	}
 }
 
-function addEventListeners() {
+async function addEventListeners() {
 	const inputs = Array.from(document.querySelectorAll('input'));
 	const button = document.getElementById("verify-btn");
 	inputsEvents(inputs);
-	buttonValidate(inputs, button);
+	await buttonValidate(inputs, button);
 	enterValidate(inputs, button);
 }
 
@@ -80,10 +111,9 @@ export async function get2FAPage() {
 		window.location.replace("/login");
 		return;
 	}
-	console.log(sessionStorage.getItem("2fa_token"));
+	removeEnterValidate();
+	loadProfileCss("/public/css/2fa.css");
     const template = await fetchTemplate("/public/html/2fa.html");
 	document.getElementById("main").innerHTML = template;
-	loadProfileCss("/public/css/2fa.css");
 	addEventListeners();
-	changeUrlHistory("/2fa");
 }
