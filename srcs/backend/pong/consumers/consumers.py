@@ -1,20 +1,14 @@
 import json
-import random
 import asyncio
 import time
-import math
-import socket
-import aioredis
 
-# from asyncio import sleep
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.shortcuts import get_object_or_404
 
-from .game_config import *
-from .game_logic import GameLogic
-from .game_status import GameStatus
-from .redis_ops import RedisOps
+from ..game.config import *
+from ..game.logic import GameLogic
+from ..game.status import GameStatus
+from ..redis.redis_ops import RedisOps
 
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):

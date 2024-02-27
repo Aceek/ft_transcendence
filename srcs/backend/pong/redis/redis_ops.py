@@ -1,7 +1,6 @@
-# redis_ops.py
 import aioredis
 
-from .game_status import GameStatus
+from ..game.status import GameStatus
 
 class RedisOps:
     def __init__(self, room_name):

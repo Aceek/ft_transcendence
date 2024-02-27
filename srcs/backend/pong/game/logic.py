@@ -1,16 +1,13 @@
-import json
-import aioredis
 import random
 import asyncio
 import time
-import math
 
-from .game_config import *
-from .game_status import GameStatus
-from .game_mechanics import *
-from .game_sync import GameSync
-from .redis_ops import RedisOps
+from .config import *
+from .status import GameStatus
+from .mechanics import *
+from .sync import GameSync
 from .channel_com import ChannelCom
+from ..redis.redis_ops import RedisOps
 
 class GameLogic:
     def __init__(self, room_name):

@@ -1,7 +1,7 @@
 import math
 import random
 
-from .game_config import *
+from .config import *
 
 def update_ball(ball, players, delta_time):
     # Calculate the next position of the ball
