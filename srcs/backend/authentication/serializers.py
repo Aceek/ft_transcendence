@@ -23,6 +23,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with that email already exists.")
         return value
 
+    def validate_username(self, value):
+        if get_user_model().objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with that username already exists.")
+        return value
+
     def validate_password(self, value):
         password_validation.validate_password(value)
         return value

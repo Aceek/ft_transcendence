@@ -115,11 +115,13 @@ export async function checkOAuthCode() {
     credentials: credentialsOption,
   });
   if (response.ok) {
-    const data = await response.json();
-    if (data && '2FA' in data) {
-      sessionStorage.setItem("2fa_token", data['2FA']);
-      return { success: true, requires2FA: true };
-    } else {
+    try {
+      const data = await response.json();
+      if (data && '2FA' in data) {
+        sessionStorage.setItem("2fa_token", data['2FA']);
+        return { success: true, requires2FA: true };
+      }
+    } catch (error) {
       return { success: true, requires2FA: false };
     }
   }

@@ -97,20 +97,42 @@ function getFormData() {
   return { username: usr_username, email: usr_email, password: usr_password };
 }
 
+async function handleResponse(response) {
+  let errorEmailTag = document.getElementById("email-error-message");
+  let errorUsernameTag = document.getElementById("username-error-message");
+  errorEmailTag.innerHTML = "";
+  errorUsernameTag.innerHTML = "";
+  if (response.status === 201) {
+    sessionStorage.setItem('register', 'true');
+    router("/login");
+  } else if (response.status === 400) {
+    try {
+      const data = await response.json();
+      if (data) {
+        if (data.email) {
+          errorEmailTag.innerHTML = data.email;
+        }
+        if (data.username) {
+          errorUsernameTag.innerHTML = data.username;
+        }
+      }
+    } catch (error) {
+      console.log("No data in response");
+    }
+  }
+}
+
 function addEventListeners() {
   addEventListenerByIdPreventDouble("loginLink", "click", (event) => {
     router("/login");
   });
-  addEventListenerByIdPreventDouble("registerBtn", "submit", async (event) => {
+  addEventListenerByIdPreventDouble("registerForm", "submit", async (event) => {
     if (!validateForm()) {
       return;
     }
     let formData = getFormData();
     let response = await postData(api_url + "auth/register/", formData);
-    if (response.status === 201) {
-      sessionStorage.setItem('register', 'true');
-      router("/login");
-    }
+    handleResponse(response);
   });
 }
 
@@ -118,7 +140,6 @@ export async function getRegisterPage() {
   try {
     const template = await fetchTemplate("/public/html/register-form.html");
     document.getElementById("main").innerHTML = template;
-    // changeUrlHistory("/register");
     addEventListeners();
   } catch (error) {
     console.error("Error:", error);
