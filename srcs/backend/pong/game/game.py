@@ -24,10 +24,8 @@ class GameLogic:
 
     async def init_game(self):
         """Initial game setup."""
-        # Init status
-        await self.redis_ops.set_game_status(GameStatus.NOT_STARTED)
-        await self.channel_com.send_dynamic_data(\
-            await self.redis_ops.get_dynamic_data())
+        # Init game status
+        await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
 
         # Init static data
         self.static_data = self.init_static_data() 
@@ -43,19 +41,20 @@ class GameLogic:
         self.ball = Ball(self.redis_ops) 
         await self.ball.set_data_to_redis()
 
-        # Send initial data to clients
-        await self.channel_com.send_static_data(self.static_data)
-        await self.channel_com.send_dynamic_data(\
-            await self.redis_ops.get_dynamic_data())
-        
         # Delete redis gamelogic flag
         await self.redis_ops.del_game_logic_flag()
+
+    async def launch_game(self):
+        """Launch game."""
+        # Send initial data to clients
+        await self.get_static_data_and_send()
+        await self.get_dynamic_data_and_send()
         
-        # Init status
+        # Launch coutdown and start th game
         await self.countdown()
-        await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
-        await self.channel_com.send_dynamic_data(\
-            await self.redis_ops.get_dynamic_data())
+        await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
+        self.last_update_time = time.time()
+        
 
     def init_static_data(self):
         static_data = {
@@ -79,7 +78,24 @@ class GameLogic:
         await self.channel_com.send_countdown(0)
         print("Countdown finished.")
 
-    # -------------------------------CHECK-----------------------------------
+    # ---------------------------DATA UPDATES-----------------------------------
+
+    async def get_static_data_and_send(self):
+        """Centralized method to send dynamic data."""
+        static_data = await self.redis_ops.get_static_data()
+        await self.channel_com.send_static_data(static_data)
+
+    async def get_dynamic_data_and_send(self):
+        """Centralized method to send dynamic data."""
+        dynamic_data = await self.redis_ops.get_dynamic_data()
+        await self.channel_com.send_dynamic_data(dynamic_data)
+
+    async def update_game_status_and_notify(self, new_status):
+        """Updates game status and sends dynamic data if necessary."""
+        await self.redis_ops.set_game_status(new_status)
+        await self.get_dynamic_data_and_send()
+
+    # -------------------------CHECK GANE STATE-----------------------------------
 
     async def is_game_active(self):
         current_status = await self.redis_ops.get_game_status()
@@ -87,28 +103,18 @@ class GameLogic:
         if current_status == GameStatus.COMPLETED:
             return False
         elif current_status == GameStatus.SUSPENDED:
-            await self.channel_com.send_dynamic_data(\
-                await self.redis_ops.get_dynamic_data())
+            # Notify all the clients the game is suspendended
+            await self.get_dynamic_data_and_send()
             return await self.is_game_resuming()
-
         return True
 
     async def is_game_resuming(self):
         print("Checking if the game is resuming...")
         if await self.game_sync.wait_for_players_to_start():
-            await self.channel_com.send_static_data(self.static_data)
-            await self.channel_com.send_dynamic_data(\
-                await self.redis_ops.get_dynamic_data())
-            await self.countdown()
-            await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
-            await self.channel_com.send_dynamic_data(\
-                await self.redis_ops.get_dynamic_data())
-            self.last_update_time = time.time()
+            await self.launch_game()
             return True
 
-        await self.redis_ops.set_game_status(GameStatus.COMPLETED) 
-        await self.channel_com.send_dynamic_data(\
-            await self.redis_ops.get_dynamic_data())
+        await self.update_game_status_and_notify(GameStatus.COMPLETED)
         return False
 
     # -------------------------------LOOP-----------------------------------
@@ -124,10 +130,10 @@ class GameLogic:
         """The main game loop."""
         
         await self.init_game()
-        self.last_update_time = time.time()
-        print("Game loop started.")
+        await self.launch_game()
 
         try:
+            print("Game loop started.")
             while True:
                 current_time = time.time()
                 delta_time = current_time - self.last_update_time
@@ -135,9 +141,6 @@ class GameLogic:
 
                 if not await self.is_game_active():
                     break
-
-                for player in self.players:
-                    await player.get_paddle_from_redis()
 
                 await self.game_tick(delta_time)
 
@@ -150,11 +153,9 @@ class GameLogic:
         except asyncio.CancelledError:
              # Handle cleanup upon asyncio task cancellation
              print("Game loop cancelled. Performing cleanup.")
-            #  await self.redis_ops.clear_all_data()
         except Exception as e:
              # Handle other exceptions that might occur
               print(f"An unexpected error occurred: {e}")
-            #   await self.redis_ops.clear_all_data()
 
     async def game_tick(self, delta_time):
         """Perform a single tick of the game loop."""
@@ -165,6 +166,10 @@ class GameLogic:
         # Check and handle wall collision
         if self.ball.check_wall_collision():
             self.ball.handle_wall_collision()
+
+        # Retrieve paddle position from players
+        for player in self.players:
+            await player.get_paddle_from_redis()
 
         # Check and handle paddle collision
         collision, position = self.ball.check_paddle_collision(self.players)
@@ -177,11 +182,10 @@ class GameLogic:
             self.ball.reset_value()
             await self.players[scorer_position.value].update_score()
             if self.players[scorer_position.value].check_win():
-                await self.redis_ops.set_game_status(GameStatus.COMPLETED)
-        
-        # Set the ball data to Redis
-        await self.ball.set_data_to_redis()
+                await self.update_game_status_and_notify(GameStatus.COMPLETED)
+        else:
+            # Set the ball data to Redis
+            await self.ball.set_data_to_redis()
 
-        # Send the Redis data to clients
-        await self.channel_com.send_dynamic_data(\
-            await self.redis_ops.get_dynamic_data())
+            # Broadcast the current game data to all clients
+            await self.get_dynamic_data_and_send()

@@ -19,28 +19,6 @@ class GameSync:
                 return False
             await asyncio.sleep(1)
 
-#--------------------------------CONDITION-------------------------------------------
-
-    async def check_for_players_ready(self):
-        connected_users_count = await self.redis_ops.get_connected_users()
-        if connected_users_count == 2:
-            return True, "Both players connected."
-        elif connected_users_count == 0:
-            return False, "No player in the room anymore."
-        return None, "Waiting for players to start the game..."
-
-    async def check_for_restart_conditions(self):
-        """Check condition for game restart waiting."""
-        connected_users_count = await self.redis_ops.get_connected_users()
-        restart_requests_count = await self.redis_ops.get_restart_requests()
-        if restart_requests_count == connected_users_count == 2:
-            return True, "All players in room are ready to restart the game."
-        elif connected_users_count == 0:
-            return False, "All players in room have left."
-        return None, "Waiting for players to restart the game..."
-
-#--------------------------------WAITING TYPE-------------------------------------------
-
     async def wait_for_players_to_start(self):
         """Check if players are ready to start the game."""
         if await self.wait_for_players(
@@ -60,3 +38,21 @@ class GameSync:
             print("Players are ready. Game can restart.")
             return True
         return False
+
+    async def check_for_players_ready(self):
+        connected_users_count = await self.redis_ops.get_connected_users()
+        if connected_users_count == 2:
+            return True, "Both players connected."
+        elif connected_users_count == 0:
+            return False, "No player in the room anymore."
+        return None, "Waiting for players to start the game..."
+
+    async def check_for_restart_conditions(self):
+        """Check condition for game restart waiting."""
+        connected_users_count = await self.redis_ops.get_connected_users()
+        restart_requests_count = await self.redis_ops.get_restart_requests()
+        if restart_requests_count == connected_users_count == 2:
+            return True, "All players in room are ready to restart the game."
+        elif connected_users_count == 0:
+            return False, "All players in room have left."
+        return None, "Waiting for players to restart the game..."
