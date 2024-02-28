@@ -123,6 +123,7 @@ export function loadScript(url) {
 
     const script = document.createElement("script");
     script.src = url;
+    script.type = "module"; // Added to dynammically import module in pong game
     script.onload = resolve;
     script.onerror = reject;
     document.body.appendChild(script);

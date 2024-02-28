@@ -128,7 +128,6 @@ class GameLogic:
 
     async def game_loop(self):
         """The main game loop."""
-        
         await self.init_game()
         await self.launch_game()
 
@@ -159,7 +158,6 @@ class GameLogic:
 
     async def game_tick(self, delta_time):
         """Perform a single tick of the game loop."""
-        
         # Update the ball position in fucntion on vellocity and delta time
         self.ball.update_position(delta_time)
 

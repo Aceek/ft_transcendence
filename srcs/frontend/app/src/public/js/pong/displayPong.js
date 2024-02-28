@@ -6,7 +6,7 @@ export async function getPongGamePage(pongID) {
     const pongHtml = await fetchTemplate("/public/html/pong.html");
     document.getElementById("main").innerHTML = pongHtml;
     loadProfileCss("/public/css/pong.css");
-    loadScript("/public/js/pong/pong.js");
+    loadScript("/public/js/pong/main.js");
   } catch (error) {
     console.error("Error fetching pong.html:", error);
     router("/home");

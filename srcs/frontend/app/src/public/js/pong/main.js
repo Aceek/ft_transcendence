@@ -1,0 +1,341 @@
+import { initializeSocket, messageHandler } from './socket.js';
+
+console.log("Pong.js is executed!");
+// ----------------------INITIALIZATION------------------------------------
+
+
+var canvas = document.getElementById('pongCanvas');
+var ctx = canvas.getContext('2d');
+
+class Game {
+  constructor() {
+      this.paddle = { width: 0, height: 0, side: null };
+      this.ball = { size: 0, x: 0, y: 0, vx: 0, vy: 0 };
+      this.players = { left: { paddleY: 0, score: 0 }, right: { paddleY: 0, score: 0 } };
+      this.gameStatus = 0;
+      this.countdown = null;
+  }
+
+  handleStaticData(staticData) {
+    //   console.log("Received static data:", staticData);
+    
+    // Parse static game settings
+    game.paddle.width = parseInt(staticData.paddleWidth, 10);
+    game.paddle.height = parseInt(staticData.paddleHeight, 10);
+    game.ball.size = parseInt(staticData.ballSize, 10);
+    
+    // Update canvas dimensions directly from staticData
+      canvas.width = parseInt(staticData.canvasWidth, 10);
+      canvas.height = parseInt(staticData.canvasHeight, 10);
+    
+      // Update other static game settings directly from staticData
+      game.scoreLimit = parseInt(staticData.scoreLimit, 10);
+      game.paddle.speed = parseInt(staticData.paddleSpeed, 10);
+    
+      // Log the updated game settings for debugging
+    //   console.log("Static game settings parsed and updated:", game);
+    }
+    
+    handleDynamicData(dynamicData) {
+      // console.log("Handling dynamic data:", dynamicData);
+      // Update the game state with parsed dynamic data
+      game.ball.x = parseInt(dynamicData.b_x, 10);
+      game.ball.y = parseInt(dynamicData.b_y, 10);
+      game.ball.vx = parseInt(dynamicData.b_vx, 10);
+      game.ball.vy = parseInt(dynamicData.b_vy, 10);
+  
+    // // Only update the opponent's paddle position
+    // if (game.paddle.side === "LEFT") {
+    // 	// If this client controls the left paddle, update only the right paddle position
+    // 	game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
+    // } else if (game.paddle.side === "RIGHT") {
+    // 	// If this client controls the right paddle, update only the left paddle position
+    // 	game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
+    // }
+    
+    game.players.right.paddleY = parseInt(dynamicData.rp_y, 10);
+    game.players.left.paddleY = parseInt(dynamicData.lp_y, 10);
+      game.players.left.score = parseInt(dynamicData.lp_s, 10);
+      game.players.right.score = parseInt(dynamicData.rp_s, 10);
+      game.status = parseInt(dynamicData.gs, 10);
+      // Log the updated game state for debugging
+    //   console.log("Updated game state with dynamic data:", game);
+    }
+  
+    // Function to handle paddle side assignment
+    handlePaddleSideAssignment(paddleSide) {
+      console.log("Assigned paddle side:", paddleSide);
+      // Assign the paddle side to your game state
+      game.paddle.side = paddleSide;
+    }
+  
+    handleCountdown(seconds) {
+      console.log("countdown :", seconds);
+      // Update the game state with the new countdown value
+      game.countdown = seconds;
+    }
+}
+
+const game = new Game();
+const socket = initializeSocket();
+messageHandler(socket, game);
+
+//----------------------KEY EVENT-----------------------------------------
+
+// Event listeners for key presses
+document.addEventListener("keydown", function (event) {
+  console.log("Key down:", event.key);
+  handleKeyPress(event.key, true);
+});
+
+document.addEventListener("keyup", function (event) {
+  console.log("Key up:", event.key);
+  handleKeyPress(event.key, false);
+});
+
+function handleKeyPress(key, isPressed) {
+	console.log(`Key Event: ${key}, Pressed: ${isPressed}`);
+  
+    // Early return if the key is not pressed
+    if (!isPressed) {
+        console.log("Key is not pressed, exiting handleKeyPress");
+        return;
+    }
+
+	if (key === "Enter" && game.status == 3 && isPressed) {
+	  console.log("Enter pressed to restart game");
+	  socket.send(JSON.stringify({ type: "restart_game" }));
+	  return;
+	}
+  
+	if (!game.paddle.side) {
+	  console.log("Paddle side not set, exiting handleKeyPress");
+	  return;
+	}
+  
+	let change = game.paddle.speed
+	let paddleKey = game.paddle.side === "LEFT" ? "left" : "right";
+  
+	if (key === "ArrowUp" || key === "ArrowDown" && game.status == 1) {
+	  console.log(`Attempting to move ${paddleKey} paddle, Key: ${key}, Change: ${change}`);
+	  let potentialNewY = game.players[paddleKey].paddleY + (key === "ArrowDown" ? change : -change);
+  
+	  if (potentialNewY >= 0 && (potentialNewY + game.paddle.height) <= canvas.height) {
+		console.log(`Updating ${paddleKey} paddle position: ${potentialNewY}`);
+		game.players[paddleKey].paddleY = potentialNewY;
+		sendPaddlePositionUpdate();
+	  } else {
+		console.log(`New position out of bounds: ${potentialNewY}, not updating.`);
+	  }
+	}
+  }
+
+// Global variables to track the last sent paddle positions for both sides
+let lastSentPaddleY = null;
+
+function sendPaddlePositionUpdate() {
+	const currentPlayerY = game.paddle.side === "LEFT" ? game.players.left.paddleY : game.players.right.paddleY;
+  
+	// Check if there's a significant change in the current paddle's position before sending
+	if (lastSentPaddleY !== currentPlayerY) {
+	  console.log(`Sending ${game.paddle.side} paddle position update: ${currentPlayerY}`);
+	  socket.send(JSON.stringify({
+		type: "paddle_position_update",
+		side: game.paddle.side,
+		PaddleY: currentPlayerY,
+	  }));
+	  lastSentPaddleY = currentPlayerY; // Update the last sent position
+	} else {
+	  console.log(`No significant change in ${game.paddle.side} paddle position. Not sending update.`);
+	}
+}
+
+//----------------------MAIN LOOP-----------------------------------------
+
+let lastUpdateTime = 0;
+const fps = 120;
+const frameDuration = 1000 / fps;
+
+function interpolatePosition(lastPosition, speed, deltaTime) {
+  // Calculate and return the new position based on the speed and the delta time
+  return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
+}
+
+function mainLoop(timestamp) {
+	// Calculate the delta time since the last frame
+	const deltaTime = timestamp - lastUpdateTime;
+  
+	
+	if (deltaTime > frameDuration) {
+	  // Calculate the interpolated positions
+	//   game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
+	//   game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
+	  
+   	  if (game.status == 1) {
+		game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
+		game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
+	  }
+
+	  // Print the ball's coordinates
+	  // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}, drawing`);
+	  draw(); // Draw the frame with the interpolated positions
+	//   if (game.status == 2) {
+	// 	console.log("waiting players");
+	// 	drawWaitingMessage();
+	// 	requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+	// 	return; // Skip the rest of the loop logic
+	//   }
+	  
+	//   // if (game.status == 2) {
+	//   //   drawPausedMessage();
+	//   //   requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+	//   //   return; // Skip the rest of the loop logic
+	//   // }
+	  
+	//   if (game.status == 3) {
+	// 	drawGameOverMessage();
+	// 	requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+	// 	return; // Skip the rest of the loop logic
+	  
+	//   }
+	 
+	  lastUpdateTime = timestamp - (deltaTime % frameDuration); // Adjust for any overshoot of the frame duration
+	}
+	
+	// Log the ball's position
+	// console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}`);
+  
+	requestAnimationFrame(mainLoop);
+  }
+  
+  requestAnimationFrame(mainLoop); // Start the game loop
+
+//----------------------DRAW-----------------------------------------
+
+function draw() {
+  // Clear the canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw paddles using the updated positions
+  drawPaddle(0, game.players.left.paddleY);
+  drawPaddle(canvas.width - game.paddle.width, game.players.right.paddleY);
+
+  // Draw the ball using the updated position
+  drawBall(game.ball.x, game.ball.y);
+
+  // Draw the white dash line in the middle
+  drawWhiteDashLine();
+
+  // Draw scores
+  drawScores(); // Pass the data parameter to drawScores()
+
+  if (game.status == 2) {
+	console.log("waiting players");
+	drawWaitingMessage();
+  }
+  
+  if (game.status == 3) {
+	drawGameOverMessage();
+  }
+
+  if (game.countdown !== null && game.countdown > 0) {
+    ctx.font = "48px Arial";
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.fillText(game.countdown.toString(), canvas.width / 2, canvas.height / 2);
+  }
+}
+
+function drawPaddle(x, y) {
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(x, y, game.paddle.width, game.paddle.height);
+}
+
+function drawBall(x, y) {
+  // console.log(`GS : ${game.status} - Drawing ball position - X: ${x.toFixed(2)}, Y: ${y.toFixed(2)}`);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(
+    x - game.ball.size / 2,
+    y - game.ball.size / 2,
+    game.ball.size,
+    game.ball.size
+  );
+}
+
+function drawWhiteDashLine() {
+  ctx.strokeStyle = "#fff";
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawScores() {
+  ctx.fillStyle = "#fff";
+  ctx.font = '100px "Geo", sans-serif';
+
+  // Calculate the position for scores in the top center
+  var middleDashLineX = canvas.width / 2;
+  var scoreTextWidth = ctx.measureText(game.players.left.score).width;
+  var distanceFromDashLine = 30;
+
+  // Set the height position in relation to the canvas height
+  var heightPosition = canvas.height / 6;
+
+  // Draw left player's score
+  ctx.fillText(
+    game.players.left.score,
+    middleDashLineX - scoreTextWidth - distanceFromDashLine,
+    heightPosition
+  );
+
+  // Draw right player's score
+  ctx.fillText(
+    game.players.right.score,
+    middleDashLineX + distanceFromDashLine,
+    heightPosition
+  );
+}
+
+function drawGameOverMessage() {
+  ctx.fillStyle = "#fff";
+  ctx.font = '100px "Geo", sans-serif';
+
+  var gameOverText = "Game Over!";
+  var gameOverTextWidth = ctx.measureText(gameOverText).width;
+
+  // Calculate the position for the game over message centered from the dash line
+  var middleDashLineX = canvas.width / 2;
+  var gameOverTextX = middleDashLineX - gameOverTextWidth / 2;
+
+  // Set the height position at 2/3 of the canvas height
+  var heightPosition = (2 / 3) * canvas.height;
+
+  ctx.fillText(gameOverText, gameOverTextX, heightPosition);
+
+  // Adjust font size for the player winning message
+  ctx.font = '50px "Geo", sans-serif';
+
+  // Calculate the position for the player winning message centered from the dash line
+  var playerWinsText =
+    "Player " +
+    (game.players.left.score > game.players.right.score ? "LEFT" : "RIGHT") +
+    " Wins!";
+  var playerWinsTextWidth = ctx.measureText(playerWinsText).width;
+  var playerWinsTextX = middleDashLineX - playerWinsTextWidth / 2;
+
+  ctx.fillText(playerWinsText, playerWinsTextX, heightPosition + 70); // Adjust vertical spacing
+
+  ctx.font = '50px "Geo", sans-serif';
+  var restartText = "Press Enter to restart";
+  ctx.fillText(restartText, canvas.width / 2, heightPosition + 100, canvas.width); // Adjust for proper centering
+}
+
+function drawWaitingMessage() {
+ ctx.fillStyle = "#FFF";
+  ctx.font = '30px Arial';
+  ctx.textAlign = "center";
+  ctx.fillText("Waiting for other players...", canvas.width / 2, canvas.height / 2);
+}
