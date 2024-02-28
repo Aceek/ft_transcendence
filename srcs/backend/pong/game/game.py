@@ -73,7 +73,6 @@ class GameLogic:
         """Handles the countdown logic."""
         print(f"Countdown starting for {duration} seconds.")
         for i in range(duration, 0, -1):
-            # Broadcast countdown status to clients
             await self.channel_com.send_countdown(i)
             print(f"Countdown: {i}")
             await asyncio.sleep(1)
@@ -95,21 +94,22 @@ class GameLogic:
         return True
 
     async def is_game_resuming(self):
-        print("Checking if the game is resuming...")  # Print at the beginning to indicate the method has started
-        game_resuming = await self.game_sync.wait_for_players_to_start()
-        print(f"Game resuming status: {game_resuming}")  # Print the status of game_resuming
+        print("Checking if the game is resuming...")
+        if await self.game_sync.wait_for_players_to_start():
+            await self.channel_com.send_static_data(self.static_data)
+            await self.channel_com.send_dynamic_data(\
+                await self.redis_ops.get_dynamic_data())
+            await self.countdown()
+            await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
+            await self.channel_com.send_dynamic_data(\
+                await self.redis_ops.get_dynamic_data())
+            self.last_update_time = time.time()
+            return True
 
-        new_status = GameStatus.IN_PROGRESS if game_resuming else GameStatus.COMPLETED
-        print(f"Setting new game status to: {'IN_PROGRESS' if game_resuming else 'COMPLETED'}")  # Print the new status being set
-
-        await self.countdown()
-        await self.redis_ops.set_game_status(new_status)  # Set the new status in Redis
-        await self.channel_com.send_static_data(self.static_data)  # Send the static data to clients
+        await self.redis_ops.set_game_status(GameStatus.COMPLETED) 
         await self.channel_com.send_dynamic_data(\
             await self.redis_ops.get_dynamic_data())
-        print("Static data sent to clients.")  # Print after sending static data
-
-        return game_resuming  # Return the status of game resuming
+        return False
 
     # -------------------------------LOOP-----------------------------------
 
@@ -124,43 +124,40 @@ class GameLogic:
         """The main game loop."""
         
         await self.init_game()
-        last_update_time = time.time()
+        self.last_update_time = time.time()
         print("Game loop started.")
 
         try:
             while True:
+                current_time = time.time()
+                delta_time = current_time - self.last_update_time
+                self.last_update_time = current_time
+
+                if not await self.is_game_active():
+                    break
+
                 for player in self.players:
                     await player.get_paddle_from_redis()
 
-                delta_time = await self.game_tick(last_update_time)
+                await self.game_tick(delta_time)
 
-                if await self.is_game_active():
-                    print("yolo")
-                else:
-                    break
-    
-                last_update_time += delta_time
                 await asyncio.sleep(1/TICK_RATE)
 
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()
                 await self.game_loop()
             
-            await self.redis_ops.clear_all_data()
-            
         except asyncio.CancelledError:
              # Handle cleanup upon asyncio task cancellation
              print("Game loop cancelled. Performing cleanup.")
-             await self.redis_ops.clear_all_data()
+            #  await self.redis_ops.clear_all_data()
         except Exception as e:
              # Handle other exceptions that might occur
               print(f"An unexpected error occurred: {e}")
-              await self.redis_ops.clear_all_data()
+            #   await self.redis_ops.clear_all_data()
 
-    async def game_tick(self, last_update_time):
+    async def game_tick(self, delta_time):
         """Perform a single tick of the game loop."""
-        current_time = time.time()
-        delta_time = current_time - last_update_time
         
         # Update the ball position in fucntion on vellocity and delta time
         self.ball.update_position(delta_time)
@@ -188,5 +185,3 @@ class GameLogic:
         # Send the Redis data to clients
         await self.channel_com.send_dynamic_data(\
             await self.redis_ops.get_dynamic_data())
-        
-        return delta_time
