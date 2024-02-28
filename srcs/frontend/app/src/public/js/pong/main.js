@@ -1,4 +1,5 @@
 import { initializeSocket, messageHandler } from './socket.js';
+import { KeyEventController } from './keyEventController.js';
 import { Player } from './player.js';
 import { Game } from './game.js';
 
@@ -15,69 +16,70 @@ game.addPlayer(new Player(2, 'right', 0, 0, 0, 0, 0));
 
 const socket = initializeSocket();
 messageHandler(socket, game);
+new KeyEventController(socket, game);
 
 //----------------------KEY EVENT-----------------------------------------
 
-// Event listeners for key presses
-document.addEventListener("keydown", function (event) {
-  console.log("Key down:", event.key);
-  handleKeyPress(event.key, true);
-});
+// // Event listeners for key presses
+// document.addEventListener("keydown", function (event) {
+//   console.log("Key down:", event.key);
+//   handleKeyPress(event.key, true);
+// });
 
-document.addEventListener("keyup", function (event) {
-  console.log("Key up:", event.key);
-  handleKeyPress(event.key, false);
-});
+// document.addEventListener("keyup", function (event) {
+//   console.log("Key up:", event.key);
+//   handleKeyPress(event.key, false);
+// });
 
-function handleKeyPress(key, isPressed) {
-  console.log(`Key Event: ${key}, Pressed: ${isPressed}`);
+// function handleKeyPress(key, isPressed) {
+//   console.log(`Key Event: ${key}, Pressed: ${isPressed}`);
 
-  if (!isPressed || game.status != 1) {
-      return;
-  }
+//   if (!isPressed || game.status != 1) {
+//       return;
+//   }
 
-  if (!game.controlledPlayer) {
-      console.log("Controlled player not found, exiting handleKeyPress");
-      return;
-  }
+//   if (!game.controlledPlayer) {
+//       console.log("Controlled player not found, exiting handleKeyPress");
+//       return;
+//   }
 
-  if (key === "Enter" && game.gameStatus === 3 && isPressed) {
-      console.log("Enter pressed to restart game");
-      socket.send(JSON.stringify({ type: "restart_game" }));
-      return;
-  }
+//   if (key === "Enter" && game.gameStatus === 3 && isPressed) {
+//       console.log("Enter pressed to restart game");
+//       socket.send(JSON.stringify({ type: "restart_game" }));
+//       return;
+//   }
 
-  let change = game.controlledPlayer.paddleSpeed;
-  console.log(`Key pressed: ${key}, Current paddleY: ${game.controlledPlayer.paddleY}, Speed change: ${change}`);
+//   let change = game.controlledPlayer.paddleSpeed;
+//   console.log(`Key pressed: ${key}, Current paddleY: ${game.controlledPlayer.paddleY}, Speed change: ${change}`);
   
-  let newY = game.controlledPlayer.paddleY + (key === "ArrowDown" ? change : -change);
-  console.log(`Calculated newY: ${newY}`);
+//   let newY = game.controlledPlayer.paddleY + (key === "ArrowDown" ? change : -change);
+//   console.log(`Calculated newY: ${newY}`);
   
-  if (newY >= 0 && (newY + game.controlledPlayer.paddleHeight) <= canvas.height) {
-      console.log(`Updating paddle position: ${newY} for ${game.controlledPlayer.side} paddle`);
-      game.controlledPlayer.paddleY = newY;
-      sendPaddlePositionUpdate(game.controlledPlayer);
-  } else {
-      console.log(`New position out of bounds: ${newY}, not updating. Current canvas height: ${canvas.height}`);
-  }
+//   if (newY >= 0 && (newY + game.controlledPlayer.paddleHeight) <= canvas.height) {
+//       console.log(`Updating paddle position: ${newY} for ${game.controlledPlayer.side} paddle`);
+//       game.controlledPlayer.paddleY = newY;
+//       sendPaddlePositionUpdate(game.controlledPlayer);
+//   } else {
+//       console.log(`New position out of bounds: ${newY}, not updating. Current canvas height: ${canvas.height}`);
+//   }
   
-}
+// }
 
-let lastSentPaddleY = null;
+// let lastSentPaddleY = null;
 
-function sendPaddlePositionUpdate(player) {
-  if (lastSentPaddleY !== player.paddleY) {
-      console.log(`Sending paddle position update for ${player.side}: ${player.paddleY}`);
-      socket.send(JSON.stringify({
-          type: "paddle_position_update",
-          side: player.side,
-          PaddleY: player.paddleY,
-      }));
-      lastSentPaddleY = player.paddleY;
-  } else {
-      console.log("No significant change in paddle position. Not sending update.");
-  }
-}
+// function sendPaddlePositionUpdate(player) {
+//   if (lastSentPaddleY !== player.paddleY) {
+//       console.log(`Sending paddle position update for ${player.side}: ${player.paddleY}`);
+//       socket.send(JSON.stringify({
+//           type: "paddle_position_update",
+//           side: player.side,
+//           PaddleY: player.paddleY,
+//       }));
+//       lastSentPaddleY = player.paddleY;
+//   } else {
+//       console.log("No significant change in paddle position. Not sending update.");
+//   }
+// }
 
 //----------------------MAIN LOOP-----------------------------------------
 
@@ -96,8 +98,8 @@ function mainLoop(timestamp) {
 	if (deltaTime > frameDuration) {
 	 
    	if (game.status == 1) {
-		game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
-		game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
+      game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
+      game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
 	  }
 
 	  draw();

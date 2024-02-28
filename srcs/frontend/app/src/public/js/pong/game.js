@@ -5,8 +5,8 @@ export class Game {
         this.ball = new Ball(0, 0, 0, 0, 0);
         this.players = [];
         this.status = 0;
-        // this.canvas.width = 0
-        // this.canvas.height = 0
+        this.canvasWidth = 0
+        this.canvasHeight = 0
         this.countdown = null;
         this.controlledPlayer = null;
     }
@@ -16,17 +16,17 @@ export class Game {
     }
 
     handleStaticData(staticData) {
-        // console.log("Received static data:", staticData);
+        console.log("Received static data:", staticData);
         this.ball.handleStaticData(staticData);
 
         this.players.forEach(player => player.handleStaticData(staticData));
 
-        // this.canvas.width = parseInt(staticData.canvasWidth, 10);
-        // this.canvas.height = parseInt(staticData.canvasHeight, 10);
+        this.canvasWidth = parseInt(staticData.canvasWidth, 10);
+        this.canvasHeight = parseInt(staticData.canvasHeight, 10);
     }
   
     handleDynamicData(dynamicData) {
-        // console.log("Handling dynamic data:", dynamicData);
+        console.log("Handling dynamic data:", dynamicData);
         this.ball.handleDynamicData(dynamicData);
 
         this.players.forEach(player => player.handleDynamicData(dynamicData));
