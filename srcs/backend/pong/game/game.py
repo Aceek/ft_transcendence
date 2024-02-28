@@ -58,7 +58,6 @@ class GameLogic:
 
     def init_static_data(self):
         static_data = {
-            "scoreLimit": int(SCORE_LIMIT),
             "canvasHeight": int(SCREEN_HEIGHT),
             "canvasWidth": int(SCREEN_WIDTH),
             "paddleWidth": int(PADDLE_WIDTH),

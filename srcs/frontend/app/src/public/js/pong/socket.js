@@ -31,7 +31,7 @@ export function initializeSocket() {
 export function messageHandler(socket, game) {
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
-        console.log("WebSocket message received:", data);
+        // console.log("WebSocket message received:", data);
 
         switch (data.type) {
             case "game.static_data":
