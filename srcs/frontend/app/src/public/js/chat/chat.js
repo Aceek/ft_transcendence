@@ -1,4 +1,3 @@
-// fetchTemplate
 import { fetchTemplate } from "../pageUtils.js";
 import { loadProfileCss, requestDataWithToken } from "../pageUtils.js";
 import { getFriendList, getProfile } from "../profile/getProfile.js";
@@ -31,7 +30,7 @@ export async function displayChatPage() {
     await attachSearchListenerChat(friendsListIds);
   } catch (error) {
     console.error("Error:", error);
-    // router("/home");
+    router("/home");
   }
 }
 
@@ -99,6 +98,7 @@ async function createConversationSingleUser(user) {
 export async function injectUsersNotFriendsInChat(friendsListIds) {
   for (const uid in conversations) {
     if (!friendsListIds.includes(uid)) {
+      console.log("Injecting user in chat", uid);
       await injectNewUserInChat(uid);
     }
   }
@@ -214,7 +214,6 @@ export function subscribeToStatusUpdates(friendsListIds) {
 }
 
 export function handleStatusUpdate(data) {
-  console.log("Status update:", data);
   const { user_id, status } = data;
   const friendLink = document.querySelector(`[data-uid="${user_id}"]`);
 
@@ -259,17 +258,26 @@ function handleWebSocketMessage(event, friendsListIds) {
     case "status_update":
       handleStatusUpdate(data);
       break;
+    case "ping":
+      chatSocket.send(JSON.stringify({ type: "pong", action: "pong"}));
+      break;
     default:
       console.log("Unknown message type:", data);
   }
 }
 
+function isConversationOpen(senderUID) {
+  return conversations[senderUID] !== undefined;
+}
+
 async function processChatMessage(data, friendsListIds) {
-  if (!isSenderFriend(data.sender, friendsListIds)) {
+  if (!isSenderFriend(data.sender, friendsListIds) && !isConversationOpen(data.sender)) {
+    console.log("User not in friends list")
     await injectNewUserInChat(data.sender);
   }
   handleIncomingMessage(data);
 }
+
 
 function handleWebSocketClose(reject) {
   console.log("Connection closed");
@@ -453,6 +461,18 @@ function injectChatRoom(uid) {
   });
   scrollToBottom();
   resetBadgeBgSuccess(uid);
+  sendReadStatus(uid);
+}
+
+function sendReadStatus(uid) {
+  if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+    chatSocket.send(
+      JSON.stringify({
+        action: "read_messages",
+        receiver: uid,
+      })
+    );
+  }
 }
 
 function resetBadgeBgSuccess(uid) {

@@ -4,6 +4,9 @@ from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 import redis
 from django.utils import timezone
+import asyncio
+from channels.exceptions import StopConsumer
+
 
 # from CustomUser.models import CustomUser
 
@@ -12,24 +15,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.followed_users = []
+        self.pong_received = True
+        self.active = True 
 
     async def connect(self):
         self.user = self.scope["user"]
         if self.user.is_authenticated:
-            # Utiliser l'ID de l'utilisateur pour nommer le groupe
             self.room_group_name = f"chat_{str(self.user.id)}"
 
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.mark_user_online(str(self.user.id))
             await self.accept()
             await self.send_unread_messages(str(self.user.id))
+            asyncio.create_task(self.ping_client())
+
 
         else:
             await self.close()
 
     async def disconnect(self, close_code):
+        self.active = False
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.mark_user_offline(str(self.user.id))
+
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -41,20 +49,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
             receiver_id = data.get("receiver")
             receiver_group_name = f"chat_{receiver_id}"
             if await self.can_send_message(receiver_id):
-                if not await self.is_user_online(receiver_id):
-                    await self.store_message(receiver_id, message)
-                else:
-                    await self.channel_layer.group_send(
-                        receiver_group_name,
-                        {
-                            "type": "chat_message",
-                            "message": message,
-                            "sender": str(self.user.id),
-                            "receiver": receiver_id,
-                        },
-                    )
+                await self.store_message(receiver_id, message)
+                await self.channel_layer.group_send(
+                    receiver_group_name,
+                    {
+                        "type": "chat_message",
+                        "message": message,
+                        "sender": str(self.user.id),
+                        "receiver": receiver_id,
+                    },
+                )
         elif action == "get_status_updates":
             await self.send_status_updates()
+        elif action == "pong":
+            self.pong_received = True
+        elif action == "read_messages":
+            await self.mark_message_as_read(data["receiver"])
 
     @database_sync_to_async
     def get_unread_messages(self, user_id):
@@ -81,13 +91,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     }
                 )
             )
-        await self.mark_message_as_read(user_id)
 
     @database_sync_to_async
     def mark_message_as_read(self, user_id):
         from chat.models import Message
 
-        messages = Message.objects.filter(receiver_id=user_id, read=False)
+        # messages = Message.objects.filter(receiver_id=user_id, read=False)
+        # get message send by user_id and received by self.user and not read
+        messages = Message.objects.filter(receiver_id=self.user.id, sender_id=user_id, read=False)
         for message in messages:
             message.read = True
             message.save()
@@ -206,3 +217,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def status_update(self, event):
         await self.send(text_data=json.dumps(event))
+
+
+
+    async def ping_client(self):
+        while self.active:
+            await asyncio.sleep(30)
+            if not self.pong_received:
+                try:
+                    await self.close()
+                    break
+                except RuntimeError:
+                    if await self.is_user_online(str(self.user.id)):
+                        await self.mark_user_offline(str(self.user.id))
+                    break
+            else:
+                self.pong_received = False
+                try:
+                    if (self.active):
+                        await self.send(text_data=json.dumps({"type": "ping"}))
+                except RuntimeError:
+                    if await self.is_user_online(str(self.user.id)):
+                        await self.mark_user_offline(str(self.user.id))
+                    break
+
