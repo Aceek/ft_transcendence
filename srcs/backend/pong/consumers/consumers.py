@@ -2,7 +2,6 @@ import json
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-from .game_start import *
 from .paddle import Paddle
 from .connect_utils import *
 from ..game.config import *
@@ -29,8 +28,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.paddle.assignment()
         await self.send_client_paddle_side()
 
-        if await self.redis_ops.set_game_logic_flag():
-            asyncio.create_task(GameLogic(self.room_name, self.room_group_name).run())
+        if await self.redis_ops.get_game_status() is None:
+            if await self.redis_ops.add_game_logic_flag():
+                asyncio.create_task(GameLogic(self.room_name, self.room_group_name).run())
 
     async def disconnect(self, close_code):
         
@@ -38,11 +38,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         if current_status == GameStatus.IN_PROGRESS:
             await self.redis_ops.set_game_status(GameStatus.SUSPENDED)
 
-        await self.redis_ops.del_connected_users(self.user_id)
-        await self.redis_ops.del_restart_requests(self.user_id)
+        await self.redis_ops.del_connected_user(self.user_id)
+        await self.redis_ops.del_restart_request(self.user_id)
 
         if await self.redis_ops.get_connected_users() == 0:
-            await self.redis_ops.clear_data()
+            await self.redis_ops.clear_all_data()
         
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -79,11 +79,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             'data': data
         }))
 
+    async def game_countdown(self, event):
+        seconds = event['seconds']
+        await self.send(text_data=json.dumps({
+            'type': 'game.countdown',
+            'seconds': seconds
+        }))
+
     async def send_client_paddle_side(self):
-        """
-        Sends a message to the connected client with their paddle side assignment.
-        """
-        print(self.paddle.side.name)
         if self.paddle.side is not None:
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',

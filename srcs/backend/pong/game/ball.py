@@ -47,8 +47,10 @@ class Ball:
 
     def check_score(self):
         if self.x < 0 - BALL_SIZE / 2:
+            print("score for the right", self.x)
             return True, PlayerPosition.RIGHT
         elif self.x > SCREEN_WIDTH + BALL_SIZE / 2:
+            print("score for the left", self.x)
             return True, PlayerPosition.LEFT
         return False, None
 

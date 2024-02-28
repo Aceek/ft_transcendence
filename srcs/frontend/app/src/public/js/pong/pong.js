@@ -41,6 +41,7 @@ var game = {
     },
   },
   gameStatus: 0,
+  countdown: null,
 };
 
 //----------------------WEBSOCKET-----------------------------------------
@@ -51,7 +52,7 @@ socket.onopen = function (event) {
 
 socket.onmessage = function (event) {
   var data = JSON.parse(event.data);
-//   console.log("WebSocket message received:", data);
+  console.log("WebSocket message received:", data);
 
   switch (data.type) {
     case "game.static_data":
@@ -62,6 +63,10 @@ socket.onmessage = function (event) {
       break;
     case "game.paddle_side": // Handle paddle side assignment
       handlePaddleSideAssignment(data.paddle_side);
+      break;
+	case "game.countdown":
+      game.countdown = data.seconds; // Update the countdown in the game state
+      console.log("countdown :", data.seconds);
       break;
     default:
       console.log("Unknown message type:", data.type);
@@ -95,7 +100,7 @@ socket.onmessage = function (event) {
   }
   
   function handleDynamicData(dynamicData) {
-    console.log("Handling dynamic data:", dynamicData);
+    // console.log("Handling dynamic data:", dynamicData);
     // Update the game state with parsed dynamic data
     game.ball.x = parseInt(dynamicData.b_x, 10);
     game.ball.y = parseInt(dynamicData.b_y, 10);
@@ -163,7 +168,7 @@ function handleKeyPress(key, isPressed) {
 	let change = game.paddle.speed
 	let paddleKey = game.paddle.side === "LEFT" ? "left" : "right";
   
-	if (key === "ArrowUp" || key === "ArrowDown") {
+	if (key === "ArrowUp" || key === "ArrowDown" && game.status == 1) {
 	  console.log(`Attempting to move ${paddleKey} paddle, Key: ${key}, Change: ${change}`);
 	  let potentialNewY = game.players[paddleKey].paddleY + (key === "ArrowDown" ? change : -change);
   
@@ -209,48 +214,53 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
 }
 
 function mainLoop(timestamp) {
-  // Calculate the delta time since the last frame
-  const deltaTime = timestamp - lastUpdateTime;
-
+	// Calculate the delta time since the last frame
+	const deltaTime = timestamp - lastUpdateTime;
   
-  if (deltaTime > frameDuration) {
-    // Calculate the interpolated positions
-    game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
-    game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
-    
-    // Print the ball's coordinates
-    // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}, drawing`);
-    draw(); // Draw the frame with the interpolated positions
-    if (game.status == 2) {
-      console.log("waiting players");
-      drawWaitingMessage();
-      requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
-      return; // Skip the rest of the loop logic
-    }
-    
-    // if (game.status == 2) {
-    //   drawPausedMessage();
-    //   requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
-    //   return; // Skip the rest of the loop logic
-    // }
-    
-    if (game.status == 3) {
-      drawGameOverMessage();
-      requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
-      return; // Skip the rest of the loop logic
-    
-    }
-   
-    lastUpdateTime = timestamp - (deltaTime % frameDuration); // Adjust for any overshoot of the frame duration
+	
+	if (deltaTime > frameDuration) {
+	  // Calculate the interpolated positions
+	//   game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
+	//   game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
+	  
+   	  if (game.status == 1) {
+		game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
+		game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
+	  }
+
+	  // Print the ball's coordinates
+	  // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}, drawing`);
+	  draw(); // Draw the frame with the interpolated positions
+	//   if (game.status == 2) {
+	// 	console.log("waiting players");
+	// 	drawWaitingMessage();
+	// 	requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+	// 	return; // Skip the rest of the loop logic
+	//   }
+	  
+	//   // if (game.status == 2) {
+	//   //   drawPausedMessage();
+	//   //   requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+	//   //   return; // Skip the rest of the loop logic
+	//   // }
+	  
+	//   if (game.status == 3) {
+	// 	drawGameOverMessage();
+	// 	requestAnimationFrame(mainLoop); // Continue to request animation frames to check for status changes
+	// 	return; // Skip the rest of the loop logic
+	  
+	//   }
+	 
+	  lastUpdateTime = timestamp - (deltaTime % frameDuration); // Adjust for any overshoot of the frame duration
+	}
+	
+	// Log the ball's position
+	// console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}`);
+  
+	requestAnimationFrame(mainLoop);
   }
   
-  // Log the ball's position
-  // console.log(`Ball position - X: ${game.ball.x.toFixed(2)}, Y: ${game.ball.y.toFixed(2)}`);
-
-  requestAnimationFrame(mainLoop);
-}
-
-requestAnimationFrame(mainLoop); // Start the game loop
+  requestAnimationFrame(mainLoop); // Start the game loop
 
 //----------------------DRAW-----------------------------------------
 
@@ -270,6 +280,22 @@ function draw() {
 
   // Draw scores
   drawScores(); // Pass the data parameter to drawScores()
+
+  if (game.status == 2) {
+	console.log("waiting players");
+	drawWaitingMessage();
+  }
+  
+  if (game.status == 3) {
+	drawGameOverMessage();
+  }
+
+  if (game.countdown !== null && game.countdown > 0) {
+    ctx.font = "48px Arial";
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.fillText(game.countdown.toString(), canvas.width / 2, canvas.height / 2);
+  }
 }
 
 function drawPaddle(x, y) {
@@ -360,22 +386,8 @@ function drawGameOverMessage() {
 }
 
 function drawWaitingMessage() {
-  // Clear the canvas or draw over existing frame
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "#FFF";
+ ctx.fillStyle = "#FFF";
   ctx.font = '30px Arial';
   ctx.textAlign = "center";
   ctx.fillText("Waiting for other players...", canvas.width / 2, canvas.height / 2);
-}
-
-function drawPausedMessage() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-  ctx.fillStyle = "rgba(0,0,0,0.75)"; // Semi-transparent overlay
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "#FFFFFF"; // White text
-  ctx.font = "30px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText("Game Paused", canvas.width / 2, canvas.height / 2);
 }

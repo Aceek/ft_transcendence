@@ -24,6 +24,11 @@ class GameLogic:
 
     async def init_game(self):
         """Initial game setup."""
+        # Init status
+        await self.redis_ops.set_game_status(GameStatus.NOT_STARTED)
+        await self.channel_com.send_dynamic_data(\
+            await self.redis_ops.get_dynamic_data())
+
         # Init static data
         self.static_data = self.init_static_data() 
         await self.redis_ops.set_static_data(self.static_data)
@@ -38,17 +43,19 @@ class GameLogic:
         self.ball = Ball(self.redis_ops) 
         await self.ball.set_data_to_redis()
 
-        # Init status
-        await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
-
         # Send initial data to clients
         await self.channel_com.send_static_data(self.static_data)
         await self.channel_com.send_dynamic_data(\
             await self.redis_ops.get_dynamic_data())
         
         # Delete redis gamelogic flag
-        self.redis_ops.del_game_logic_flag()
-
+        await self.redis_ops.del_game_logic_flag()
+        
+        # Init status
+        await self.countdown()
+        await self.redis_ops.set_game_status(GameStatus.IN_PROGRESS)
+        await self.channel_com.send_dynamic_data(\
+            await self.redis_ops.get_dynamic_data())
 
     def init_static_data(self):
         static_data = {
@@ -62,6 +69,17 @@ class GameLogic:
         }
         return static_data
 
+    async def countdown(self, duration=3):
+        """Handles the countdown logic."""
+        print(f"Countdown starting for {duration} seconds.")
+        for i in range(duration, 0, -1):
+            # Broadcast countdown status to clients
+            await self.channel_com.send_countdown(i)
+            print(f"Countdown: {i}")
+            await asyncio.sleep(1)
+        await self.channel_com.send_countdown(0)
+        print("Countdown finished.")
+
     # -------------------------------CHECK-----------------------------------
 
     async def is_game_active(self):
@@ -72,7 +90,6 @@ class GameLogic:
         elif current_status == GameStatus.SUSPENDED:
             await self.channel_com.send_dynamic_data(\
                 await self.redis_ops.get_dynamic_data())
-            print(await self.redis_ops.get_dynamic_data())
             return await self.is_game_resuming()
 
         return True
@@ -85,8 +102,11 @@ class GameLogic:
         new_status = GameStatus.IN_PROGRESS if game_resuming else GameStatus.COMPLETED
         print(f"Setting new game status to: {'IN_PROGRESS' if game_resuming else 'COMPLETED'}")  # Print the new status being set
 
+        await self.countdown()
         await self.redis_ops.set_game_status(new_status)  # Set the new status in Redis
         await self.channel_com.send_static_data(self.static_data)  # Send the static data to clients
+        await self.channel_com.send_dynamic_data(\
+            await self.redis_ops.get_dynamic_data())
         print("Static data sent to clients.")  # Print after sending static data
 
         return game_resuming  # Return the status of game resuming
@@ -102,6 +122,7 @@ class GameLogic:
 
     async def game_loop(self):
         """The main game loop."""
+        
         await self.init_game()
         last_update_time = time.time()
         print("Game loop started.")
@@ -113,7 +134,9 @@ class GameLogic:
 
                 delta_time = await self.game_tick(last_update_time)
 
-                if not await self.is_game_active():
+                if await self.is_game_active():
+                    print("yolo")
+                else:
                     break
     
                 last_update_time += delta_time
@@ -122,15 +145,17 @@ class GameLogic:
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()
                 await self.game_loop()
-                    
+            
+            await self.redis_ops.clear_all_data()
+            
         except asyncio.CancelledError:
              # Handle cleanup upon asyncio task cancellation
              print("Game loop cancelled. Performing cleanup.")
-             self.redis_ops.clear_all_data()
+             await self.redis_ops.clear_all_data()
         except Exception as e:
              # Handle other exceptions that might occur
               print(f"An unexpected error occurred: {e}")
-              self.redis_ops.clear_all_data()
+              await self.redis_ops.clear_all_data()
 
     async def game_tick(self, last_update_time):
         """Perform a single tick of the game loop."""
