@@ -1,11 +1,11 @@
 // ball.js
 export class Ball {
-    constructor(size, x, y, vx, vy) {
-      this.size = size;
-      this.x = x;
-      this.y = y;
-      this.vx = vx;
-      this.vy = vy;
+    constructor() {
+      this.size = 0;
+      this.x = 0;
+      this.y = 0;
+      this.vx = 0;
+      this.vy = 0;
     }
   
     handleStaticData(staticData) {

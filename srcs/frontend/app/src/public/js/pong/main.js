@@ -12,8 +12,8 @@ const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');
 
 const game = new Game();
-game.addPlayer(new Player(1, 'left', 0, 0, 0, 0, 0));
-game.addPlayer(new Player(2, 'right', 0, 0, 0, 0, 0));
+game.addPlayer(new Player(1, 'left'));
+game.addPlayer(new Player(2, 'right'));
 
 const renderer = new GameRenderer(ctx, game);
 
@@ -38,7 +38,7 @@ function mainLoop(timestamp) {
   
 	if (deltaTime > frameDuration) {
 	 
-   	if (game.status == 1) {
+   	if (game.status === 1) {
       game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
       game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
 	  }

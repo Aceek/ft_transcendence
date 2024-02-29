@@ -22,11 +22,11 @@ class GameLogic:
         self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self.redis_ops, self.room_name)
 
+        # Delete redis gamelogic flag
+        await self.redis_ops.del_game_logic_flag()
+        
     async def init_game(self):
         """Initial game setup."""
-        # Init game status
-        await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
-
         # Init static data
         self.static_data = self.init_static_data() 
         await self.redis_ops.set_static_data(self.static_data)
@@ -41,12 +41,14 @@ class GameLogic:
         self.ball = Ball(self.redis_ops) 
         await self.ball.set_data_to_redis()
 
-        # Delete redis gamelogic flag
-        await self.redis_ops.del_game_logic_flag()
+        # Send data to first client and set the game to not started
+        await self.get_static_data_and_send()
+        await self.get_dynamic_data_and_send()
+        
 
     async def launch_game(self):
         """Launch game."""
-        # Send initial data to clients
+        # Send initial data to all clients
         await self.get_static_data_and_send()
         await self.get_dynamic_data_and_send()
         
@@ -58,6 +60,7 @@ class GameLogic:
 
     def init_static_data(self):
         static_data = {
+            "scoreLimit": int(SCORE_LIMIT),
             "canvasHeight": int(SCREEN_HEIGHT),
             "canvasWidth": int(SCREEN_WIDTH),
             "paddleWidth": int(PADDLE_WIDTH),
@@ -121,13 +124,16 @@ class GameLogic:
     async def run(self):
         """Running the task"""
         await self.init_env()
+        await self.init_game()
+
+        # Notify the first client that the init is successful
+        await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
 
         if await self.game_sync.wait_for_players_to_start():
             await self.game_loop()
 
     async def game_loop(self):
         """The main game loop."""
-        await self.init_game()
         await self.launch_game()
 
         try:
@@ -146,6 +152,7 @@ class GameLogic:
 
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()
+                await self.init_game()
                 await self.game_loop()
             
         except asyncio.CancelledError:
@@ -156,7 +163,7 @@ class GameLogic:
               print(f"An unexpected error occurred: {e}")
 
     async def game_tick(self, delta_time):
-        """Perform a single tick of the game loop."""
+        """Perform a single tick of the game lop."""
         # Update the ball position in fucntion on vellocity and delta time
         self.ball.update_position(delta_time)
 

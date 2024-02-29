@@ -1,13 +1,13 @@
 // player.js
 export class Player {
-    constructor(id, side, paddleWidth, paddleHeight, paddleSpeed, paddleY, score) {
+    constructor(id, side) {
         this.id = id;
         this.side = side;
-        this.paddleWidth = paddleWidth;
-        this.paddleHeight = paddleHeight;
-        this.paddleSpeed = paddleSpeed;
-        this.paddleY = paddleY;
-        this.score = score;
+        this.paddleWidth = 0;
+        this.paddleHeight = 0;
+        this.paddleSpeed = 0;
+        this.paddleY = 0;
+        this.score = 0;
       }
   
     //   setPaddleSide(side) {

@@ -7,32 +7,45 @@ export class GameRenderer {
     draw() {
         const { ctx, game } = this;
 
+        if (game.status === -1) {
+            return;
+        }
+        
         ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
-
+        
         game.players.forEach(player => {
             const x = player.side === 'left' ? 0 : game.canvasWidth - player.paddleWidth;
             this.drawPaddle(x, player.paddleY, player.paddleWidth, player.paddleHeight);
         });
-
+        
         this.drawBall(game.ball.x, game.ball.y);
-
+        
         this.drawWhiteDashLine();
 
         this.drawScores();
 
-        if (game.status === 2) {
-            this.drawWaitingMessage();
+        if (game.status === 0 && game.countdown === null) {
+            this.drawTwoPartMessage("Room joined!", 
+                "Waiting for other players to start...");
         }
 
-        if (game.status === 3) {
-            this.drawGameOverMessage();
+        if (game.status === 2 && game.countdown === 0) {
+            this.drawTwoPartMessage("Game Paused!",
+                "Waiting for other players to resume...");
         }
 
+        if (game.status === 3 && game.countdown === 0) {
+            this.drawTwoPartMessage("Game Over!",
+                "Press Enter to restart...")
+        }
+        
+        // if (game.countdown !== null && game.countdown > 0) {
+        //         this.drawCountdown();
+        //     }
+            
         if (game.countdown !== null && game.countdown > 0) {
-            ctx.font = "48px Arial";
-            ctx.fillStyle = "red";
-            ctx.textAlign = "center";
-            ctx.fillText(game.countdown.toString(), game.canvasWidth / 2, game.canvasHeight / 2);
+            this.drawTwoPartMessage(game.countdown.toString(),
+                "Get ready...")
         }
     }
 
@@ -59,33 +72,56 @@ export class GameRenderer {
     drawScores() {
         this.ctx.fillStyle = "#fff";
         this.ctx.font = '100px "Geo", sans-serif';
-        const distanceFromCenter = 50;
-
+        const distanceFromCenter = this.game.canvasHeight / 5;
+        const distanceFromTop = this.game.canvasHeight / 4;
+    
         this.game.players.forEach((player) => {
-            const textWidth = this.ctx.measureText(player.score).width;
-            const x = player.side === 'left' ? (this.game.canvasWidth / 2) - distanceFromCenter - textWidth
-                                            : (this.game.canvasWidth / 2) + distanceFromCenter;
-            const y = this.game.canvasHeight / 6;
-
+            let x;
+            if (player.side === 'left') {
+                // Align the left player's score to the left of the center line
+                x = (this.game.canvasWidth / 2) - distanceFromCenter;
+            } else {
+                // Align the right player's score to the right of the center line
+                x = (this.game.canvasWidth / 2) + distanceFromCenter;
+            }
+    
+            // Use the fixed distance from the top for Y
+            const textHeight = this.ctx.measureText(player.score).height
+            const y = distanceFromTop;
+    
             this.ctx.fillText(player.score, x, y);
         });
     }
 
-    drawGameOverMessage() {
+    drawTwoPartMessage(mainText, subText) {
         this.ctx.fillStyle = "#fff";
-        this.ctx.font = '100px "Geo", sans-serif';
-        const gameOverText = "Game Over!";
-        const textWidth = this.ctx.measureText(gameOverText).width;
-        const x = (this.game.canvasWidth / 2) - (textWidth / 2);
-        const y = this.game.canvasHeight / 2;
-
-        this.ctx.fillText(gameOverText, x, y);
-    }
-
-    drawWaitingMessage() {
-        this.ctx.fillStyle = "#FFF";
-        this.ctx.font = '30px Arial';
         this.ctx.textAlign = "center";
-        this.ctx.fillText("Waiting for other players...", this.game.canvasWidth / 2, this.game.canvasHeight / 2);
+    
+        // Fonts setup
+        const mainFont = '70px "Geo", sans-serif'; // Font for the main message
+        const subFont = '25px "Geo", sans-serif'; // Font for the sub-message
+        const gapBetweenMessages = 50; // Space between the two messages
+    
+        // Measure main text height
+        this.ctx.font = mainFont;
+        const mainTextMetrics = this.ctx.measureText(mainText);
+        const mainTextHeight = mainTextMetrics.actualBoundingBoxAscent + mainTextMetrics.actualBoundingBoxDescent;
+    
+        // Measure sub text height
+        this.ctx.font = subFont;
+        const subTextMetrics = this.ctx.measureText(subText);
+        const subTextHeight = subTextMetrics.actualBoundingBoxAscent + subTextMetrics.actualBoundingBoxDescent;
+    
+        // Calculate total height and adjust starting Y position for 2/3 down the canvas
+        const startY = (this.game.canvasHeight * 3 / 4) - (mainTextHeight + subTextHeight + gapBetweenMessages) / 2 + mainTextHeight;
+    
+        // Draw main message
+        this.ctx.font = mainFont;
+        this.ctx.fillText(mainText, this.game.canvasWidth / 2, startY);
+    
+        // Draw sub-message
+        this.ctx.font = subFont;
+        this.ctx.fillText(subText, this.game.canvasWidth / 2, startY + gapBetweenMessages);
     }
 }
+

@@ -2,9 +2,9 @@ import { Ball } from './ball.js';
 
 export class Game {
     constructor() {
-        this.ball = new Ball(0, 0, 0, 0, 0);
+        this.ball = new Ball();
         this.players = [];
-        this.status = 0;
+        this.status = -1;
         this.canvasWidth = 0
         this.canvasHeight = 0
         this.countdown = null;
