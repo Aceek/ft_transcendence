@@ -56,7 +56,7 @@ function addEventListeners() {
   addEventListenerByIdPreventDouble("42button", "click", async function (event) {
     window.location.href = await fetch42AuthLink();
   });
-  addEventListenerByIdPreventDouble("loginBtn", "click", async function (event) {
+  addEventListenerByIdPreventDouble("loginForm", "submit", async function (event) {
     let formData = getFormData();
     let response = await postData(api_url + "auth/login/", formData);
     handleLoginResponse(response);
