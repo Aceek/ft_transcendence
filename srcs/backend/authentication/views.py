@@ -66,6 +66,20 @@ class LogoutView(APIView):
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
         response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.set_cookie(
+                    "access_token",
+                    "None",
+                    httponly=True,
+                    samesite="none",
+                    secure=True,
+        )
+        response.set_cookie(
+                    "refresh_token",
+                    "None",
+                    httponly=True,
+                    samesite="none",
+                    secure=True,
+        )
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
