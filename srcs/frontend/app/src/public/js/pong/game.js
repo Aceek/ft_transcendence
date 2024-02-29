@@ -5,6 +5,7 @@ export class Game {
         this.ball = new Ball();
         this.players = [];
         this.status = -1;
+        this.lastServerUpdate = 0;
         this.canvasWidth = 0
         this.canvasHeight = 0
 		this.paddleBorderDistance = 0
@@ -33,6 +34,7 @@ export class Game {
 
         this.players.forEach(player => player.handleDynamicData(dynamicData));
         this.status = parseInt(dynamicData.gs, 10);
+        this.lastServerUpdate = (new Date()).getTime();
     }
     
     handlePaddleSideAssignment(paddleSide) {

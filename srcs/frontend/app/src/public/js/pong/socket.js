@@ -38,7 +38,7 @@ export function messageHandler(socket, game) {
                 game.handleStaticData(data.data); // Update to call method on game object
                 break;
             case "game.dynamic_data":
-                game.handleDynamicData(data.data); // Update to call method on game object
+                game.handleDynamicData(data.data, data.timestamp); // Update to call method on game object
                 break;
             case "game.paddle_side":
                 game.handlePaddleSideAssignment(data.paddle_side); // Update to call method on game object

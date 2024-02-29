@@ -15,11 +15,11 @@ export class Ball {
 
     handleDynamicData(dynamicData) {
         // console.log("Handling ball dynamic data");
-        this.x = parseInt(dynamicData.b_x, 10);
-        this.y = parseInt(dynamicData.b_y, 10);
-        this.vx = parseInt(dynamicData.b_vx, 10);
-        this.vy = parseInt(dynamicData.b_vy, 10);
-    
+        this.x = parseFloat(dynamicData.b_x);
+        this.y = parseFloat(dynamicData.b_y);
+        this.vx = parseFloat(dynamicData.b_vx);
+        this.vy = parseFloat(dynamicData.b_vy);
+        console.log(`S - Ball position - X: ${this.x}, Y: ${this.y}`);
       }
   }
   

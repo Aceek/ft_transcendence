@@ -29,29 +29,36 @@ const fps = 240;
 const frameDuration = 1000 / fps;
 
 function interpolatePosition(lastPosition, speed, deltaTime) {
-  // Calculate and return the new position based on the speed and the delta time
-  return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
+    // Calculate and return the new position based on the speed and the delta time
+    return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
 }
 
-function mainLoop(timestamp) {
-    const deltaTime = timestamp - lastUpdateTime;
-  
-    if (deltaTime > frameDuration) {
-     
-       if (game.status === 1) {
-      game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
-      game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
-      }
+function mainLoop() {
+    const now = Date.now(); // Get current time in milliseconds
+    const timeSinceLastServerUpdate = now - game.lastServerUpdate; // Time since last server data was processed
 
-    //   // Print the ball's current position
-    //   console.log(`Ball position - X: ${game.ball.x}, Y: ${game.ball.y}`);
+    // Calculate deltaTime based on the last update time for consistent frame updates
+    const deltaTime = now - lastUpdateTime;
 
-      renderer.draw();
+    if (deltaTime >= frameDuration) {
+        if (game.status === 1) {
+            // Use timeSinceLastServerUpdate for interpolation to simulate movement since the last server update
+            game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, timeSinceLastServerUpdate);
+            game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, timeSinceLastServerUpdate);
+        }
 
-      lastUpdateTime = timestamp - (deltaTime % frameDuration);
+        // Print the ball's current position
+        // console.log(`C - Ball position - X: ${game.ball.x}, Y: ${game.ball.y}`);
+
+        renderer.draw();
+
+        // Update lastUpdateTime to now, correcting for the frame overshoot, to maintain consistent FPS
+        lastUpdateTime = now - (deltaTime % frameDuration);
     }
-  
+
     requestAnimationFrame(mainLoop);
 }
-  
-requestAnimationFrame(mainLoop); // Start the game loop
+
+// Start the game loop
+requestAnimationFrame(mainLoop);
+
