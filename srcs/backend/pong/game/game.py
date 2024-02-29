@@ -97,7 +97,7 @@ class GameLogic:
         await self.redis_ops.set_game_status(new_status)
         await self.get_dynamic_data_and_send()
 
-    # -------------------------CHECK GANE STATE-----------------------------------
+    # -------------------------CHECK GAME STATE-----------------------------------
 
     async def is_game_active(self):
         current_status = await self.redis_ops.get_game_status()

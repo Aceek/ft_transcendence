@@ -6,6 +6,7 @@ from .paddle import Paddle
 from .connect_utils import *
 from ..game.config import *
 from ..game.player import Player
+from ..game.channel_com import ChannelCom
 from ..game.game import GameLogic
 from ..game.enum import GameStatus
 from ..redis.redis_ops import RedisOps
@@ -23,9 +24,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Retrieve and set the user's ID and room names based on the connection's scope
         self.user_id = get_user_id(self.scope)
         self.room_name, self.room_group_name = get_room_names(self.scope)
-        
-        # Add this channel to the group, allowing for group messages
+
+        # Add this channel to the group and instanciate the Channel commmunication class
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        self.channel_com = ChannelCom(self.room_group_name)
         
         # Initialize Redis operations helper for the room and add the user as connected
         self.redis_ops = await RedisOps.create(self.room_name)
@@ -41,7 +43,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         if await self.redis_ops.get_game_status() is None:
             if await self.redis_ops.add_game_logic_flag():
                 asyncio.create_task(GameLogic(self.room_name, self.room_group_name).run())
+        else:
+            # Retrieve data from the existing game
+            static_data = await self.redis_ops.get_static_data()
+            await self.channel_com.send_static_data(static_data)
 
+            dynamic_data = await self.redis_ops.get_dynamic_data()
+            await self.channel_com.send_dynamic_data(dynamic_data)
+
+            # print
     # -------------------------------DISCONNECT-----------------------------------
                 
     async def disconnect(self, close_code):

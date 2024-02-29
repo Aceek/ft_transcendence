@@ -24,24 +24,22 @@ export class GameRenderer {
 
         this.drawScores();
 
-        if (game.status === 0 && game.countdown === null) {
+        if (game.status === 0 && (game.countdown === null || game.countdown === 0)) {
             this.drawTwoPartMessage("Room joined!", 
                 "Waiting for other players to start...");
         }
 
-        if (game.status === 2 && game.countdown === 0) {
+        if (game.status === 2 && (game.countdown === null || game.countdown === 0)) {
             this.drawTwoPartMessage("Game Paused!",
                 "Waiting for other players to resume...");
         }
 
-        if (game.status === 3 && game.countdown === 0) {
+        console.log(`Game countdown: ${this.game.countdown}`);
+
+        if (game.status === 3 && (game.countdown === null || game.countdown === 0)) {
             this.drawTwoPartMessage("Game Over!",
                 "Press Enter to restart...")
         }
-        
-        // if (game.countdown !== null && game.countdown > 0) {
-        //         this.drawCountdown();
-        //     }
             
         if (game.countdown !== null && game.countdown > 0) {
             this.drawTwoPartMessage(game.countdown.toString(),
