@@ -58,6 +58,26 @@ class GameLogic:
         await self.get_dynamic_data_and_send()
         
 
+
+    # ---------------------------DATA UPDATES-----------------------------------
+
+    async def get_static_data_and_send(self):
+        """Centralized method to send dynamic data."""
+        static_data = await self.redis_ops.get_static_data()
+        await self.channel_com.send_static_data(static_data)
+
+    async def get_dynamic_data_and_send(self):
+        """Centralized method to send dynamic data."""
+        dynamic_data = await self.redis_ops.get_dynamic_data()
+        await self.channel_com.send_dynamic_data(dynamic_data)
+
+    async def update_game_status_and_notify(self, new_status):
+        """Updates game status and sends dynamic data if necessary."""
+        await self.redis_ops.set_game_status(new_status)
+        await self.get_dynamic_data_and_send()
+
+    # -------------------------------LAUNCHER-----------------------------------
+
     async def launch_game(self):
         """Launch game."""    
         await self.countdown()
@@ -80,23 +100,6 @@ class GameLogic:
             await asyncio.sleep(1)
         await self.channel_com.send_countdown(0)
         print("Countdown finished.")
-
-    # ---------------------------DATA UPDATES-----------------------------------
-
-    async def get_static_data_and_send(self):
-        """Centralized method to send dynamic data."""
-        static_data = await self.redis_ops.get_static_data()
-        await self.channel_com.send_static_data(static_data)
-
-    async def get_dynamic_data_and_send(self):
-        """Centralized method to send dynamic data."""
-        dynamic_data = await self.redis_ops.get_dynamic_data()
-        await self.channel_com.send_dynamic_data(dynamic_data)
-
-    async def update_game_status_and_notify(self, new_status):
-        """Updates game status and sends dynamic data if necessary."""
-        await self.redis_ops.set_game_status(new_status)
-        await self.get_dynamic_data_and_send()
 
     # -------------------------CHECK GAME STATE-----------------------------------
 
