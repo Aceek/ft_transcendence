@@ -194,9 +194,10 @@ class GameLogic:
             await self.players[scorer_position.value].update_score()
             if self.players[scorer_position.value].check_win():
                 await self.update_game_status_and_notify(GameStatus.COMPLETED)
-        else:
-            # Set the ball data to Redis
-            await self.ball.set_data_to_redis()
+        
+        # Set the ball data to Redis
+        await self.ball.set_data_to_redis()
 
-            # Broadcast the current game data to all clients
-            await self.get_dynamic_data_and_send()
+        # Broadcast the current game data to all clients
+        await self.get_dynamic_data_and_send()
+        
