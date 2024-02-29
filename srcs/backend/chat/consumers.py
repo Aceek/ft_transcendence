@@ -16,7 +16,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.followed_users = []
         self.pong_received = True
-        self.active = True 
+        self.active = True
 
     async def connect(self):
         self.user = self.scope["user"]
@@ -27,8 +27,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.mark_user_online(str(self.user.id))
             await self.accept()
             await self.send_unread_messages(str(self.user.id))
+            await self.verify_active_tournament()
+            await self.verify_active_match()
             asyncio.create_task(self.ping_client())
-
 
         else:
             await self.close()
@@ -37,7 +38,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.active = False
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.mark_user_offline(str(self.user.id))
-
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -65,6 +65,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.pong_received = True
         elif action == "read_messages":
             await self.mark_message_as_read(data["receiver"])
+        elif action == "join_tournament":
+            await self.channel_layer.group_add(
+                f"tournament_{data['tournamentId']}", self.channel_name
+            )
+        elif action == "join_match":
+            await self.channel_layer.group_add(
+                f"match_{data['matchId']}", self.channel_name
+            )
 
     @database_sync_to_async
     def get_unread_messages(self, user_id):
@@ -96,9 +104,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def mark_message_as_read(self, user_id):
         from chat.models import Message
 
-        # messages = Message.objects.filter(receiver_id=user_id, read=False)
-        # get message send by user_id and received by self.user and not read
-        messages = Message.objects.filter(receiver_id=self.user.id, sender_id=user_id, read=False)
+        messages = Message.objects.filter(
+            receiver_id=self.user.id, sender_id=user_id, read=False
+        )
         for message in messages:
             message.read = True
             message.save()
@@ -218,8 +226,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def status_update(self, event):
         await self.send(text_data=json.dumps(event))
 
-
-
     async def ping_client(self):
         while self.active:
             await asyncio.sleep(30)
@@ -234,10 +240,112 @@ class ChatConsumer(AsyncWebsocketConsumer):
             else:
                 self.pong_received = False
                 try:
-                    if (self.active):
+                    if self.active:
                         await self.send(text_data=json.dumps({"type": "ping"}))
                 except RuntimeError:
                     if await self.is_user_online(str(self.user.id)):
                         await self.mark_user_offline(str(self.user.id))
                     break
 
+    async def tournament_message(self, event):
+        message = event["message"]
+        action = event.get("action")
+        tournament_id = event["tournamentId"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "tournament_message",
+                    "message": message,
+                    "tournamentId": tournament_id,
+                    "action": action,
+                }
+            )
+        )
+
+    async def send_tournament(self, event):
+        tournament_id = event["tournamentId"]
+        action = event["action"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "tournament_message",
+                    "action": action,
+                    "tournamentId": tournament_id,
+                }
+            )
+        )
+
+    async def send_tournament_ready(self, active_tournaments):
+        for tournament in active_tournaments:
+            await self.channel_layer.group_add(
+                f"tournament_{str(tournament.uid)}", self.channel_name
+            )
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "tournament_message",
+                        "action": "tournament_ready",
+                        "tournamentId": str(tournament.uid),
+                    }
+                )
+            )
+
+    async def send_match(self, event):
+        match_id = event["matchId"]
+        action = event["action"]
+        message = event.get("message")
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "match_message",
+                    "action": action,
+                    "matchId": match_id,
+                    "message": message,
+                }
+            )
+        )
+
+    async def verify_active_match(self):
+        active_matches = await self.get_active_matches()
+        await self.send_match_ready(active_matches)
+
+    @database_sync_to_async
+    def get_active_matches(self):
+        from tournament.models import Matches
+        from django.db.models import Q
+
+        active_matches = Matches.objects.filter(
+            Q(user1=self.user) | Q(user2=self.user),
+            is_active=True,
+            is_finished=False,
+        )
+        return list(active_matches)
+
+
+    async def send_match_ready(self, active_matches):
+        for match in active_matches:
+            await self.channel_layer.group_add(
+                f"match_{str(match.uid)}", self.channel_name
+            )
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "match_message",
+                        "action": "match_ready",
+                        "matchId": str(match.uid),
+                    }
+                )
+            )
+
+    async def verify_active_tournament(self):
+        active_tournaments = await self.get_active_tournaments()
+        await self.send_tournament_ready(active_tournaments)
+
+    @database_sync_to_async
+    def get_active_tournaments(self):
+        from tournament.models import Tournament
+
+        active_tournaments = Tournament.objects.filter(
+            is_active=True, user=self.user, is_finished=False
+        )
+        return list(active_tournaments)

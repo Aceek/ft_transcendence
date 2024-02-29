@@ -2,6 +2,8 @@ from .models import Tournament, Matches
 import random
 from CustomUser.models import CustomUser
 from stats.manage_stats import ManageHistory
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class ManageTournament:
@@ -38,7 +40,8 @@ class ManageTournament:
                 round=self.tournament.round,
             )
             match.save()
-            print("match created : ", match, " round : ", self.tournament.round)
+            self.send_messages_join_match_users(match)
+            self.notify_match_ready(match)
         self.tournament.save()
 
     def end_round(self):
@@ -50,6 +53,7 @@ class ManageTournament:
             self.tournament.is_active = False
             self.tournament.winner = winners[0]
             self.tournament.save()
+            self.notify_tournament_end()
             return
         self.tournament.round += 1
         self.tournament.save()
@@ -72,6 +76,7 @@ class ManageTournament:
         match.winner = winner
         ManageHistory(user1=match.user1, user2=match.user2, winner=winner)
         match.save()
+        self.notify_match_end(match)
         if verify:
             self.verify_round_end()
 
@@ -89,3 +94,84 @@ class ManageTournament:
 
     def get_users(self):
         return self.users
+
+    def notify_tournament_group(self):
+        channel_layer = get_channel_layer()
+        message = f"Tournament {self.tournament.name} is now active"
+        async_to_sync(channel_layer.group_send)(
+            f"tournament_{str(self.tournament.uid)}",
+            {
+                "type": "tournament_message",
+                "action": "tournament_active",
+                "message": message,
+                "tournamentId": str(self.tournament.uid),
+            },
+        )
+
+    def send_messages_join_tournaments_users(self):
+        for user in self.users:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{user.id}",
+                {
+                    "action": "join_tournament",
+                    "type": "send_tournament",
+                    "tournamentId": str(self.tournament.uid),
+                },
+            )
+
+    def send_messages_join_match_users(self, match: Matches):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{match.user1.id}",
+            {
+                "action": "join_match",
+                "type": "send_match",
+                "action": "join_match",
+                "matchId": str(match.uid),
+            },
+        )
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{match.user2.id}",
+            {
+                "type": "send_match",
+                "action": "join_match",
+                "matchId": str(match.uid),
+            },
+        )
+
+    def notify_match_ready(self, match: Matches):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"match_{str(match.uid)}",
+            {
+                "type": "send_match",
+                "action": "match_ready",
+                "message": "Match is ready",
+                "matchId": str(match.uid),
+            },
+        )
+
+    def notify_match_end(self, match: Matches):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"match_{str(match.uid)}",
+            {
+                "type": "send_match",
+                "action": "match_end",
+                "message": "Match is ended",
+                "matchId": str(match.uid),
+            },
+        )
+
+    def notify_tournament_end(self):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"tournament_{str(self.tournament.uid)}",
+            {
+                "type": "tournament_message",
+                "action": "tournament_end",
+                "message": f"Tournament {self.tournament.name} is ended",
+                "tournamentId": str(self.tournament.uid),
+            },
+        )

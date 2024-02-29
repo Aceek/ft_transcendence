@@ -5,7 +5,7 @@ from CustomUser.models import CustomUser
 import random
 
 # Remplacez 'your_tournament_uid' par l'UID de votre tournoi
-tournament_uid = '3ec26a92-98c4-414b-9b7f-1cb3bcba2cce'
+tournament_uid = 'eb60427a-03a3-4a99-a6f7-d2837e6b20df'
 tournament = Tournament.objects.get(uid=tournament_uid)
 
 # Instanciez votre gestionnaire de tournoi

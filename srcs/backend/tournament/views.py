@@ -156,6 +156,8 @@ class TournamentLaunchView(APIView):
         # manageTournament(tournament)
         manageTournament = ManageTournament(tournament)
         manageTournament.organize_matches()
+        manageTournament.send_messages_join_tournaments_users()
+        manageTournament.notify_tournament_group()
         tournament.save()
         return Response(
             {"message": "Tournament is now active"}, status=status.HTTP_200_OK

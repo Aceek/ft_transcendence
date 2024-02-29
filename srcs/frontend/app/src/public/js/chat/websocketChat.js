@@ -3,6 +3,7 @@ import { handleStatusUpdate } from "./utilsChat.js";
 import { getProfile } from "../profile/getProfile.js";
 import { injectChatRoom } from "./injectChat.js";
 import { incressBadgeBgSuccess } from "./utilsChat.js";
+import { handleTournamentMessage } from "./tournamentChat.js";
 import {
   conversations,
   chatSocket,
@@ -28,6 +29,9 @@ export function handleWebSocketMessage(event, friendsListIds) {
       break;
     case "ping":
       chatSocket.send(JSON.stringify({ type: "pong", action: "pong" }));
+      break;
+    case "tournament_message":
+      handleTournamentMessage(data);
       break;
     default:
       console.log("Unknown message type:", data);
