@@ -25,7 +25,7 @@ new KeyEventController(socket, game);
 //-----------------------------MAIN LOOP------------------------------------
 
 let lastUpdateTime = 0;
-const fps = 120;
+const fps = 240;
 const frameDuration = 1000 / fps;
 
 function interpolatePosition(lastPosition, speed, deltaTime) {
@@ -34,21 +34,24 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
 }
 
 function mainLoop(timestamp) {
-	const deltaTime = timestamp - lastUpdateTime;
+    const deltaTime = timestamp - lastUpdateTime;
   
-	if (deltaTime > frameDuration) {
-	 
-   	if (game.status === 1) {
+    if (deltaTime > frameDuration) {
+     
+       if (game.status === 1) {
       game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, deltaTime);
       game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, deltaTime);
-	  }
+      }
 
-	  renderer.draw();
+    //   // Print the ball's current position
+    //   console.log(`Ball position - X: ${game.ball.x}, Y: ${game.ball.y}`);
 
-	  lastUpdateTime = timestamp - (deltaTime % frameDuration);
-	}
+      renderer.draw();
+
+      lastUpdateTime = timestamp - (deltaTime % frameDuration);
+    }
   
-	requestAnimationFrame(mainLoop);
+    requestAnimationFrame(mainLoop);
 }
   
 requestAnimationFrame(mainLoop); // Start the game loop

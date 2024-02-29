@@ -14,6 +14,10 @@ class Player:
     def reset_value(self):
         self.score = INITIAL_SCORE
         self.paddle_y = INITIAL_PADDLE_Y
+        if self.side == PlayerPosition.LEFT:
+            self.paddle_x = PADDLE_DISTANCE_FROM_BORDER
+        elif self.side == PlayerPosition.RIGHT:
+            self.paddle_x = SCREEN_WIDTH - PADDLE_WIDTH - PADDLE_DISTANCE_FROM_BORDER
 
     async def set_data_to_redis(self):
         await self.set_paddle_to_redis(self.paddle_y)

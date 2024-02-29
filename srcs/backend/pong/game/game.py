@@ -18,12 +18,12 @@ class GameLogic:
 
     def init_static_data(self):
         static_data = {
-            "scoreLimit": int(SCORE_LIMIT),
             "canvasHeight": int(SCREEN_HEIGHT),
             "canvasWidth": int(SCREEN_WIDTH),
             "paddleWidth": int(PADDLE_WIDTH),
             "paddleHeight": int(PADDLE_HEIGHT),
             "paddleSpeed": int(PADDLE_SPEED),
+            "paddleBorderDistance": int(PADDLE_DISTANCE_FROM_BORDER),
             "ballSize": int(BALL_SIZE),
         }
         return static_data
@@ -56,8 +56,6 @@ class GameLogic:
         # Send data to first client and set the game to not started
         await self.get_static_data_and_send()
         await self.get_dynamic_data_and_send()
-        
-
 
     # ---------------------------DATA UPDATES-----------------------------------
 
@@ -82,7 +80,7 @@ class GameLogic:
         """Launch game."""    
         await self.countdown()
 
-        # If a client disconnect during the countdown, the loop restart to wait for a reconnection
+        # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
         if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
             if await self.game_sync.wait_for_players_to_start():
                 await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
@@ -176,7 +174,7 @@ class GameLogic:
 
         # Check and handle wall collision
         if self.ball.check_wall_collision():
-            self.ball.handle_wall_collision()
+            self.ball.handle_wall_bounce()
 
         # Retrieve paddle position from players
         for player in self.players:
@@ -185,7 +183,7 @@ class GameLogic:
         # Check and handle paddle collision
         collision, position = self.ball.check_paddle_collision(self.players)
         if collision:
-            self.ball.handle_paddle_collision(position, self.players)
+            self.ball.handle_paddle_bounce_calculation(position, self.players)
         
         # Check and handle goal scored
         scored, scorer_position = self.ball.check_score()

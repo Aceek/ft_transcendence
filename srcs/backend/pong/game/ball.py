@@ -33,17 +33,21 @@ class Ball:
         return False
 
     def check_paddle_collision(self, players):
-        # Check collision with left paddle
-        if (self.x - BALL_SIZE / 2 <= PADDLE_WIDTH and
-                players[PlayerPosition.LEFT.value].paddle_y <= self.y <= players[PlayerPosition.LEFT.value].paddle_y + PADDLE_HEIGHT):
-            return True, PlayerPosition.LEFT
+        def detect_collision_and_handle_edge_bounce(paddle_x, paddle_y):
+            if paddle_x < self.x < paddle_x + PADDLE_WIDTH + BALL_SIZE:
+                if paddle_y <= self.y <= paddle_y + PADDLE_HEIGHT:
+                    return True
+                elif (abs(self.y - paddle_y) <= BALL_SIZE / 2 or
+                    abs(self.y - (paddle_y + PADDLE_HEIGHT)) <= BALL_SIZE / 2):
+                    self.vy *= -1  # Reverse y-velocity for edge collision
+                    return True
+            return False
 
-        # Check collision with right paddle
-        elif (self.x + BALL_SIZE / 2 >= SCREEN_WIDTH - PADDLE_WIDTH and
-            players[PlayerPosition.RIGHT.value].paddle_y <= self.y <= players[PlayerPosition.RIGHT.value].paddle_y + PADDLE_HEIGHT):
-            return True, PlayerPosition.RIGHT
-
-        return False, None
+        for player in players:
+            if detect_collision_and_handle_edge_bounce(player.paddle_x, player.paddle_y):
+                return True, player.side
+                
+        return False, None 
 
     def check_score(self):
         if self.x < 0 - BALL_SIZE / 2:
@@ -54,11 +58,11 @@ class Ball:
 
 #------------------------------HANDLER-------------------------------------
 
-    def handle_wall_collision(self):
+    def handle_wall_bounce(self):
         self.vy *= -1
         self.y = max(BALL_SIZE / 2, min(self.y, SCREEN_HEIGHT - BALL_SIZE / 2))
         
-    def handle_paddle_collision(self, player_position, players):
+    def handle_paddle_bounce_calculation(self, player_position, players):
         player = players[player_position.value]
         paddle_y = player.paddle_y
         relative_position = (self.y - paddle_y) / PADDLE_HEIGHT

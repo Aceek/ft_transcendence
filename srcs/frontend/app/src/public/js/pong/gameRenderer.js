@@ -14,7 +14,7 @@ export class GameRenderer {
         ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
         
         game.players.forEach(player => {
-            const x = player.side === 'left' ? 0 : game.canvasWidth - player.paddleWidth;
+            const x = player.side === 'left' ? game.paddleBorderDistance : game.canvasWidth - player.paddleWidth - game.paddleBorderDistance;
             this.drawPaddle(x, player.paddleY, player.paddleWidth, player.paddleHeight);
         });
         

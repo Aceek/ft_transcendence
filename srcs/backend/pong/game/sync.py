@@ -56,3 +56,4 @@ class GameSync:
         elif connected_users_count == 0:
             return False, "All players in room have left."
         return None, "Waiting for players to restart the game..."
+    
