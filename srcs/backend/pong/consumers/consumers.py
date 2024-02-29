@@ -36,7 +36,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
         self.paddle = Paddle(self.user_id, self.redis_ops)
         await self.paddle.assignment()
-        await self.send_client_paddle_side()
+        await self.send_paddle_assignement()
 
         # Check if the client is the first to connect to the room; 
         # if so, client acquire the game logic flag and start game logic in a new task
@@ -44,21 +44,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             if await self.redis_ops.add_game_logic_flag():
                 asyncio.create_task(GameLogic(self.room_name, self.room_group_name).run())
         else:
-            # Retrieve data from the existing game
-            static_data = await self.redis_ops.get_static_data()
-            await self.channel_com.send_static_data(static_data)
+            # Retrieve and send data from the existing game
+            await self.send_game_data()
 
-            dynamic_data = await self.redis_ops.get_dynamic_data()
-            await self.channel_com.send_dynamic_data(dynamic_data)
-
-            # print
     # -------------------------------DISCONNECT-----------------------------------
                 
     async def disconnect(self, close_code):
         
         # If the game is in progress, set its status to suspended
         current_status = await self.redis_ops.get_game_status()
-        if current_status == GameStatus.IN_PROGRESS:
+        if current_status != GameStatus.COMPLETED:
             await self.redis_ops.set_game_status(GameStatus.SUSPENDED)
 
         # Remove this user from the list of connected users and delete any restart request from them
@@ -115,7 +110,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             'seconds': seconds
         }))
 
-    async def send_client_paddle_side(self):
+    async def send_paddle_assignement(self):
         if self.paddle.side is not None:
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',
@@ -123,3 +118,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             }))
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
+
+    async def send_game_data(self):
+            # Retrieve static and dynamic data from the existing game
+            static_data = await self.redis_ops.get_static_data()
+            dynamic_data = await self.redis_ops.get_dynamic_data()
+
+            # Prepare the data as if it were coming from a channel event
+            static_event = {'data': static_data}
+            dynamic_event = {'data': dynamic_data}
+
+            await self.game_static_data(static_event)
+            await self.game_dynamic_data(dynamic_event)

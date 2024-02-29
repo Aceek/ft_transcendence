@@ -34,8 +34,6 @@ export class GameRenderer {
                 "Waiting for other players to resume...");
         }
 
-        console.log(`Game countdown: ${this.game.countdown}`);
-
         if (game.status === 3 && (game.countdown === null || game.countdown === 0)) {
             this.drawTwoPartMessage("Game Over!",
                 "Press Enter to restart...")

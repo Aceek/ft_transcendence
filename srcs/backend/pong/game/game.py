@@ -16,6 +16,18 @@ class GameLogic:
 
     # -------------------------------INIT-----------------------------------
 
+    def init_static_data(self):
+        static_data = {
+            "scoreLimit": int(SCORE_LIMIT),
+            "canvasHeight": int(SCREEN_HEIGHT),
+            "canvasWidth": int(SCREEN_WIDTH),
+            "paddleWidth": int(PADDLE_WIDTH),
+            "paddleHeight": int(PADDLE_HEIGHT),
+            "paddleSpeed": int(PADDLE_SPEED),
+            "ballSize": int(BALL_SIZE),
+        }
+        return static_data
+    
     async def init_env(self):
         """Initial env setup."""
         self.redis_ops = await RedisOps.create(self.room_name)
@@ -47,28 +59,17 @@ class GameLogic:
         
 
     async def launch_game(self):
-        """Launch game."""
-        # Send initial data to all clients
-        await self.get_static_data_and_send()
-        await self.get_dynamic_data_and_send()
-        
-        # Launch coutdown and start th game
+        """Launch game."""    
         await self.countdown()
+
+        # If a client disconnect during the countdown, the loop restart to wait for a reconnection
+        if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
+            if await self.game_sync.wait_for_players_to_start():
+                await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
+                await self.launch_game()
+        
         await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
         self.last_update_time = time.time()
-        
-
-    def init_static_data(self):
-        static_data = {
-            "scoreLimit": int(SCORE_LIMIT),
-            "canvasHeight": int(SCREEN_HEIGHT),
-            "canvasWidth": int(SCREEN_WIDTH),
-            "paddleWidth": int(PADDLE_WIDTH),
-            "paddleHeight": int(PADDLE_HEIGHT),
-            "paddleSpeed": int(PADDLE_SPEED),
-            "ballSize": int(BALL_SIZE),
-        }
-        return static_data
 
     async def countdown(self, duration=3):
         """Handles the countdown logic."""
@@ -113,6 +114,7 @@ class GameLogic:
     async def is_game_resuming(self):
         print("Checking if the game is resuming...")
         if await self.game_sync.wait_for_players_to_start():
+            await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
             await self.launch_game()
             return True
 
@@ -157,9 +159,11 @@ class GameLogic:
             
         except asyncio.CancelledError:
              # Handle cleanup upon asyncio task cancellation
+             await self.redis_ops.clear_all_data()
              print("Game loop cancelled. Performing cleanup.")
         except Exception as e:
              # Handle other exceptions that might occur
+              await self.redis_ops.clear_all_data()
               print(f"An unexpected error occurred: {e}")
 
     async def game_tick(self, delta_time):
