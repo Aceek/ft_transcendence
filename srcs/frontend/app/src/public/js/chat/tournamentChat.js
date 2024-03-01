@@ -13,7 +13,7 @@ export async function handleTournamentMessage(data) {
     tournamentId: tournamentId,
   });
   if (currentFriendId === "tournament-bot") {
-    injectChatRoom("tournament-bot", false);
+    injectChatRoom("tournament-bot", false, createTournamentMessage);
     attashLinkListenerTournamentChat();
   } else {
     incressBadgeBgSuccess("tournament-bot");
