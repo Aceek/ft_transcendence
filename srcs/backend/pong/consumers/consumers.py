@@ -4,8 +4,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .paddle import Paddle
 from .connect_utils import *
-from ..game.config import *
-from ..game.player import Player
 from ..game.channel_com import ChannelCom
 from ..game.game import GameLogic
 from ..game.enum import GameStatus

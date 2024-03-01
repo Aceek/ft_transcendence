@@ -1,50 +1,62 @@
-from ..game.config import SCREEN_HEIGHT, PADDLE_HEIGHT, PADDLE_SPEED
+from ..game.config import *
 from ..game.enum import PlayerPosition
+from ..game.utils import get_player_key_map
+
 
 class Paddle:
     def __init__(self, user_id, redis_ops):
         self.user_id = user_id
         self.redis_ops = redis_ops
         self.side = None
-        self.position_key_map = {
-            PlayerPosition.LEFT: "lp_y",
-            PlayerPosition.RIGHT: "rp_y"
-        }
 
     async def assignment(self):
-        for position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
-            key = f"game:{self.redis_ops.room_name}:paddle:{self.position_key_map[position]}"
+        # Iterate through all possible positions
+        for position in PlayerPosition:
+            # Use get_player_key_map to fetch the key map for the current position
+            self.key_map = get_player_key_map(position)
+
+            # Construct the Redis key using the position from the key map
+            key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
+            
+            # Check if the user_id is already assigned to a paddle for this position
             if await self.redis_ops.connection.sismember(key, self.user_id):
                 self.side = position
-                break
-        else:
-            for position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
-                key = f"game:{self.redis_ops.room_name}:paddle:{self.position_key_map[position]}"
-                if not await self.redis_ops.connection.scard(key):
-                    await self.redis_ops.connection.sadd(key, self.user_id)
-                    self.side = position
-                    break
-        print(f"User {self.user_id} assigned to {self.side.name} paddle")
+                return
+            # Check if there's room to add a new player to this position
+            elif not await self.redis_ops.connection.scard(key):
+                await self.redis_ops.connection.sadd(key, self.user_id)
+                self.side = position
+                return
 
-    async def check_movement(self, new_y):
-        if new_y < 0 or new_y > SCREEN_HEIGHT - PADDLE_HEIGHT:
-            print(f"Requested Y: {new_y} is outside the game boundaries.")
-            return False 
-        
-        key = self.position_key_map[self.side]
-        current_y_str = await self.redis_ops.get_dynamic_value(key)
-        current_y = int(current_y_str) if current_y_str is not None else 0
+        # This prints the side to which the user was assigned, if any
+        if self.side is not None:
+            print(f"User {self.user_id} assigned to {self.side.name} paddle")
+        else:
+            print(f"No available position for user {self.user_id}.")
+
+    async def check_movement(self, new_position):
+        # Choose the correct axis key based on the player's side
+        key = self.key_map['paddle_x'] if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else self.key_map['paddle_y']
+        current_pos_str = await self.redis_ops.get_dynamic_value(key)
+        current_pos = int(current_pos_str) if current_pos_str is not None else 0
 
         # Calculate the attempted movement distance
-        movement_distance = abs(new_y - current_y)
+        movement_distance = abs(new_position - current_pos)
+        # Determine boundaries based on paddle orientation
+        boundary = SCREEN_WIDTH - PADDLE_WIDTH if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else SCREEN_HEIGHT - PADDLE_HEIGHT
+
+        if new_position < 0 or new_position > boundary:
+            print(f"Requested position: {new_position} is outside the game boundaries.")
+            return False
 
         # Check if the movement is within the allowed speed limit
         if movement_distance <= PADDLE_SPEED:
             return True
         else:
-            print(f"Attempted to move the paddle more than the speed limit ({PADDLE_SPEED}). Movement Distance: {movement_distance}")  # Print error message
+            print(f"Attempted to move the paddle more than the speed limit ({PADDLE_SPEED}). Movement Distance: {movement_distance}")
             return False
 
-    async def set_data_to_redis(self, paddle_y):
-        key = self.position_key_map[self.side]
-        await self.redis_ops.set_dynamic_value(key, paddle_y)
+    async def set_data_to_redis(self, new_position):
+        # Choose the correct axis key based on the player's side
+        key = self.key_map['paddle_x'] if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else self.key_map['paddle_y']
+        await self.redis_ops.set_dynamic_value(key, new_position)

@@ -8,10 +8,12 @@ class Ball:
     def __init__(self, redis_ops):
         self.reset_value()
         self.redis_ops = redis_ops
+        
+        self.size = BALL_SIZE
 
     def reset_value(self):
-        self.x = INITIAL_BALL_X
-        self.y = INITIAL_BALL_Y
+        self.x = BALL_X
+        self.y = BALL_Y
         self.vx = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
         self.vy = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
 
@@ -34,11 +36,11 @@ class Ball:
 
     def check_paddle_collision(self, players):
         def detect_collision_and_handle_edge_bounce(paddle_x, paddle_y):
-            if paddle_x < self.x < paddle_x + PADDLE_WIDTH + BALL_SIZE:
+            if paddle_x < self.x < paddle_x + PADDLE_WIDTH + self.size:
                 if paddle_y <= self.y <= paddle_y + PADDLE_HEIGHT:
                     return True
                 elif (abs(self.y - paddle_y) <= BALL_SIZE / 2 or
-                    abs(self.y - (paddle_y + PADDLE_HEIGHT)) <= BALL_SIZE / 2):
+                    abs(self.y - (paddle_y + PADDLE_HEIGHT)) <= self.size / 2):
                     self.vy *= -1  # Reverse y-velocity for edge collision
                     return True
             return False
@@ -52,7 +54,7 @@ class Ball:
     def check_score(self):
         if self.x < 0 - BALL_SIZE / 2:
             return True, PlayerPosition.RIGHT
-        elif self.x > SCREEN_WIDTH + BALL_SIZE / 2:
+        elif self.x > SCREEN_WIDTH + self.size / 2:
             return True, PlayerPosition.LEFT
         return False, None
 
@@ -60,7 +62,7 @@ class Ball:
 
     def handle_wall_bounce(self):
         self.vy *= -1
-        self.y = max(BALL_SIZE / 2, min(self.y, SCREEN_HEIGHT - BALL_SIZE / 2))
+        self.y = max(self.size / 2, min(self.y, SCREEN_HEIGHT - self.size / 2))
         
     def handle_paddle_bounce_calculation(self, player_position, players):
         player = players[player_position.value]

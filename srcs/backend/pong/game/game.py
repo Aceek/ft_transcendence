@@ -23,8 +23,9 @@ class GameLogic:
             "paddleWidth": int(PADDLE_WIDTH),
             "paddleHeight": int(PADDLE_HEIGHT),
             "paddleSpeed": int(PADDLE_SPEED),
-            "paddleBorderDistance": int(PADDLE_DISTANCE_FROM_BORDER),
+            "paddleBorderDistance": int(PADDLE_BORDER_DISTANCE),
             "ballSize": int(BALL_SIZE),
+            "playerNb": int(PLAYER_NB),
         }
         return static_data
     
@@ -44,10 +45,11 @@ class GameLogic:
         await self.redis_ops.set_static_data(self.static_data)
 
         # Init players
-        self.players = [Player(PlayerPosition.LEFT, self.redis_ops), 
-                        Player(PlayerPosition.RIGHT, self.redis_ops)]
+        self.players = [Player(position, self.redis_ops) for position in PlayerPosition if position.value < PLAYER_NB]
         for player in self.players:
                 await player.set_data_to_redis()
+        #to be tested
+        # await asyncio.gather(*(player.set_data_to_redis() for player in self.players))
 
         # Init ball
         self.ball = Ball(self.redis_ops) 
