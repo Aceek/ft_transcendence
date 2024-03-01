@@ -14,9 +14,15 @@ export class GameRenderer {
         ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
         
         game.players.forEach(player => {
-            const x = player.side === 'left' ? game.paddleBorderDistance : game.canvasWidth - player.paddleWidth - game.paddleBorderDistance;
-            this.drawPaddle(x, player.paddleY, player.paddleWidth, player.paddleHeight);
+            // Uncomment the following line if you need to check the calculated 'x' value for any reason
+            // const x = player.side === 'left' ? game.paddleBorderDistance : game.canvasWidth - player.paddleWidth - game.paddleBorderDistance;
+        
+            // Print player paddle properties for debugging or monitoring
+            console.log(`Player [${player.id}] Paddle Position and Size: X=${player.paddleX}, Y=${player.paddleY}, Width=${player.paddleWidth}, Height=${player.paddleHeight}`);
+        
+            this.drawPaddle(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
         });
+        
         
         this.drawBall(game.ball.x, game.ball.y);
         

@@ -11,6 +11,7 @@ export class Game {
 		this.paddleBorderDistance = 0
         this.countdown = null;
         this.controlledPlayer = null;
+        this.nbPlayer = 0;
     }
 
     addPlayer(player) {
@@ -26,6 +27,7 @@ export class Game {
         this.canvasWidth = parseInt(staticData.canvasWidth, 10);
         this.canvasHeight = parseInt(staticData.canvasHeight, 10);
         this.paddleBorderDistance = parseInt(staticData.paddleBorderDistance, 10);
+        this.nbPlayer = parseInt(staticData.nbPlayer, 10);
     }
   
     handleDynamicData(dynamicData) {

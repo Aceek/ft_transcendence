@@ -35,11 +35,10 @@ class Player:
 
 #------------------------------REDIS-------------------------------------
 
+
     async def set_data_to_redis(self):
-        if self.side in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
-            await self.set_paddle_to_redis(self.paddle_y, "paddle_y")
-        else:
-            await self.set_paddle_to_redis(self.paddle_x, "paddle_x")
+        await self.set_paddle_to_redis(self.paddle_x, "paddle_x")
+        await self.set_paddle_to_redis(self.paddle_y, "paddle_y")
         await self.set_score_to_redis(self.score)
         
     async def update_score(self):
