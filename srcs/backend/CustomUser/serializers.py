@@ -15,6 +15,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_2fa_enabled",
             "friends",
             "new_email",
+            "blocked_users",
         ]
         read_only_fields = ["id", "email"]
 
@@ -71,8 +72,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         friends = validated_data.pop("friends", [])
         for friend in friends:
             instance.friends.add(friend)
+        blocked_users = validated_data.pop("blocked_users", [])
+        for blocked_user in blocked_users:
+            instance.blocked_users.add(blocked_user)
         return super().update(instance, validated_data)
 
 
 class CustomUserSerializerFriend(serializers.Serializer):
     friends = serializers.ListField(child=serializers.UUIDField(), required=True)
+
+class CustomUserSerializerBlocked(serializers.Serializer):
+    blocked_users = serializers.ListField(child=serializers.UUIDField(), required=True)

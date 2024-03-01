@@ -5,21 +5,31 @@ import {
   loadScript,
 } from "../../pageUtils.js";
 import { api_url, router } from "../../main.js";
-import { displayProfile } from "../profile.js";
-import { displayFriendsProfile } from "../profileFriends.js";
+import { injectUserInfo } from "../profileUtils.js";
+import { getProfile } from "../getProfile.js";
+import { ajusterInterfaceProfil } from "../profileFriends.js";
 
-async function verifyDOMProfileLoaded(userUID = null) {
-  if (!document.getElementById("mainContainerProfile")) {
+
+export async function displayProfileStatsInfo(userUID = null) {
+  try {
+    loadProfileCss("/public/css/profile.css");
+    const profileTemplateHtml = await fetchTemplate("/public/html/profile.html");
+    document.getElementById("main").innerHTML = profileTemplateHtml;
+    const profile = await getProfile(userUID);
+    injectUserInfo(profile);
     if (userUID) {
-      await displayFriendsProfile(userUID);
-    } else {
-      await displayProfile();
+      ajusterInterfaceProfil();
     }
+  } catch (error) {
+    console.error("Error:", error);
+    router("/home");
   }
 }
 
+
 export async function displayStats(userUID = null) {
-  await verifyDOMProfileLoaded(userUID);
+  // await verifyDOMProfileLoaded(userUID);
+  await displayProfileStatsInfo(userUID);
   await fetchTemplate("/public/html/stats.html")
     .then(async (statsDivString) => {
       const friendHistoryDiv = document.getElementById("friendHistoryDiv");
@@ -196,6 +206,7 @@ function displayEloChart(data) {
   eloData.reverse();
   labels.reverse();
   const ctxElo = document.getElementById("eloChart").getContext("2d");
+  // ctxElo.clearRect(0, 0, ctxElo.width, ctxElo.height);
   const eloChart = new Chart(ctxElo, {
     type: "line",
     data: {

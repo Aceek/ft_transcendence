@@ -12,14 +12,32 @@ import { deleteNavbar } from "./pageUtils.js";
 import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 import { get2FAPage } from "./2fa.js";
+import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
+import {
+  chatSocket,
+  displayChatPage,
+  resetCurrentFriendId,
+} from "./chat/chat.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
-export const api_url = "https://" + window.location.hostname + portString + "/api/";
+export const api_url =
+  "https://" + window.location.hostname + portString + "/api/";
 
 export const credentialsOption = "include";
 window.addEventListener("popstate", (event) => {
   router(window.location.pathname, false);
 });
+
+export function closeChatWebSocket(path) {
+  if (
+    chatSocket &&
+    chatSocket.readyState === WebSocket.OPEN &&
+    path !== "/chat"
+  ) {
+    chatSocket.close();
+    resetCurrentFriendId();
+  }
+}
 
 export function clearLoadedCss() {
   const head = document.head;
@@ -43,6 +61,13 @@ export function clearLoadedCss() {
   });
 }
 
+
+function resetDataForReloadingPage(path) {
+  closeChatWebSocket(path);
+  clearLoadedCss();
+  clearTournamentConversationsMessages();
+}
+
 export async function router(path, updateHistory = true) {
   if (!path) {
     path = window.location.pathname;
@@ -54,7 +79,7 @@ export async function router(path, updateHistory = true) {
     history.pushState(null, "", path + window.location.search);
   }
 
-  clearLoadedCss();
+  resetDataForReloadingPage(path);
 
   if (await checkEmailVerification()) {
     sessionStorage.setItem('validate', 'true');
@@ -120,6 +145,10 @@ async function handleAuthenticatedRoutes(path) {
       case "/play":
         console.log("Loading play page");
         await displayPlayPage();
+        break;
+      case "/chat":
+        await displayChatPage();
+        console.log("Loading chat page");
         break;
       default:
         path = "/home";

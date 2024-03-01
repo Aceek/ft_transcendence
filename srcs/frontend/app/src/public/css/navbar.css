@@ -2,3 +2,6 @@
     color: RGB(13, 110, 253) !important;
 }
 
+.nav-link {
+    text-align: end;
+}

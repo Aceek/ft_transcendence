@@ -5,6 +5,7 @@ from .views import (
     CustomUserFriendView,
     CustomUserUpdateView,
     ListUserFriendsView,
+    CustomUserBlockedView,
 )
 
 
@@ -20,4 +21,5 @@ urlpatterns = [
     path("users/remove_friends", CustomUserFriendView.as_view(), name="remove_friends"),
     path("users/friends", ListUserFriendsView.as_view(), name="friends"),
     path("users/friends/<uuid:user_id>", ListUserFriendsView.as_view(), name="friends"),
+    path("users/remove_blocked", CustomUserBlockedView.as_view(), name="remove_blocked"),
 ]

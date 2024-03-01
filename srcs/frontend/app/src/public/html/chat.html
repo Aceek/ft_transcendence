@@ -1,0 +1,69 @@
+<main class="content">
+  <div class="container p-0">
+
+    <h1 class="h3 mb-3">Messages</h1>
+    <div class="card">
+      <div class="row g-0">
+        <div class="col-12 col-lg-5 col-xl-3 border-right">
+
+          <div class="px-4">
+            <div class="d-flex align-items-center">
+              <div class="flex-grow-1">
+                <input id="search-bar-chat" type="text" class="form-control my-3" placeholder="Search...">
+              </div>
+            </div>
+          </div>
+
+
+          <div style="margin-left: 5px;" id="tournament_bot">
+            <a id ="tournament-chat-link" class="chat-link list-group-item list-group-item-action border-0 d-flex justify-content-between align-items-center"
+            data-uid="tournament-bot">
+              <div class="d-flex align-items-center">
+                <img src="/public/images/profile.jpg" class="rounded-circle me-2"
+                  width="40" height="40">
+                <div>
+                  Tournament Info
+                </div>
+              </div>
+              <div class="badge bg-secondary">0</div>
+            </a>
+          </div>
+
+          <div style="margin-left: 5px;" id="friends_in_chat">
+            <!-- Inject friend in chat here -->
+          </div>
+
+
+          <div style="margin-left: 5px;" id="users_in_chat">
+            <!-- Inject User in chat here -->
+          </div>
+          <hr class="d-block d-lg-none mt-1 mb-0">
+        </div>
+        <div class="col-12 col-lg-7 col-xl-9">
+
+          <div id="info-user-chat">
+            <!-- inject user info here -->
+          </div>
+
+
+
+          <div class="position-relative">
+            <div id="chat-messages-div" class="chat-messages p-4">
+              <!-- Inject chat messages here -->
+            </div>
+          </div>
+
+          <div class="flex-grow-0 py-3 px-4 border-top">
+            <div class="input-group">
+              <input id="message-input" type="text" class="form-control" placeholder="Type your message">
+              <button id="send-message-button" class="btn btn-primary">Send</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</main>

@@ -1,0 +1,125 @@
+body{
+    color: #1a202c;
+    background-color: #e2e8f0;    
+}
+
+.profile-link-chat {
+    color: #007bff;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .profile-link-chat:hover {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+.tournament-link-chat {
+    color: #007bff;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .tournament-link-chat:hover {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+
+.chat-link:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+  }
+  
+  .chat-link.selected {
+    background-color: #0056b3;
+
+    color: white;
+  }
+  
+  .chat-link.selected:hover {
+    background-color: #007bff;
+
+}
+
+#search-results-container {
+    position: absolute;
+    width: calc(100% - 10px);
+    background-color: white;
+    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 300px;
+    max-width: 300px;
+    overflow-y: auto;
+    border-radius: 0 0 5px 5px;
+  }
+  
+  .search-result-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .search-result-item:hover {
+    background-color: #f9f9f9;
+  }
+  
+
+.text-online {
+    color: green;
+}
+
+.text-offline {
+    color: red;
+}
+
+.fa-circle.chat-online {
+    color: green;
+}
+
+
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    max-height: 700px;
+    overflow-y: scroll
+}
+
+li::marker {
+    content: none;
+}
+
+
+.chat-message-left,
+.chat-message-right {
+    display: flex;
+    flex-shrink: 0
+}
+
+.chat-message-left {
+    margin-right: auto
+}
+
+.chat-message-right {
+    flex-direction: row-reverse;
+    margin-left: auto
+}
+.py-3 {
+    padding-top: 1rem!important;
+    padding-bottom: 1rem!important;
+}
+.px-4 {
+    padding-right: 1.5rem!important;
+    padding-left: 1.5rem!important;
+}
+.flex-grow-0 {
+    flex-grow: 0!important;
+}
+.border-top {
+    border-top: 1px solid #dee2e6!important;
+}
+

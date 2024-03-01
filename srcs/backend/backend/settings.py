@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
 	"pong",
     "corsheaders",
+    "chat",
     "websocket",
     "tournament",
 ]

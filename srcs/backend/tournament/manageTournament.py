@@ -2,6 +2,8 @@ from .models import Tournament, Matches
 import random
 from CustomUser.models import CustomUser
 from stats.manage_stats import ManageHistory
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 class ManageTournament:
@@ -38,7 +40,8 @@ class ManageTournament:
                 round=self.tournament.round,
             )
             match.save()
-            print("match created : ", match, " round : ", self.tournament.round)
+            self.send_messages_join_match_users(match)
+            self.notify_match_ready(match)
         self.tournament.save()
 
     def end_round(self):
@@ -50,6 +53,7 @@ class ManageTournament:
             self.tournament.is_active = False
             self.tournament.winner = winners[0]
             self.tournament.save()
+            self.notify_tournament_end()
             return
         self.tournament.round += 1
         self.tournament.save()
@@ -61,9 +65,6 @@ class ManageTournament:
         matches = self.get_matches_by_round(self.tournament.round)
         if all([match.is_finished for match in matches]):
             self.end_round()
-            print("round ended")
-        else:
-            print("round not ended")
 
     def set_end_match(self, match: Matches, winner: CustomUser, verify=True):
         match.is_active = False
@@ -72,6 +73,7 @@ class ManageTournament:
         match.winner = winner
         ManageHistory(user1=match.user1, user2=match.user2, winner=winner)
         match.save()
+        self.notify_match_end(match)
         if verify:
             self.verify_round_end()
 
@@ -89,3 +91,88 @@ class ManageTournament:
 
     def get_users(self):
         return self.users
+
+    def notify_tournament_group(self):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"tournament_{str(self.tournament.uid)}",
+            {
+                "type": "tournament_message",
+                "action": "tournament_active",
+                "message": f"Tournament {str(self.tournament.uid)} is active",
+                "tournamentId": str(self.tournament.uid),
+            },
+        )
+
+    def send_messages_join_tournaments_users(self):
+        for user in self.users:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{user.id}",
+                {
+                    "action": "join_tournament",
+                    "type": "send_tournament",
+                    "tournamentId": str(self.tournament.uid),
+                },
+            )
+
+    def send_messages_join_match_users(self, match: Matches):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{match.user1.id}",
+            {
+                "type": "send_match",
+                "message": f"Match {str(match.uid)} is ready",
+                "action": "join_match",
+                "tournamentId": str(self.tournament.uid),
+                "matchId": str(match.uid),
+            },
+        )
+        async_to_sync(channel_layer.group_send)(
+            f"chat_{match.user2.id}",
+            {
+                "type": "send_match",
+                "message": f"Match {str(match.uid)} is ready",
+                "action": "join_match",
+                "tournamentId": str(self.tournament.uid),
+                "matchId": str(match.uid),
+            },
+        )
+
+    def notify_match_ready(self, match: Matches):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"match_{str(match.uid)}",
+            {
+                "type": "send_match",
+                "action": "match_ready",
+                "tournamentId": str(self.tournament.uid),
+                "message": f"Match {str(match.uid)} is ready for tournament {str(self.tournament.uid)}",
+                "matchId": str(match.uid),
+            },
+        )
+
+    def notify_match_end(self, match: Matches):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"match_{str(match.uid)}",
+            {
+                "type": "send_match",
+                "action": "match_end",
+                "tournamentId": str(self.tournament.uid),
+                "message": f"Match {str(match.uid)} is ended for tournament {str(self.tournament.uid)}",
+                "matchId": str(match.uid),
+            },
+        )
+
+    def notify_tournament_end(self):
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"tournament_{str(self.tournament.uid)}",
+            {
+                "type": "tournament_message",
+                "action": "tournament_end",
+                "message": f"Tournament {str(self.tournament.uid)} is ended",
+                "tournamentId": str(self.tournament.uid),
+            },
+        )

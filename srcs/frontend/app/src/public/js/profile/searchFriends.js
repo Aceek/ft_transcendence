@@ -11,6 +11,9 @@ import { attachLinkListenerProfile } from "./profileUtils.js";
 
 export function injectFriendsSearsh() {
   const friendListCol = document.getElementById("friends-list-col");
+  if (!friendListCol) {
+    return;
+  }
   const createFriendsSearch = document.createElement("div");
   createFriendsSearch.id = "friendsSearch";
   createFriendsSearch.className = "input-group mb-3";

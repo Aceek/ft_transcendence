@@ -25,6 +25,8 @@ class CustomUser(AbstractUser):
         validators=[validate_image],
     )
     friends = models.ManyToManyField("self", blank=True, symmetrical=False)
+    blocked_users = models.ManyToManyField("self", blank=True, symmetrical=False, related_name="blocked_by")
+    chat_online = models.BooleanField(default=False, editable=False, blank=True)
 
     def __str__(self):
         return self.username

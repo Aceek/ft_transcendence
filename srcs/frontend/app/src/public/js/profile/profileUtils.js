@@ -54,6 +54,7 @@ export async function attachLinkListenerProfile() {
 export async function injectFriendList(page, UID = null) {
   const friendList = await getFriendList(page, UID);
   const friendListContainer = document.getElementById("friendsList");
+
   friendListContainer.innerHTML = "";
   const friendListTitle = document.getElementById("friendListTitle");
   friendListTitle.textContent = "Friend List";
@@ -95,6 +96,9 @@ export async function injectFriendList(page, UID = null) {
 export async function injectHistoryList(page, UID = null) {
   const historyList = await getGameHistory(page, UID);
   const historyListContainer = document.getElementById("gameHistory");
+  if (!historyListContainer) {
+    return;
+  }
   historyListContainer.innerHTML = historyList.results
     .map((match) => {
       const date = new Date(match.date).toLocaleDateString("fr-FR", {
@@ -147,6 +151,7 @@ export function injectUserInfo(profile) {
   const usernameElement = document.getElementById("username");
   const emailElement = document.getElementById("email");
   const twofaElement = document.getElementById("2fa");
+
 
   avatarElement.src = profile.avatar || "/public/images/profile.jpg";
   usernameElement.value = profile.username;
