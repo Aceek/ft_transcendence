@@ -65,14 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.pong_received = True
         elif action == "read_messages":
             await self.mark_message_as_read(data["receiver"])
-        elif action == "join_tournament":
-            await self.channel_layer.group_add(
-                f"tournament_{data['tournamentId']}", self.channel_name
-            )
-        elif action == "join_match":
-            await self.channel_layer.group_add(
-                f"match_{data['matchId']}", self.channel_name
-            )
+
 
     @database_sync_to_async
     def get_unread_messages(self, user_id):
@@ -265,12 +258,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def send_tournament(self, event):
         tournament_id = event["tournamentId"]
         action = event["action"]
+        if (action == "join_tournament"):
+            await self.channel_layer.group_add(
+                f"tournament_{tournament_id}", self.channel_name
+            )
+            return
         await self.send(
             text_data=json.dumps(
                 {
                     "type": "tournament_message",
                     "action": action,
                     "tournamentId": tournament_id,
+                    "message": "Tournament " + tournament_id + " is ready",
                 }
             )
         )
@@ -286,14 +285,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "type": "tournament_message",
                         "action": "tournament_ready",
                         "tournamentId": str(tournament.uid),
+                        "message": "Tournament " + str(tournament.uid) + " is ready",
                     }
                 )
             )
 
     async def send_match(self, event):
         match_id = event["matchId"]
+        message = event["message"]
         action = event["action"]
-        message = event.get("message")
+        tournamentId = event.get("tournamentId")
+
+        if (action == "join_match"):
+            print(f"Received match event: {event}")
+            await self.channel_layer.group_add(f"match_{match_id}", self.channel_name)
+            return
         await self.send(
             text_data=json.dumps(
                 {
@@ -301,6 +307,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "action": action,
                     "matchId": match_id,
                     "message": message,
+                    "tournamentId": tournamentId,
                 }
             )
         )
@@ -321,9 +328,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         return list(active_matches)
 
+    @database_sync_to_async
+    def get_tourmanent_uid(self, match):
+        return str(match.tournament.uid)
 
     async def send_match_ready(self, active_matches):
         for match in active_matches:
+            tournamentUID = await self.get_tourmanent_uid(match)
             await self.channel_layer.group_add(
                 f"match_{str(match.uid)}", self.channel_name
             )
@@ -333,6 +344,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "type": "match_message",
                         "action": "match_ready",
                         "matchId": str(match.uid),
+                        "message": "Match " + str(match.uid) + " is ready for tournament " + tournamentUID,
+                        "tournamentId": tournamentUID,
                     }
                 )
             )

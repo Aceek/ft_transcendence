@@ -5,6 +5,7 @@ import { displaySearchResults } from "./utilsChat.js";
 import { sendMessageWebSocket } from "./websocketChat.js";
 import { handleOutgoingMessage } from "./websocketChat.js";
 import { requestDataWithToken } from "../pageUtils.js";
+import { manageTournamentBot } from "./tournamentChat.js";
 
 export async function attachLinkListenerChat() {
   const chatLinks = document.querySelectorAll(".chat-link");
@@ -17,9 +18,13 @@ export async function attachLinkListenerChat() {
         event.currentTarget.classList.add("selected");
 
         const uid = link.getAttribute("data-uid");
-        setCurrentFriendId(uid);
-        injectChatRoom(uid);
-        injectInfoOnUserChat(uid);
+        if (uid !== "tournament-bot") {
+          setCurrentFriendId(uid);
+          injectChatRoom(uid);
+          injectInfoOnUserChat(uid);
+        } else {
+          manageTournamentBot();
+        }
       });
       link.setAttribute("data-listener-added", "true");
     }
@@ -77,7 +82,11 @@ export async function handleSendButton() {
 
   const sendMessage = async () => {
     const message = messageInput.value;
-    if (currentFriendId === undefined || currentFriendId === null) {
+    if (
+      currentFriendId === undefined ||
+      currentFriendId === null ||
+      currentFriendId === "tournament-bot"
+    ) {
       return;
     }
     if (message) {

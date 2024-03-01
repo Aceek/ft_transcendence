@@ -45,13 +45,16 @@ export async function injectFriendsInChat(friends) {
 export async function injectUsersNotFriendsInChat(friendsListIds) {
   for (const uid in conversations) {
     if (!friendsListIds.includes(uid)) {
-      console.log("Injecting user in chat", uid);
       await injectNewUserInChat(uid);
     }
   }
 }
 
-export function injectChatRoom(uid) {
+export function injectChatRoom(
+  uid,
+  readStatus = true,
+  createElementfunction = createMessageElement
+) {
   const chatMessages = document.getElementById("chat-messages-div");
   chatMessages.innerHTML = "";
 
@@ -62,12 +65,14 @@ export function injectChatRoom(uid) {
   const messages = conversation.messages || [];
 
   messages.forEach((message) => {
-    const messageElement = createMessageElement(message, conversation);
+    const messageElement = createElementfunction(message, conversation);
     chatMessages.appendChild(messageElement);
   });
   scrollToBottom();
   resetBadgeBgSuccess(uid);
-  sendReadStatus(uid);
+  if (readStatus) {
+    sendReadStatus(uid);
+  }
 }
 
 export async function injectInfoOnUserChat(uid) {

@@ -33,6 +33,9 @@ export function handleWebSocketMessage(event, friendsListIds) {
     case "tournament_message":
       handleTournamentMessage(data);
       break;
+    case "match_message":
+      handleTournamentMessage(data);
+      break;
     default:
       console.log("Unknown message type:", data);
   }

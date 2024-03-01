@@ -65,9 +65,6 @@ class ManageTournament:
         matches = self.get_matches_by_round(self.tournament.round)
         if all([match.is_finished for match in matches]):
             self.end_round()
-            print("round ended")
-        else:
-            print("round not ended")
 
     def set_end_match(self, match: Matches, winner: CustomUser, verify=True):
         match.is_active = False
@@ -97,13 +94,12 @@ class ManageTournament:
 
     def notify_tournament_group(self):
         channel_layer = get_channel_layer()
-        message = f"Tournament {self.tournament.name} is now active"
         async_to_sync(channel_layer.group_send)(
             f"tournament_{str(self.tournament.uid)}",
             {
                 "type": "tournament_message",
                 "action": "tournament_active",
-                "message": message,
+                "message": f"Tournament {str(self.tournament.uid)} is active",
                 "tournamentId": str(self.tournament.uid),
             },
         )
@@ -125,9 +121,10 @@ class ManageTournament:
         async_to_sync(channel_layer.group_send)(
             f"chat_{match.user1.id}",
             {
-                "action": "join_match",
                 "type": "send_match",
+                "message": f"Match {str(match.uid)} is ready",
                 "action": "join_match",
+                "tournamentId": str(self.tournament.uid),
                 "matchId": str(match.uid),
             },
         )
@@ -135,7 +132,9 @@ class ManageTournament:
             f"chat_{match.user2.id}",
             {
                 "type": "send_match",
+                "message": f"Match {str(match.uid)} is ready",
                 "action": "join_match",
+                "tournamentId": str(self.tournament.uid),
                 "matchId": str(match.uid),
             },
         )
@@ -147,7 +146,8 @@ class ManageTournament:
             {
                 "type": "send_match",
                 "action": "match_ready",
-                "message": "Match is ready",
+                "tournamentId": str(self.tournament.uid),
+                "message": f"Match {str(match.uid)} is ready for tournament {str(self.tournament.uid)}",
                 "matchId": str(match.uid),
             },
         )
@@ -159,7 +159,8 @@ class ManageTournament:
             {
                 "type": "send_match",
                 "action": "match_end",
-                "message": "Match is ended",
+                "tournamentId": str(self.tournament.uid),
+                "message": f"Match {str(match.uid)} is ended for tournament {str(self.tournament.uid)}",
                 "matchId": str(match.uid),
             },
         )
@@ -171,7 +172,7 @@ class ManageTournament:
             {
                 "type": "tournament_message",
                 "action": "tournament_end",
-                "message": f"Tournament {self.tournament.name} is ended",
+                "message": f"Tournament {str(self.tournament.uid)} is ended",
                 "tournamentId": str(self.tournament.uid),
             },
         )

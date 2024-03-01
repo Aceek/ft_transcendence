@@ -32,8 +32,8 @@ export async function displayChatPage() {
     await etablishConnectionWebSocket(friendsListIds);
     await injectUsersNotFriendsInChat(friendsListIds);
     await handleSendButton();
-    createConversationObjects(friends, clientSender);
     await attachSearchListenerChat(friendsListIds);
+    createConversationObjects(friends, clientSender);
   } catch (error) {
     console.error("Error:", error);
     router("/home");

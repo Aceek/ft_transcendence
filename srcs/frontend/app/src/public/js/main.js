@@ -11,6 +11,7 @@ import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
 import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
+import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
 import {
   chatSocket,
   displayChatPage,
@@ -56,6 +57,12 @@ export function clearLoadedCss() {
   });
 }
 
+function resetDataForReloadingPage(path) {
+  closeChatWebSocket(path);
+  clearLoadedCss();
+  clearTournamentConversationsMessages();
+}
+
 export async function router(path, updateHistory = true) {
   if (!path) {
     path = window.location.pathname;
@@ -67,8 +74,7 @@ export async function router(path, updateHistory = true) {
     history.pushState(null, "", path + window.location.search);
   }
 
-  closeChatWebSocket(path);
-  clearLoadedCss();
+  resetDataForReloadingPage(path);
 
   if (await isAPIConnected()) {
     await injectNavBar();
