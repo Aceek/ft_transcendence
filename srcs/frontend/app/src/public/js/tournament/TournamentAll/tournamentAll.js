@@ -12,7 +12,7 @@ import {
 
 export let joinedOrOwnedActive = true;
 
-export async function displayPlayPage() {
+export async function displayTournamentAllPage() {
   try {
     const matchmakingHtml = await fetchTemplate(
       "/public/html/tournamentAll.html"

@@ -6,10 +6,9 @@ import { displayProfile } from "./profile/profile.js";
 import { displayFriendsProfile } from "./profile/profileFriends.js";
 import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
-import { displayMatchmaking } from "./matchmaking/matchamking.js";
 import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
-import { displayPlayPage } from "./tournament/TournamentAll/tournamentAll.js";
+import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 import { get2FAPage } from "./2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
@@ -138,13 +137,9 @@ async function handleAuthenticatedRoutes(path) {
         console.log("Loading personal profile page");
         await displayProfile();
         break;
-      case "/matchmaking":
-        console.log("Loading matchmaking page");
-        await displayMatchmaking();
-        break;
-      case "/play":
-        console.log("Loading play page");
-        await displayPlayPage();
+      case "/tournamentAll":
+        console.log("Loading tournamentAll page");
+        await displayTournamentAllPage();
         break;
       case "/chat":
         await displayChatPage();
