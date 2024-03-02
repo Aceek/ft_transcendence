@@ -1,4 +1,5 @@
 import { Ball } from './ball.js';
+import { Player } from './player.js';
 
 export class Game {
     constructor() {
@@ -8,10 +9,9 @@ export class Game {
         this.lastServerUpdate = 0;
         this.canvasWidth = 0
         this.canvasHeight = 0
-		this.paddleBorderDistance = 0
         this.countdown = null;
         this.controlledPlayer = null;
-        this.nbPlayer = 0;
+        this.playerNb = 0;
     }
 
     addPlayer(player) {
@@ -19,16 +19,35 @@ export class Game {
     }
 
     handleStaticData(staticData) {
-        console.log("Received static data:", staticData);
         this.ball.handleStaticData(staticData);
-
-        this.players.forEach(player => player.handleStaticData(staticData));
-
+    
+        // Parsing static data to set up game dimensions and player number
         this.canvasWidth = parseInt(staticData.canvasWidth, 10);
         this.canvasHeight = parseInt(staticData.canvasHeight, 10);
-        this.paddleBorderDistance = parseInt(staticData.paddleBorderDistance, 10);
-        this.nbPlayer = parseInt(staticData.nbPlayer, 10);
+        this.playerNb = parseInt(staticData.playerNb, 10);
+    
+        // Adjust the number of players based on playerNb
+        const sides = ['left', 'right', 'bottom', 'up']; // Extend this array for more sides/players if needed
+        for (let i = 0; i < this.playerNb; i++) {
+            const playerId = i + 1; // Calculate player id as the next sequential number
+            const playerSide = sides[i % sides.length]; // Assign player side, cycling through sides if necessary
+    
+            // Create and add the new player
+            const newPlayer = new Player(playerId, playerSide);
+            this.addPlayer(newPlayer);
+    
+            // Assign controlledPlayer if the player's side matches the received side
+            if (playerSide === this.receivedSide) {
+                this.controlledPlayer = newPlayer;
+            }
+        }
+    
+        // Pass static data to all players for their initialization
+        this.players.forEach(player => player.handleStaticData(staticData));
     }
+    
+    
+    
   
     handleDynamicData(dynamicData) {
         console.log("Handling dynamic data:", dynamicData);
@@ -40,16 +59,7 @@ export class Game {
     }
     
     handlePaddleSideAssignment(paddleSide) {
-        // Directly find and assign the controlled player based on the paddleSide
-        const foundPlayer = this.players.find(player => player.side.toUpperCase() === paddleSide.toUpperCase());
-        
-        // If a matching player is found, mark them as the controlled player
-        if (foundPlayer) {
-            this.controlledPlayer = foundPlayer; // Assume there is a this.controlledPlayer property
-            console.log(`Controlled player set to side: ${paddleSide}`);
-        } else {
-            console.log(`No player found with side: ${paddleSide}`);
-        }
+        this.receivedSide = paddleSide;
     }
     
     handleCountdown(seconds) {

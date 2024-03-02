@@ -1,7 +1,6 @@
 import { initializeSocket, messageHandler } from './socket.js';
 import { KeyEventController } from './keyEventController.js';
 import { GameRenderer } from './gameRenderer.js';
-import { Player } from './player.js';
 import { Game } from './game.js';
 
 console.log("Pong.js is executed!");
@@ -12,8 +11,10 @@ const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');
 
 const game = new Game();
-game.addPlayer(new Player(1, 'left'));
-game.addPlayer(new Player(2, 'right'));
+// game.addPlayer(new Player(1, 'left'));
+// game.addPlayer(new Player(2, 'right'));
+// game.addPlayer(new Player(3, 'bottom'));
+// game.addPlayer(new Player(4, 'up'));
 
 const renderer = new GameRenderer(ctx, game);
 

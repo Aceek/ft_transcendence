@@ -23,7 +23,6 @@ class GameLogic:
             "paddleWidth": int(PADDLE_WIDTH),
             "paddleHeight": int(PADDLE_HEIGHT),
             "paddleSpeed": int(PADDLE_SPEED),
-            "paddleBorderDistance": int(PADDLE_BORDER_DISTANCE),
             "ballSize": int(BALL_SIZE),
             "playerNb": int(PLAYER_NB),
         }

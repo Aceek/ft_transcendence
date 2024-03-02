@@ -10,10 +10,6 @@ export class Player {
         this.paddleY = 0;
         this.score = 0;
       }
-  
-    //   setPaddleSide(side) {
-    //       this.side = side;
-    //   }
 
     handleStaticData(staticData) {
         // console.log(`Handling ${this.side} player static data`);
