@@ -115,11 +115,11 @@ class Ball:
             self.vx = speed * math.cos(angle) *-1
             self.vy = speed * math.sin(angle)
         elif player_position == PlayerPosition.BOTTOM:
-            self.vx = speed * math.cos(angle)
-            self.vy = abs(speed * math.sin(angle)) * -1
+            self.vx = speed * math.sin(angle)       # Reflecting horizontally based on the angle
+            self.vy = speed * math.cos(angle) * -1  # Negative to move upwards
         elif player_position == PlayerPosition.UP:
-            self.vx = speed * math.cos(angle)
-            self.vy = abs(speed * math.sin(angle))
+            self.vx = speed * math.sin(angle)  # Reflecting horizontally based on the angle
+            self.vy = speed * math.cos(angle)
 
 #------------------------------REDIS-------------------------------------
 
