@@ -37,20 +37,20 @@ export class Game {
             this.addPlayer(newPlayer);
     
             // Assign controlledPlayer if the player's side matches the received side
+            console.log(`Attempte Controlled player set: ${playerSide} vs ${this.receivedSide}`);
             if (playerSide === this.receivedSide) {
                 this.controlledPlayer = newPlayer;
+                console.log(`Controlled player set: Player with side ${playerSide} is now the controlled player.`);
             }
+            
         }
     
         // Pass static data to all players for their initialization
         this.players.forEach(player => player.handleStaticData(staticData));
     }
-    
-    
-    
   
     handleDynamicData(dynamicData) {
-        console.log("Handling dynamic data:", dynamicData);
+        // console.log("Handling dynamic data:", dynamicData);
         this.ball.handleDynamicData(dynamicData);
 
         this.players.forEach(player => player.handleDynamicData(dynamicData));
@@ -59,7 +59,7 @@ export class Game {
     }
     
     handlePaddleSideAssignment(paddleSide) {
-        this.receivedSide = paddleSide;
+        this.receivedSide = paddleSide.toLowerCase();
     }
     
     handleCountdown(seconds) {

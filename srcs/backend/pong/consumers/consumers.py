@@ -72,10 +72,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Handle "paddle_position_update" message
         if "type" in data and data["type"] == "paddle_position_update":
-            paddle_y = data.get('PaddleY')
-            if paddle_y is not None and self.paddle.side is not None:
-                if await self.paddle.check_movement(paddle_y):
-                    await self.paddle.set_data_to_redis(paddle_y)
+            paddle_pos = data.get('paddle_pos')
+            if paddle_pos is not None and self.paddle.side is not None:
+                if await self.paddle.check_movement(paddle_pos):
+                    await self.paddle.set_data_to_redis(paddle_pos)
 
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":

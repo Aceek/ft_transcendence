@@ -11,10 +11,6 @@ const canvas = document.getElementById('pongCanvas');
 const ctx = canvas.getContext('2d');
 
 const game = new Game();
-// game.addPlayer(new Player(1, 'left'));
-// game.addPlayer(new Player(2, 'right'));
-// game.addPlayer(new Player(3, 'bottom'));
-// game.addPlayer(new Player(4, 'up'));
 
 const renderer = new GameRenderer(ctx, game);
 

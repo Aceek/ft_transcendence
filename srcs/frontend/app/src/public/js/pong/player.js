@@ -13,8 +13,14 @@ export class Player {
 
     handleStaticData(staticData) {
         // console.log(`Handling ${this.side} player static data`);
-        this.paddleWidth = parseInt(staticData.paddleWidth, 10);
-        this.paddleHeight = parseInt(staticData.paddleHeight, 10);
+        if (this.side === "left" || this.side === "right") {
+            this.paddleWidth = parseInt(staticData.paddleWidth, 10);
+            this.paddleHeight = parseInt(staticData.paddleHeight, 10);
+        } else if (this.side === "bottom" || this.side === "up") {
+            this.paddleWidth = parseInt(staticData.paddleHeight, 10);
+            this.paddleHeight = parseInt(staticData.paddleWidth, 10);
+        }
+
         this.paddleSpeed = parseInt(staticData.paddleSpeed, 10);
     }
 

@@ -38,31 +38,73 @@ export class KeyEventController {
         }
     }
     
+    // updatePaddlePosition(key) {
+    //     let change = this.game.controlledPlayer.paddleSpeed;
+    //     let newY = this.game.controlledPlayer.paddleY + (key === "ArrowDown" ? change : -change);
+    
+    //     // Check if the new position is within bounds
+    //     if (newY >= 0 && (newY + this.game.controlledPlayer.paddleHeight) <= this.game.canvasHeight) {
+    //         this.game.controlledPlayer.paddleY = newY;
+    //         this.sendPaddlePositionUpdate(this.game.controlledPlayer);
+    //         console.log(`Paddle updated: ${newY} for ${this.game.controlledPlayer.side}`);
+    //     } else {
+    //         console.log(`Out of bounds: ${newY}. Canvas height: ${this.game.canvasHeight}`);
+    //     }
+    // }
+
     updatePaddlePosition(key) {
         let change = this.game.controlledPlayer.paddleSpeed;
-        let newY = this.game.controlledPlayer.paddleY + (key === "ArrowDown" ? change : -change);
+        // Determine the paddle's side
+        const side = this.game.controlledPlayer.side;
     
-        // Check if the new position is within bounds
-        if (newY >= 0 && (newY + this.game.controlledPlayer.paddleHeight) <= this.game.canvasHeight) {
-            this.game.controlledPlayer.paddleY = newY;
-            this.sendPaddlePositionUpdate(this.game.controlledPlayer);
-            console.log(`Paddle updated: ${newY} for ${this.game.controlledPlayer.side}`);
-        } else {
-            console.log(`Out of bounds: ${newY}. Canvas height: ${this.game.canvasHeight}`);
+        // Handle vertical movement for left/right sides
+        if (side === 'left' || side === 'right') {
+            let newY = this.game.controlledPlayer.paddleY + (key === "ArrowDown" ? change : key === "ArrowUp" ? -change : 0);
+    
+            // Check if the new Y position is within bounds
+            if (newY >= 0 && (newY + this.game.controlledPlayer.paddleHeight) <= this.game.canvasHeight) {
+                this.game.controlledPlayer.paddleY = newY;
+                this.sendPaddlePositionUpdate(this.game.controlledPlayer);
+                console.log(`Paddle Y updated: ${newY} for ${side}`);
+            } else {
+                console.log(`Y Out of bounds: ${newY}. Canvas height: ${this.game.canvasHeight}`);
+            }
+        }
+    
+        // Handle horizontal movement for bottom/up sides
+        else if (side === 'bottom' || side === 'up') {
+            let newX = this.game.controlledPlayer.paddleX + (key === "ArrowRight" ? change : key === "ArrowLeft" ? -change : 0);
+    
+            // Check if the new X position is within bounds
+            if (newX >= 0 && (newX + this.game.controlledPlayer.paddleWidth) <= this.game.canvasWidth) {
+                this.game.controlledPlayer.paddleX = newX;
+                this.sendPaddlePositionUpdate(this.game.controlledPlayer);
+                console.log(`Paddle X updated: ${newX} for ${side}`);
+            } else {
+                console.log(`X Out of bounds: ${newX}. Canvas width: ${this.game.canvasWidth}`);
+            }
         }
     }
-
+    
     sendPaddlePositionUpdate(player) {
-        if (this.lastSentPaddleY != player.paddleY) {
-            console.log(`Sending paddle position update for ${player.side}: ${player.paddleY}`);
+        let currentPos;
+        if (player.side === 'left' || player.side === 'right') {
+            currentPos = player.paddleY;
+        } else if (player.side === 'bottom' || player.side === 'up') {
+            currentPos = player.paddleX;
+        }
+    
+        // Check if there's a significant change in position.
+        if (this.lastSentPaddlePos !== currentPos) {
+            console.log(`Sending paddle position update for ${player.side}: ${currentPos}`);
             this.socket.send(JSON.stringify({
                 type: "paddle_position_update",
-                side: player.side,
-                PaddleY: player.paddleY,
+                paddle_pos: currentPos,
             }));
-            this.lastSentPaddleY = player.paddleY;
+            this.lastSentPaddlePos = currentPos; // Update the last sent position.
         } else {
             console.log("No significant change in paddle position. Not sending update.");
         }
     }
+    
 }
