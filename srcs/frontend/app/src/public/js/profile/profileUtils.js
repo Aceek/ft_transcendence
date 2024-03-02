@@ -70,7 +70,7 @@ export async function injectFriendList(page, UID = null) {
         <img src="${friend.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${friend.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
           <span class="profile-link" data-uid="${friend.id}"><strong>${friend.username}</strong></span>
-          <span class="text-success ms-2">• En ligne</span>
+          <span class=${friend.status === "online" ? "text-success" : "text-danger"}>• ${friend.status}</span>
         </div>
       </div>
     `;

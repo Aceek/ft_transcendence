@@ -12,6 +12,7 @@ import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentA
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 import { get2FAPage } from "./2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
+import { handleUserActivity } from "./user_activity_websocket.js";
 import {
   chatSocket,
   displayChatPage,
@@ -86,6 +87,7 @@ export async function router(path, updateHistory = true) {
 
   if (await isAPIConnected()) {
     await injectNavBar();
+    await handleUserActivity();
     handleAuthenticatedRoutes(path);
   } else {
     handleUnauthenticatedRoutes(path);

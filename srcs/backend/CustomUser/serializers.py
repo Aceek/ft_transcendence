@@ -16,6 +16,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "friends",
             "new_email",
             "blocked_users",
+            "status",
         ]
         read_only_fields = ["id", "email"]
 

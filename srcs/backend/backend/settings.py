@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     "chat",
     "websocket",
     "tournament",
+    "user_activity_websocket",
 ]
 
 ASGI_APPLICATION = "backend.asgi.application"
