@@ -18,13 +18,13 @@ class GameLogic:
 
     def init_static_data(self):
         static_data = {
-            "canvasHeight": int(SCREEN_HEIGHT),
-            "canvasWidth": int(SCREEN_WIDTH),
+            "ballSize": int(BALL_SIZE),
             "paddleWidth": int(PADDLE_WIDTH),
             "paddleHeight": int(PADDLE_HEIGHT),
             "paddleSpeed": int(PADDLE_SPEED),
-            "ballSize": int(BALL_SIZE),
             "playerNb": int(PLAYER_NB),
+            "canvasHeight": int(SCREEN_HEIGHT),
+            "canvasWidth": int(SCREEN_WIDTH),
         }
         return static_data
     

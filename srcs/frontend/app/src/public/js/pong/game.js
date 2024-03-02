@@ -19,13 +19,20 @@ export class Game {
     }
 
     handleStaticData(staticData) {
+        console.log("Handling static data:", staticData);
         this.ball.handleStaticData(staticData);
     
         // Parsing static data to set up game dimensions and player number
+        this.playerNb = parseInt(staticData.playerNb, 10);
+
         this.canvasWidth = parseInt(staticData.canvasWidth, 10);
         this.canvasHeight = parseInt(staticData.canvasHeight, 10);
-        this.playerNb = parseInt(staticData.playerNb, 10);
-    
+        
+        // Now, dynamically set the canvas size using the received dimensions
+        const canvas = document.getElementById('pongCanvas'); // Ensure this ID matches your canvas element
+        canvas.width = this.canvasWidth;
+        canvas.height = this.canvasHeight;
+
         // Adjust the number of players based on playerNb
         const sides = ['left', 'right', 'bottom', 'up']; // Extend this array for more sides/players if needed
         for (let i = 0; i < this.playerNb; i++) {
@@ -37,10 +44,8 @@ export class Game {
             this.addPlayer(newPlayer);
     
             // Assign controlledPlayer if the player's side matches the received side
-            console.log(`Attempte Controlled player set: ${playerSide} vs ${this.receivedSide}`);
             if (playerSide === this.receivedSide) {
                 this.controlledPlayer = newPlayer;
-                console.log(`Controlled player set: Player with side ${playerSide} is now the controlled player.`);
             }
             
         }

@@ -5,41 +5,38 @@ export class GameRenderer {
     }
 
     draw() {
-        const { ctx, game } = this;
-
-        if (game.status === -1) {
+        if (this.game.status === -1) {
             return;
         }
         
-        ctx.clearRect(0, 0, game.canvasWidth, game.canvasHeight);
+        this.ctx.clearRect(0, 0, this.game.canvasWidth, this.game.canvasHeight);
         
-        game.players.forEach(player => {
+        this.game.players.forEach(player => {
             this.drawPaddle(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
         });
         
-        
-        this.drawBall(game.ball.x, game.ball.y);
+        this.drawBall(this.game.ball.x, this.game.ball.y);
         
         this.drawWhiteDashLine();
 
         this.drawScores();
         
-        if (game.countdown !== null && game.countdown > 0) {
-            this.drawTwoPartMessage(game.countdown.toString(),
+        if (this.game.countdown !== null && this.game.countdown > 0) {
+            this.drawTwoPartMessage(this.game.countdown.toString(),
                 "Get ready...")
         }
 
-        if (game.status === 0 && (game.countdown === null || game.countdown === 0)) {
+        if (this.game.status === 0 && (this.game.countdown === null || this.game.countdown === 0)) {
             this.drawTwoPartMessage("Room joined!", 
                 "Waiting for other players to start...");
         }
 
-        if (game.status === 2 && (game.countdown === null || game.countdown === 0)) {
+        if (this.game.status === 2 && (this.game.countdown === null || this.game.countdown === 0)) {
             this.drawTwoPartMessage("Game Paused!",
                 "Waiting for other players to resume...");
         }
 
-        if (game.status === 3 && (game.countdown === null || game.countdown === 0)) {
+        if (this.game.status === 3 && (this.game.countdown === null || this.game.countdown === 0)) {
             this.drawTwoPartMessage("Game Over!",
                 "Press Enter to restart...")
         }
