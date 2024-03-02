@@ -190,9 +190,10 @@ class GameLogic:
         scored, scorer_position = self.ball.check_score()
         if scored:
             self.ball.reset_value()
-            await self.players[scorer_position.value].update_score()
-            if self.players[scorer_position.value].check_win():
-                await self.update_game_status_and_notify(GameStatus.COMPLETED)
+            if scorer_position is not None:
+                await self.players[scorer_position.value].update_score()
+                if self.players[scorer_position.value].check_win():
+                    await self.update_game_status_and_notify(GameStatus.COMPLETED)
         
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()

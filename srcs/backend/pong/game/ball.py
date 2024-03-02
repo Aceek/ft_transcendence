@@ -16,6 +16,7 @@ class Ball:
         self.y = BALL_Y
         self.vx = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
         self.vy = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
+        self.lastPlayertouched = None
 
     async def set_data_to_redis(self):
         await self.set_ball_to_redis()
@@ -27,11 +28,15 @@ class Ball:
 #------------------------------CONDITION-------------------------------------
 
     def check_wall_collision(self):
-        if (
-           self.y - self.size / 2 < 0
-            or self.y + self.size / 2 > SCREEN_HEIGHT
-        ):
-            return True
+        if PLAYER_NB == 4:
+            return False
+        elif PLAYER_NB == 3:
+            if self.y - self.size / 2 < 0:
+                return True
+        else:
+            if (self.y - self.size / 2 < 0 or
+                    self.y + self.size / 2 > SCREEN_HEIGHT):
+                return True
         return False
 
     def check_paddle_collision(self, players):
@@ -39,8 +44,6 @@ class Ball:
             # Access the player's paddle attributes directly
             paddle_x, paddle_y = player.paddle_x, player.paddle_y
             paddle_width, paddle_height = player.paddle_width, player.paddle_height
-
-            # Use the enum for comparison
 
             # Check for horizontal overlap
             if paddle_x <= self.x <= paddle_x + paddle_width or \
@@ -57,15 +60,28 @@ class Ball:
 
         for player in players:
             if detect_collision_and_handle_edge_bounce(player):
+                self.lastPlayertouched = player.side
                 return True, player.side
                     
         return False, None
 
-    def check_score(self):
-        if self.x < 0 - self.size / 2:
-            return True, PlayerPosition.RIGHT
-        elif self.x > SCREEN_WIDTH + self.size / 2:
-            return True, PlayerPosition.LEFT
+    def check_score(self):     
+        # Normal check for game of 2 players
+        if PLAYER_NB <=2:        
+            if self.x < 0 - self.size / 2:
+                return True, PlayerPosition.RIGHT
+            elif self.x > SCREEN_WIDTH + self.size / 2:
+                return True, PlayerPosition.LEFT
+        else:
+            # Custum check for game of more then 2 players
+            # allowing the goal to the last player who touched the ball
+            if self.x < 0 - self.size / 2 or \
+            self.x > SCREEN_WIDTH + self.size / 2 or \
+            self.y < 0 - self.size / 2 or \
+            self.y < 0 - self.size / 2 or \
+            self.y > SCREEN_HEIGHT + self.size / 2:
+                return True, self.lastPlayertouched
+
         return False, None
 
 #------------------------------HANDLER-------------------------------------
