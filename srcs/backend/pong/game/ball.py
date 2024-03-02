@@ -28,31 +28,41 @@ class Ball:
 
     def check_wall_collision(self):
         if (
-           self.y - BALL_SIZE / 2 < 0
-            or self.y + BALL_SIZE / 2 > SCREEN_HEIGHT
+           self.y - self.size / 2 < 0
+            or self.y + self.size / 2 > SCREEN_HEIGHT
         ):
             return True
         return False
 
     def check_paddle_collision(self, players):
-        def detect_collision_and_handle_edge_bounce(paddle_x, paddle_y):
-            if paddle_x < self.x < paddle_x + PADDLE_WIDTH + self.size:
-                if paddle_y <= self.y <= paddle_y + PADDLE_HEIGHT:
-                    return True
-                elif (abs(self.y - paddle_y) <= BALL_SIZE / 2 or
-                    abs(self.y - (paddle_y + PADDLE_HEIGHT)) <= self.size / 2):
-                    self.vy *= -1  # Reverse y-velocity for edge collision
+        def detect_collision_and_handle_edge_bounce(player):
+            # Access the player's paddle attributes directly
+            paddle_x, paddle_y = player.paddle_x, player.paddle_y
+            paddle_width, paddle_height = player.paddle_width, player.paddle_height
+
+            # Use the enum for comparison
+
+            # Check for horizontal overlap
+            if paddle_x <= self.x <= paddle_x + paddle_width or \
+                paddle_x <= self.x + self.size <= paddle_x + paddle_width:
+                # Check for vertical overlap
+                if paddle_y <= self.y <= paddle_y + paddle_height or \
+                    paddle_y <= self.y + self.size <= paddle_y + paddle_height:
+                    if player.side == PlayerPosition.LEFT or player.side == PlayerPosition.RIGHT:
+                        self.vx *= -1
+                    elif player.side == PlayerPosition.BOTTOM or player.side == PlayerPosition.UP:
+                        self.vy *= -1
                     return True
             return False
 
         for player in players:
-            if detect_collision_and_handle_edge_bounce(player.paddle_x, player.paddle_y):
+            if detect_collision_and_handle_edge_bounce(player):
                 return True, player.side
-                
-        return False, None 
+                    
+        return False, None
 
     def check_score(self):
-        if self.x < 0 - BALL_SIZE / 2:
+        if self.x < 0 - self.size / 2:
             return True, PlayerPosition.RIGHT
         elif self.x > SCREEN_WIDTH + self.size / 2:
             return True, PlayerPosition.LEFT
@@ -66,16 +76,34 @@ class Ball:
         
     def handle_paddle_bounce_calculation(self, player_position, players):
         player = players[player_position.value]
+        paddle_x = player.paddle_x
         paddle_y = player.paddle_y
-        relative_position = (self.y - paddle_y) / PADDLE_HEIGHT
-        angle = (relative_position - 0.5) * math.pi / 2
+        paddle_width = player.paddle_width
+        paddle_height = player.paddle_height
+
+        # Adjust calculations based on player position
+        if player_position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
+            relative_position = (self.y + self.size / 2 - paddle_y) / paddle_height
+        elif player_position in [PlayerPosition.BOTTOM, PlayerPosition.UP]:  # For BOTTOM and UP players
+            relative_position = (self.x + self.size / 2 - paddle_x) / paddle_width
+        angle = (relative_position - 0.5) * math.pi / 2 
 
         # Calculate speed based on the current velocity
         speed = math.sqrt(self.vx**2 + self.vy**2)
 
         # Adjust velocity based on the collision with the paddle
-        self.vx = speed * math.cos(angle) * (-1 if player_position == PlayerPosition.RIGHT else 1)
-        self.vy = speed * math.sin(angle)
+        if player_position == PlayerPosition.LEFT:
+            self.vx = speed * math.cos(angle)
+            self.vy = speed * math.sin(angle)
+        elif player_position == PlayerPosition.RIGHT:
+            self.vx = speed * math.cos(angle) *-1
+            self.vy = speed * math.sin(angle)
+        elif player_position == PlayerPosition.BOTTOM:
+            self.vx = speed * math.cos(angle)
+            self.vy = abs(speed * math.sin(angle)) * -1
+        elif player_position == PlayerPosition.UP:
+            self.vx = speed * math.cos(angle)
+            self.vy = abs(speed * math.sin(angle))
 
 #------------------------------REDIS-------------------------------------
 

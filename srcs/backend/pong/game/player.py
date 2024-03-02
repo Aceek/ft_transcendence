@@ -10,8 +10,12 @@ class Player:
         self.key_map = get_player_key_map(side)
         
         self.speed = PADDLE_SPEED
-        self.height = PADDLE_HEIGHT
-        self.width = PADDLE_WIDTH
+        if self.side == PlayerPosition.LEFT or self.side == PlayerPosition.RIGHT:
+            self.paddle_height = PADDLE_HEIGHT
+            self.paddle_width = PADDLE_WIDTH
+        elif self.side == PlayerPosition.BOTTOM or self.side == PlayerPosition.UP:
+            self.paddle_height = PADDLE_WIDTH
+            self.paddle_width = PADDLE_HEIGHT
 
     def reset_value(self):
         self.score = SCORE_START
