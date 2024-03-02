@@ -34,6 +34,7 @@ async function initiateMatchmaking() {
     if (data.message === "Match found") {
       ws.close();
       if (data.room_url) {
+        console.log("Match found, redirecting to room:", data.room_url);
         router(data.room_url);
       }
     } else {
