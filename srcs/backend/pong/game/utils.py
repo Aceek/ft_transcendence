@@ -59,3 +59,10 @@ def calculate_launch_angle(player_nb, angle_range):
                                 central_angle % 360 + angle_range//2)
 
     return math.radians(angle_deg)
+
+def generate_adjusted_random_speed(original_speed, range):
+    range = range / 100
+    adjustment_factor = random.uniform(-range, range)
+    adjusted_speed = original_speed * (1 + adjustment_factor)
+
+    return adjusted_speed

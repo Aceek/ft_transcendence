@@ -3,7 +3,7 @@ import math
 
 from .config import *
 from .enum import PlayerPosition
-from .utils import calculate_launch_angle
+from .utils import calculate_launch_angle, generate_adjusted_random_speed
 
 class Ball:
     def __init__(self, redis_ops):
@@ -16,8 +16,7 @@ class Ball:
         self.x = BALL_X
         self.y = BALL_Y
         
-        speed = BALL_SPEED_RANGE
-
+        speed = generate_adjusted_random_speed(BALL_SPEED, 15)
         angle_rad = calculate_launch_angle(PLAYER_NB, 60)
 
         # Calculate the velocity components based on the angle
