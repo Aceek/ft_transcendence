@@ -49,6 +49,7 @@ class Paddle:
         }
         if self.side in collision_map:
             return collision_map[self.side][boundary_condition]
+        
 
     async def set_boundaries(self):
         if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
@@ -120,7 +121,12 @@ class Paddle:
         if relevant_position is not None:
             other_key_map = get_player_key_map(relevant_position)
             other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
-            other_paddle_pos = int(other_paddle_pos_str) if other_paddle_pos_str is not None else 0
+            
+            # Other player does not exist in the game, thus no need to check
+            if other_paddle_pos_str is None:
+                return True
+            else:
+                other_paddle_pos = int(other_paddle_pos_str)
             
             if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min or \
             relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
