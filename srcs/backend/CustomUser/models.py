@@ -26,7 +26,6 @@ class CustomUser(AbstractUser):
     )
     friends = models.ManyToManyField("self", blank=True, symmetrical=False)
     blocked_users = models.ManyToManyField("self", blank=True, symmetrical=False, related_name="blocked_by")
-    chat_online = models.BooleanField(default=False, editable=False, blank=True)
     status = models.CharField(max_length=255, blank=True, null=True, editable=False, default="offline")
 
     def __str__(self):

@@ -61,23 +61,6 @@ export function createConversationObjects(friends, clientSender) {
   });
 }
 
-export function handleStatusUpdate(data) {
-  const { user_id, status } = data;
-  const friendLink = document.querySelector(`[data-uid="${user_id}"]`);
-
-  if (friendLink) {
-    const statusElement = friendLink.querySelector(".connection-status");
-    if (status === "online") {
-      statusElement.classList.add("text-online");
-      statusElement.classList.remove("text-offline");
-      statusElement.textContent = "Chat online";
-    } else {
-      statusElement.classList.add("text-offline");
-      statusElement.classList.remove("text-online");
-      statusElement.textContent = "Chat offline";
-    }
-  }
-}
 
 function isSenderFriend(sender, friendsListIds) {
   return friendsListIds.includes(sender);

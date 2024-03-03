@@ -1,5 +1,4 @@
 import { processChatMessage } from "./utilsChat.js";
-import { handleStatusUpdate } from "./utilsChat.js";
 import { getProfile } from "../profile/getProfile.js";
 import { injectChatRoom } from "./injectChat.js";
 import { incressBadgeBgSuccess } from "./utilsChat.js";
@@ -14,7 +13,6 @@ import {
 
 export function handleWebSocketOpen(friendsListIds, resolve) {
   console.log("Connection opened");
-  subscribeToStatusUpdates(friendsListIds);
   resolve();
 }
 
@@ -23,9 +21,6 @@ export function handleWebSocketMessage(event, friendsListIds) {
   switch (data.type) {
     case "chat_message":
       processChatMessage(data, friendsListIds);
-      break;
-    case "status_update":
-      handleStatusUpdate(data);
       break;
     case "ping":
       chatSocket.send(JSON.stringify({ type: "pong", action: "pong" }));
@@ -54,7 +49,6 @@ function handleWebSocketError(error, reject) {
 export function etablishConnectionWebSocket(friendsListIds) {
   return new Promise((resolve, reject) => {
     if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-      getStatusUpdatesFromServer();
       resolve();
       return;
     }
@@ -143,22 +137,5 @@ export function sendMessageWebSocket(message) {
   }
 }
 
-export function subscribeToStatusUpdates(friendsListIds) {
-  if (chatSocket.readyState !== WebSocket.OPEN) {
-    return;
-  }
-  chatSocket.send(
-    JSON.stringify({
-      action: "subscribe",
-      usersIds: friendsListIds,
-    })
-  );
-}
 
-export function getStatusUpdatesFromServer() {
-  chatSocket.send(
-    JSON.stringify({
-      action: "get_status_updates",
-    })
-  );
-}
+

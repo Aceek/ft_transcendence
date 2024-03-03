@@ -42,9 +42,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         action = data.get("action")
-        if action == "subscribe":
-            await self.subscribe_to_status_updates(data["usersIds"])
-        elif action == "send_message":
+        if action == "send_message":
             message = data["message"]
             receiver_id = data.get("receiver")
             receiver_group_name = f"chat_{receiver_id}"
@@ -59,8 +57,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         "receiver": receiver_id,
                     },
                 )
-        elif action == "get_status_updates":
-            await self.send_status_updates()
         elif action == "pong":
             self.pong_received = True
         elif action == "read_messages":
@@ -120,38 +116,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
             )
 
-    async def send_status_updates(self):
-        for user_id in self.followed_users:
-            status = await self.get_user_status(user_id)
-            await self.send(
-                text_data=json.dumps(
-                    {"type": "status_update", "user_id": user_id, "status": status}
-                )
-            )
 
-    async def subscribe_to_status_updates(self, user_ids):
-        for user_id in user_ids:
-            await self.channel_layer.group_add(
-                f"user_status_{user_id}", self.channel_name
-            )
-            if user_id not in self.followed_users:
-                self.followed_users.append(user_id)
-
-            status = await self.get_user_status(user_id)
-
-            await self.send(
-                text_data=json.dumps(
-                    {"type": "status_update", "user_id": user_id, "status": status}
-                )
-            )
-
-    @database_sync_to_async
-    def get_user_status(self, user_id):
-        r = redis.Redis(host="redis", port=6379, db=0)
-        status = r.get(f"user_status:{user_id}")
-        if status is not None:
-            return status.decode("utf-8")
-        return "offline"
 
     async def can_send_message(self, receiver_id):
         sender = self.user
