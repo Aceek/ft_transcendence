@@ -2,6 +2,8 @@ import { router } from "../main.js";
 import { requestDataWithToken } from "../pageUtils.js";
 import { getGameHistory, getFriendList } from "./getProfile.js";
 import { createButtonFriend } from "./profileFriends.js";
+import { sendTrackStatus } from "../user_activity_websocket/user_activity_websocket.js";
+
 
 const historyContext = {
   currentPage: 1,
@@ -54,6 +56,7 @@ export async function attachLinkListenerProfile() {
 export async function injectFriendList(page, UID = null) {
   const friendList = await getFriendList(page, UID);
   const friendListContainer = document.getElementById("friendsList");
+  sendTrackStatus(friendList.results.map((friend) => friend.id));
 
   friendListContainer.innerHTML = "";
   const friendListTitle = document.getElementById("friendListTitle");

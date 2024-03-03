@@ -1,4 +1,8 @@
-import { getLoginPage, checkOAuthCode, checkEmailVerification } from "./login.js";
+import {
+  getLoginPage,
+  checkOAuthCode,
+  checkEmailVerification,
+} from "./login.js";
 import { getHomePage } from "./home/home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./networkUtils.js";
@@ -12,7 +16,7 @@ import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentA
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 import { get2FAPage } from "./2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
-import { handleUserActivity } from "./user_activity_websocket.js";
+import { handleUserActivity } from "./user_activity_websocket/user_activity_websocket.js";
 import {
   chatSocket,
   displayChatPage,
@@ -61,7 +65,6 @@ export function clearLoadedCss() {
   });
 }
 
-
 function resetDataForReloadingPage(path) {
   closeChatWebSocket(path);
   clearLoadedCss();
@@ -82,7 +85,7 @@ export async function router(path, updateHistory = true) {
   resetDataForReloadingPage(path);
 
   if (await checkEmailVerification()) {
-    sessionStorage.setItem('validate', 'true');
+    sessionStorage.setItem("validate", "true");
   }
 
   if (await isAPIConnected()) {
@@ -124,7 +127,7 @@ async function matchRegex(path) {
 }
 
 async function handleAuthenticatedRoutes(path) {
-  sessionStorage.removeItem('validate');
+  sessionStorage.removeItem("validate");
   if (await matchRegex(path)) {
   } else {
     switch (path) {
@@ -158,7 +161,7 @@ async function handleAuthenticatedRoutes(path) {
 
 async function handleUnauthenticatedRoutes(path) {
   deleteNavbar();
-  const oauth = await checkOAuthCode()
+  const oauth = await checkOAuthCode();
 
   if (oauth.success) {
     if (oauth.requires2FA) {

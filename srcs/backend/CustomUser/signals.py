@@ -4,7 +4,8 @@ from django.conf import settings
 from email_verification.utils import send_verification_email
 from .models import CustomUser
 import os
-
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 @receiver(pre_delete, sender=CustomUser)
@@ -18,14 +19,26 @@ def delete_avatar(sender, instance, **kwargs):
             os.rmdir(user_uid_folder)
 
 
-# @receiver(pre_save, sender=CustomUser)
-# def update_is_active_if_email_changed(sender, instance, **kwargs):
-#     if instance._state.adding:
-#         return
-#     try:
-#         old_instance = CustomUser.objects.get(pk=instance.pk)
-#         if old_instance.email != instance.email:
-#             instance.is_active = False
-#             send_verification_email(instance)
-#     except CustomUser.DoesNotExist:
-#         pass
+@receiver(pre_save, sender=CustomUser)
+def user_status_activity_on_save(sender, instance, **kwargs):
+    if instance._state.adding:
+        return
+    try:
+        old_instance = CustomUser.objects.get(pk=instance.pk)
+        if old_instance.status != instance.status:
+            channel_layer = get_channel_layer()
+            group_name = f"user_activity_{instance.id}"
+
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    "type": "user_activity",
+                    "status": instance.status,
+                    "user_id": str(instance.id),
+                },
+            )
+    except CustomUser.DoesNotExist:
+        pass
+
+
+

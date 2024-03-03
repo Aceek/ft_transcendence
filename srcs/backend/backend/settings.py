@@ -77,7 +77,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "channels",
-    "CustomUser",
+    "CustomUser.apps.CustomuserConfig",
     "authentication",
     "email_verification",
     "stats",

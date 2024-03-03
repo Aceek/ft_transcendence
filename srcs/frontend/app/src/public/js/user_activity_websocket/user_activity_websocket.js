@@ -39,6 +39,7 @@ function connectUserActivitySocket() {
 }
 
 function sendPing(socket) {
+  console.log('Sending ping to server');
   socket.send(JSON.stringify({action: "ping"}));
   setTimeout(() => sendPing(socket), 30000);
 }
@@ -53,3 +54,12 @@ function handleMessage(data) {
       console.log('Message from server: ', data);
   }
 }
+
+// utility function to send all uids of users with action = "track_status"
+export function sendTrackStatus(user_ids) {
+  if (userActivitySocket === null || userActivitySocket.readyState === WebSocket.CLOSED) {
+    return;
+  }
+  userActivitySocket.send(JSON.stringify({action: "track_status", user_ids: user_ids}));
+}
+  
