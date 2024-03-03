@@ -45,17 +45,32 @@ function sendPing(socket) {
 }
 
 
+export function updateStatusOnPage(data) {
+  const statusElement = document.querySelector(`#status-${data.user_id}`);
+  if (statusElement) {
+    statusElement.textContent = `• ${data.status}`;
+
+    statusElement.classList.remove("text-success", "text-danger");
+    const statusClass = data.status === "online" ? "text-success" : "text-danger";
+    statusElement.classList.add(statusClass);
+  }
+}
+
+
 function handleMessage(data) {
   if (data.error) {
       console.error('Error from server: ', data.message);
-  } else if (data.status === "pong") {
+  } else if (data.action === "pong") {
       console.log('Pong received from server');
+  } else if (data.action === "status_update") {
+      console.log('Status update received from server: ', data);
+      updateStatusOnPage(data);
+
   } else {
       console.log('Message from server: ', data);
   }
 }
 
-// utility function to send all uids of users with action = "track_status"
 export function sendTrackStatus(user_ids) {
   if (userActivitySocket === null || userActivitySocket.readyState === WebSocket.CLOSED) {
     return;

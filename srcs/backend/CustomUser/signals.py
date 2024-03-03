@@ -33,6 +33,7 @@ def user_status_activity_on_save(sender, instance, **kwargs):
                 group_name,
                 {
                     "type": "user_activity",
+                    "action": "status_update",
                     "status": instance.status,
                     "user_id": str(instance.id),
                 },

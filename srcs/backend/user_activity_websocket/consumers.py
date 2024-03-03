@@ -60,7 +60,7 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
         action = data.get("action")
         if action == "ping":
             await self.handle_ping()
-            await self.send(text_data=json.dumps({"status": "pong"}))
+            await self.send(text_data=json.dumps({"action": "pong"}))
         elif action == "track_status":
             await self.track_status(data["user_ids"])
         elif action == "untrack_status":
@@ -117,6 +117,7 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
         await self.send(
             text_data=json.dumps(
                 {
+                    "action": event["action"],
                     "status": event["status"],
                     "user_id": event["user_id"],
                 }
