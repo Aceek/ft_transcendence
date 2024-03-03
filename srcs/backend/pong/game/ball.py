@@ -98,9 +98,13 @@ class Ball:
         paddle_height = player.paddle_height
 
         # Adjust calculations based on player position
-        if player_position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
+        if player_position == PlayerPosition.LEFT:
+            relative_position = (self.y - self.size / 2 - paddle_y) / paddle_height
+        elif player_position == PlayerPosition.RIGHT:
             relative_position = (self.y + self.size / 2 - paddle_y) / paddle_height
-        elif player_position in [PlayerPosition.BOTTOM, PlayerPosition.UP]:  # For BOTTOM and UP players
+        elif player_position == PlayerPosition.UP:
+            relative_position = (self.x - self.size / 2 - paddle_x) / paddle_width
+        elif player_position == PlayerPosition.BOTTOM:
             relative_position = (self.x + self.size / 2 - paddle_x) / paddle_width
         angle = (relative_position - 0.5) * math.pi / 2 
 
