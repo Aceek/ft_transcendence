@@ -3,6 +3,7 @@ import math
 
 from .config import *
 from .enum import PlayerPosition
+from .utils import calculate_launch_angle
 
 class Ball:
     def __init__(self, redis_ops):
@@ -14,8 +15,15 @@ class Ball:
     def reset_value(self):
         self.x = BALL_X
         self.y = BALL_Y
-        self.vx = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
-        self.vy = random.choice([-BALL_SPEED_RANGE, BALL_SPEED_RANGE])
+        
+        speed = BALL_SPEED_RANGE
+
+        angle_rad = calculate_launch_angle(PLAYER_NB, 60)
+
+        # Calculate the velocity components based on the angle
+        self.vx = speed * math.cos(angle_rad)
+        self.vy = speed * math.sin(angle_rad)
+
         self.lastPlayertouched = None
 
     async def set_data_to_redis(self):
