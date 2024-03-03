@@ -9,6 +9,21 @@ export async function handleUserActivity() {
   }
 }
 
+function sendUserToTrack() {
+  const userIds = extractUserIds();
+  if (userIds.length === 0) {
+    return;
+  }
+  sendTrackStatus(userIds);
+}
+
+function extractUserIds() {
+  const statusElements = document.querySelectorAll('[id^="status-"]');
+  const userIds = Array.from(statusElements).map((el) => {
+    return el.id.replace("status-", "");
+  });
+  return userIds;
+}
 function connectUserActivitySocket() {
   userActivitySocket = new WebSocket(
     "wss://" + window.location.host + "/ws/user_activity/"
@@ -17,6 +32,7 @@ function connectUserActivitySocket() {
   userActivitySocket.onopen = function (e) {
     console.log("User activity socket connected");
     sendPing(userActivitySocket);
+    sendUserToTrack();
   };
 
   userActivitySocket.onmessage = function (e) {

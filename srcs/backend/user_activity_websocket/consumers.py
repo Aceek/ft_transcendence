@@ -12,6 +12,7 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.connected = True
+
     async def connect(self):
         await self.accept()
         self.user = self.scope["user"]
@@ -35,12 +36,12 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def mark_online(self):
-        self.user.status = "online"
-        self.user.save()
+        if self.user.status != "online":
+            self.user.status = "online"
+            self.user.save()
 
     async def mark_user_offline(self):
         await self.redis.delete(f"user_last_ping:{self.user_id}")
-        print(f"Utilisateur {self.user_id} marqué comme hors ligne.")
         await self.mark_offline()
 
     @database_sync_to_async
@@ -62,25 +63,21 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
             await self.handle_ping()
             await self.send(text_data=json.dumps({"action": "pong"}))
         elif action == "track_status":
-            await self.track_status(data["user_ids"])
-        elif action == "untrack_status":
-            await self.untrack_status(data["user_ids"])
+            await self.track_status_and_send(data["user_ids"])
         else:
             await self.send_error("Invalid action")
 
     async def send_error(self, error_message):
         await self.send(text_data=json.dumps({"error": error_message}))
 
-
     async def handle_ping(self):
         self.last_ping = datetime.now()
         current_timestamp = int(time.time())
         await self.redis.set(f"user_last_ping:{self.user_id}", current_timestamp)
 
-
     async def check_inactivity(self):
         await self.redis.incr(f"user:{self.user_id}:inactivity_checks")
-        inactivity_checks = await self.redis.get(f"user:{self.user_id}:inactivity_checks")
+
         async def check_and_mark_offline():
             last_ping_timestamp = await self.redis.get(f"user_last_ping:{self.user_id}")
             if last_ping_timestamp:
@@ -88,28 +85,47 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
                 current_timestamp = int(time.monotonic())
                 if current_timestamp - last_ping > 60:
                     await self.mark_user_offline()
+                else:
+                    await self.mark_online()
+
 
         try:
             while self.connected:
                 await asyncio.sleep(20)
                 await check_and_mark_offline()
         finally:
-            checks_left = await self.redis.decr(f"user:{self.user_id}:inactivity_checks")
+            checks_left = await self.redis.decr(
+                f"user:{self.user_id}:inactivity_checks"
+            )
             if checks_left <= 0:
                 await self.mark_user_offline()
-                await self.redis.delete(f"user:{self.user_id}:inactivity_checks")  # Nettoyage
+                await self.redis.delete(
+                    f"user:{self.user_id}:inactivity_checks"
+                )
 
+    async def track_status_and_send(self, user_ids):
+        await self.track_status(user_ids)
+        for user_id in user_ids:
+            user = await self.get_user(user_id)
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "status_update",
+                        "status": user.status,
+                        "user_id": str(user.id),
+                    }
+                )
+            )
 
+    @database_sync_to_async
+    def get_user(self, user_id):
+        from CustomUser.models import CustomUser
+
+        return CustomUser.objects.get(id=user_id)
 
     async def track_status(self, user_ids):
         for user_id in user_ids:
             await self.channel_layer.group_add(
-                f"user_activity_{user_id}", self.channel_name
-            )
-
-    async def untrack_status(self, user_ids):
-        for user_id in user_ids:
-            await self.channel_layer.group_discard(
                 f"user_activity_{user_id}", self.channel_name
             )
 

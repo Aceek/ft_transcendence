@@ -22,9 +22,9 @@ export function handleWebSocketMessage(event, friendsListIds) {
     case "chat_message":
       processChatMessage(data, friendsListIds);
       break;
-    case "ping":
-      chatSocket.send(JSON.stringify({ type: "pong", action: "pong" }));
-      break;
+    // case "ping":
+    //   chatSocket.send(JSON.stringify({ type: "pong", action: "pong" }));
+    //   break;
     case "tournament_message":
       handleTournamentMessage(data);
       break;
