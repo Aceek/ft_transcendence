@@ -46,11 +46,11 @@ class Ball:
             paddle_width, paddle_height = player.paddle_width, player.paddle_height
 
             # Check for horizontal overlap
-            if paddle_x <= self.x <= paddle_x + paddle_width or \
-                paddle_x <= self.x + self.size <= paddle_x + paddle_width:
+            if paddle_x <= self.x - self.size / 2 <= paddle_x + paddle_width or \
+                paddle_x <= self.x + self.size / 2 <= paddle_x + paddle_width:
                 # Check for vertical overlap
-                if paddle_y <= self.y <= paddle_y + paddle_height or \
-                    paddle_y <= self.y + self.size <= paddle_y + paddle_height:
+                if paddle_y <= self.y - self.size / 2 <= paddle_y + paddle_height or \
+                    paddle_y <= self.y + self.size / 2 <= paddle_y + paddle_height:
                     if player.side == PlayerPosition.LEFT or player.side == PlayerPosition.RIGHT:
                         self.vx *= -1
                     elif player.side == PlayerPosition.BOTTOM or player.side == PlayerPosition.UP:

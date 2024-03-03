@@ -36,7 +36,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.paddle.assignment()
         await self.paddle.set_boundaries()
         await self.paddle.set_axis_keys()
-        await self.paddle.set_relevant_position()
 
         await self.send_paddle_assignement()
 
