@@ -26,6 +26,30 @@ class Paddle:
         self.axis_key = None
         self.reverse_axis_key = None
 
+    async def get_collision_details(self, boundary_condition):
+        # Define a mapping of which paddle positions to check based on the current paddle's position
+        # and whether it's at its min or max boundary.
+        collision_map = {
+            PlayerPosition.LEFT: {
+                "min": (PlayerPosition.UP, "min"),
+                "max": (PlayerPosition.BOTTOM, "min")
+            },
+            PlayerPosition.RIGHT: {
+                "min": (PlayerPosition.UP, "max"),
+                "max": (PlayerPosition.BOTTOM, "max")
+            },
+            PlayerPosition.UP: {
+                "min": (PlayerPosition.LEFT, "min"),
+                "max": (PlayerPosition.RIGHT, "min")
+            },
+            PlayerPosition.BOTTOM: {
+                "min": (PlayerPosition.LEFT, "max"),
+                "max": (PlayerPosition.RIGHT, "max")
+            }
+        }
+        if self.side in collision_map:
+            return collision_map[self.side][boundary_condition]
+
     async def set_boundaries(self):
         if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
             self.boundary_max = SCREEN_WIDTH
@@ -39,15 +63,6 @@ class Paddle:
     async def set_axis_keys(self):
         self.axis_key = 'paddle_x' if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
-
-    async def set_relevant_position(self):
-        if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
-            self.min_relevant_position = PlayerPosition.LEFT
-            self.max_relevant_position = PlayerPosition.RIGHT
-        else:
-            self.min_relevant_position = PlayerPosition.UP if PLAYER_NB > 3 else None
-            self.max_relevant_position = PlayerPosition.BOTTOM
-
 
     async def assignment(self):
         # Iterate through all possible positions
@@ -97,9 +112,9 @@ class Paddle:
         # Check if the paddle is in potential range of others
         relevant_position = None
         if new_pos <= self.collision_boundary_min:
-            relevant_position = self.min_relevant_position
+            relevant_position, relevant_boundary = await self.get_collision_details("min")
         elif new_pos + self.size >= self.collision_boundary_max:
-            relevant_position = self.max_relevant_position
+            relevant_position, relevant_boundary = await self.get_collision_details("max")
 
         # Check if there is a collision
         if relevant_position is not None:
@@ -107,10 +122,10 @@ class Paddle:
             other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
             other_paddle_pos = int(other_paddle_pos_str) if other_paddle_pos_str is not None else 0
             
-            if other_paddle_pos <= self.other_collision_boundary_min or \
-            other_paddle_pos + self.size >= self.other_collision_boundary_max:
-                    print(f"Overlap detected with {relevant_position} paddle.")
-                    return False
+            if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min or \
+            relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
+                print(f"Overlap detected with {relevant_position} paddle.")
+                return False
 
         return True
 
