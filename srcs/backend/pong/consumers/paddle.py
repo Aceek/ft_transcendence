@@ -9,6 +9,46 @@ class Paddle:
         self.redis_ops = redis_ops
         self.side = None
 
+        self.size = PADDLE_HEIGHT
+        self.speed = PADDLE_SPEED
+
+        self.boundary_min = 0
+        self.collision_boundary_min = PADDLE_BORDER_DISTANCE
+        self.other_collision_boundary_min = PADDLE_BORDER_DISTANCE
+        
+        self.boundary_max = None
+        self.collision_boundary_max = None
+        self.other_collision_boundary_max = None
+        
+        self.min_relevant_position = None
+        self.max_relevant_position = None
+
+        self.axis_key = None
+        self.reverse_axis_key = None
+
+    async def set_boundaries(self):
+        if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
+            self.boundary_max = SCREEN_WIDTH
+            self.collision_boundary_max = SCREEN_WIDTH - PADDLE_BORDER_DISTANCE
+            self.other_collision_boundary_max = SCREEN_HEIGHT - PADDLE_BORDER_DISTANCE
+        else:
+            self.boundary_max = SCREEN_HEIGHT
+            self.collision_boundary_max = SCREEN_HEIGHT - PADDLE_BORDER_DISTANCE
+            self.other_collision_boundary_max = SCREEN_WIDTH - PADDLE_BORDER_DISTANCE
+
+    async def set_axis_keys(self):
+        self.axis_key = 'paddle_x' if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'
+        self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
+
+    async def set_relevant_position(self):
+        if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
+            self.min_relevant_position = PlayerPosition.LEFT
+            self.max_relevant_position = PlayerPosition.RIGHT
+        else:
+            self.min_relevant_position = PlayerPosition.UP if PLAYER_NB > 3 else None
+            self.max_relevant_position = PlayerPosition.BOTTOM
+
+
     async def assignment(self):
         # Iterate through all possible positions
         for position in PlayerPosition:
@@ -34,27 +74,45 @@ class Paddle:
         else:
             print(f"No available position for user {self.user_id}.")
 
-    async def check_movement(self, new_position):
-        # Choose the correct axis key based on the player's side
-        key = self.key_map['paddle_x'] if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else self.key_map['paddle_y']
-        current_pos_str = await self.redis_ops.get_dynamic_value(key)
+    async def check_movement(self, new_pos):
+        # Determine the axis and boundary based on the player's side
+        current_pos_str = await self.redis_ops.get_dynamic_value(self.key_map[self.axis_key])
         current_pos = int(current_pos_str) if current_pos_str is not None else 0
 
-        # Calculate the attempted movement distance
-        movement_distance = abs(new_position - current_pos)
-        # Determine boundaries based on paddle orientation
-        boundary = SCREEN_WIDTH - PADDLE_WIDTH if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else SCREEN_HEIGHT - PADDLE_HEIGHT
-
-        if new_position < 0 or new_position > boundary:
-            print(f"Requested position: {new_position} is outside the game boundaries.")
+        # Check game boundaries
+        if new_pos < self.boundary_min or new_pos + self.size > self.boundary_max:
+            print(f"Requested position: {new_pos} is outside the game boundaries.")
             return False
 
-        # Check if the movement is within the allowed speed limit
-        if movement_distance <= PADDLE_SPEED:
+        # Check movement speed limit
+        movement_distance = abs(new_pos - current_pos)
+        if movement_distance > self.speed:
+            print(f"Attempted to move the paddle more than the speed limit ({self.speed}). Movement Distance: {movement_distance}")
+            return False
+
+        # Early exit if only 2 players
+        if PLAYER_NB < 3:
             return True
-        else:
-            print(f"Attempted to move the paddle more than the speed limit ({PADDLE_SPEED}). Movement Distance: {movement_distance}")
-            return False
+
+        # Check if the paddle is in potential range of others
+        relevant_position = None
+        if new_pos <= self.collision_boundary_min:
+            relevant_position = self.min_relevant_position
+        elif new_pos + self.size >= self.collision_boundary_max:
+            relevant_position = self.max_relevant_position
+
+        # Check if there is a collision
+        if relevant_position is not None:
+            other_key_map = get_player_key_map(relevant_position)
+            other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
+            other_paddle_pos = int(other_paddle_pos_str) if other_paddle_pos_str is not None else 0
+            
+            if other_paddle_pos <= self.other_collision_boundary_min or \
+            other_paddle_pos + self.size >= self.other_collision_boundary_max:
+                    print(f"Overlap detected with {relevant_position} paddle.")
+                    return False
+
+        return True
 
     async def set_data_to_redis(self, new_position):
         # Choose the correct axis key based on the player's side

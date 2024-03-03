@@ -34,6 +34,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
         self.paddle = Paddle(self.user_id, self.redis_ops)
         await self.paddle.assignment()
+        await self.paddle.set_boundaries()
+        await self.paddle.set_axis_keys()
+        await self.paddle.set_relevant_position()
+
         await self.send_paddle_assignement()
 
         # Check if the client is the first to connect to the room; 
