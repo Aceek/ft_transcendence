@@ -47,8 +47,6 @@ class GameLogic:
         self.players = [Player(position, self.redis_ops) for position in PlayerPosition if position.value < PLAYER_NB]
         for player in self.players:
                 await player.set_data_to_redis()
-        #to be tested
-        # await asyncio.gather(*(player.set_data_to_redis() for player in self.players))
 
         # Init ball
         self.ball = Ball(self.redis_ops) 
@@ -139,10 +137,12 @@ class GameLogic:
     async def game_loop(self):
         """The main game loop."""
         await self.launch_game()
+        target_loop_duration = 1 / TICK_RATE
 
         try:
             print("Game loop started.")
             while True:
+                loop_start_time = time.time()
                 current_time = time.time()
                 delta_time = current_time - self.last_update_time
                 self.last_update_time = current_time
@@ -152,7 +152,11 @@ class GameLogic:
 
                 await self.game_tick(delta_time)
 
-                await asyncio.sleep(1/TICK_RATE)
+                # Calculate the remaining tick time to send the data at fixed interval
+                loop_execution_time = time.time() - loop_start_time
+                sleep_duration = max(0, target_loop_duration - loop_execution_time)
+                
+                await asyncio.sleep(sleep_duration)
 
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()

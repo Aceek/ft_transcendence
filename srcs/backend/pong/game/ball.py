@@ -137,9 +137,9 @@ class Ball:
     async def set_ball_to_redis(self):
         # Prepare a dictionary with the ball attributes prefixed by 'b_'
         ball_attributes = {
-            'b_x': round(self.x, 8),  # Keep 4 decimal places
-            'b_y': round(self.y, 8),
-            'b_vx': round(self.vx, 8),
-            'b_vy': round(self.vy, 8)
+            'b_x': round(self.x, 2),  # Keep 4 decimal places
+            'b_y': round(self.y, 2),
+            'b_vx': round(self.vx, 2),
+            'b_vy': round(self.vy, 2)
         }
         await self.redis_ops.set_dynamic_data(ball_attributes)

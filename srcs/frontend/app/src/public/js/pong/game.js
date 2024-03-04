@@ -1,12 +1,14 @@
 import { Ball } from './ball.js';
 import { Player } from './player.js';
 
+let lastUpdateTimestamp = null;
 export class Game {
     constructor() {
         this.ball = new Ball();
         this.players = [];
         this.status = -1;
         this.lastServerUpdate = 0;
+        this.latency
         this.canvasWidth = 0
         this.canvasHeight = 0
         this.countdown = null;
@@ -54,14 +56,30 @@ export class Game {
         this.players.forEach(player => player.handleStaticData(staticData));
     }
   
-    handleDynamicData(dynamicData) {
-        // console.log("Handling dynamic data:", dynamicData);
-        this.ball.handleDynamicData(dynamicData);
+    // Initialize a variable to store the timestamp of the last update for delta calculation
+    
+    handleDynamicData(dynamicData, serverTimestamp) {
+        // Convert server timestamp from seconds to milliseconds
+        const serverTimestampMs = parseInt(serverTimestamp, 10);
+        const currentTime = (new Date()).getTime();
 
+        // Calculate the network latency
+        this.latency = currentTime - serverTimestampMs;
+        this.lastServerUpdate = currentTime - this.latency;
+        // console.log("Network latency: ", this.latency, "ms");
+
+        
+        // If lastUpdateTimestamp exists, calculate the delta between updates
+        // if (lastUpdateTimestamp !== null) {
+        //     const deltaBetweenUpdates = serverTimestampMs - lastUpdateTimestamp;
+        //     console.log("Delta between server updates: ", deltaBetweenUpdates, "ms");
+        // }
+       
+        this.ball.handleDynamicData(dynamicData, this.latency);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
         this.status = parseInt(dynamicData.gs, 10);
-        this.lastServerUpdate = (new Date()).getTime();
     }
+
     
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();

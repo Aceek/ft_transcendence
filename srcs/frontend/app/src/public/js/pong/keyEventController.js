@@ -13,7 +13,7 @@ export class KeyEventController {
 
     handleKeyPress(key, isPressed) {
         // Log every key press for debugging purposes
-        console.log(`Key Event: ${key}, Pressed: ${isPressed}`);
+        // console.log(`Key Event: ${key}, Pressed: ${isPressed}`);
     
         // Exit early for key releases or if no player is controlled
         if (!isPressed || !this.game.controlledPlayer) {
@@ -37,20 +37,6 @@ export class KeyEventController {
             this.updatePaddlePosition(key);
         }
     }
-    
-    // updatePaddlePosition(key) {
-    //     let change = this.game.controlledPlayer.paddleSpeed;
-    //     let newY = this.game.controlledPlayer.paddleY + (key === "ArrowDown" ? change : -change);
-    
-    //     // Check if the new position is within bounds
-    //     if (newY >= 0 && (newY + this.game.controlledPlayer.paddleHeight) <= this.game.canvasHeight) {
-    //         this.game.controlledPlayer.paddleY = newY;
-    //         this.sendPaddlePositionUpdate(this.game.controlledPlayer);
-    //         console.log(`Paddle updated: ${newY} for ${this.game.controlledPlayer.side}`);
-    //     } else {
-    //         console.log(`Out of bounds: ${newY}. Canvas height: ${this.game.canvasHeight}`);
-    //     }
-    // }
 
     updatePaddlePosition(key) {
         let change = this.game.controlledPlayer.paddleSpeed;
