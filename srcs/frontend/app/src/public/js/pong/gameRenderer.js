@@ -12,6 +12,10 @@ export class GameRenderer {
         this.ctx.clearRect(0, 0, this.game.canvasWidth, this.game.canvasHeight);
         
         this.game.players.forEach(player => {
+            // Log player paddle details
+            // console.log(`Drawing paddle for player at X: ${player.paddleX}, Y: ${player.paddleY}, Width: ${player.paddleWidth}, Height: ${player.paddleHeight}`);
+        
+            // Draw the paddle
             this.drawPaddle(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
         });
         

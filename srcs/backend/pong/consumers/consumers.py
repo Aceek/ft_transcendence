@@ -106,6 +106,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp 
         }))
 
+    async def game_inital_dynamic_data(self, event):
+        # Extract data and timestamp from the event
+        data = event['data']
+        timestamp = event.get('timestamp', None)  # Use .get to avoid KeyError if 'timestamp' is missing
+        await self.send(text_data=json.dumps({
+            'type': 'game.inital_dynamic_data',
+            'data': data,
+        }))
+
     async def game_countdown(self, event):
         seconds = event['seconds']
         await self.send(text_data=json.dumps({

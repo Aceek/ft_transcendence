@@ -100,11 +100,11 @@ class Paddle:
             print(f"Requested position: {new_pos} is outside the game boundaries.")
             return False
 
-        # Check movement speed limit
-        movement_distance = abs(new_pos - current_pos)
-        if movement_distance > self.speed:
-            print(f"Attempted to move the paddle more than the speed limit ({self.speed}). Movement Distance: {movement_distance}")
-            return False
+        # # Check movement speed limit
+        # movement_distance = abs(new_pos - current_pos)
+        # if movement_distance > self.speed:
+        #     print(f"Attempted to move the paddle more than the speed limit ({self.speed}). Movement Distance: {movement_distance}")
+        #     return False
 
         # Early exit if only 2 players
         if PLAYER_NB < 3:

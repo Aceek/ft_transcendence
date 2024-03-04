@@ -54,7 +54,7 @@ class GameLogic:
 
         # Send data to first client and set the game to not started
         await self.get_static_data_and_send()
-        await self.get_dynamic_data_and_send()
+        await self.get_initial_dynamic_data_and_send()
 
     # ---------------------------DATA UPDATES-----------------------------------
 
@@ -67,6 +67,11 @@ class GameLogic:
         """Centralized method to send dynamic data."""
         dynamic_data = await self.redis_ops.get_dynamic_data()
         await self.channel_com.send_dynamic_data(dynamic_data)
+
+    async def get_initial_dynamic_data_and_send(self):
+        """Centralized method to send dynamic data."""
+        dynamic_data = await self.redis_ops.get_dynamic_data()
+        await self.channel_com.send_inital_dynamic_data(dynamic_data)
 
     async def update_game_status_and_notify(self, new_status):
         """Updates game status and sends dynamic data if necessary."""
@@ -196,6 +201,7 @@ class GameLogic:
             self.ball.reset_value()
             if scorer_position is not None:
                 await self.players[scorer_position.value].update_score()
+                await self.get_initial_dynamic_data_and_send()
                 if self.players[scorer_position.value].check_win():
                     await self.update_game_status_and_notify(GameStatus.COMPLETED)
         

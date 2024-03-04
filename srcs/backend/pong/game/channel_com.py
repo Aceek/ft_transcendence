@@ -25,6 +25,14 @@ class ChannelCom:
         }
         await self.channel_layer.group_send(self.room_group_name, message)
 
+    async def send_inital_dynamic_data(self, dynamic_data):
+        message = {
+            "type": "game.inital_dynamic_data",
+            "data": dynamic_data,
+        }
+        await self.channel_layer.group_send(self.room_group_name, message)
+
+
     async def send_countdown(self, seconds_left):
         message = {
             "type": "game.countdown",

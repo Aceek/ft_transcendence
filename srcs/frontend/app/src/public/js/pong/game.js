@@ -40,16 +40,16 @@ export class Game {
         for (let i = 0; i < this.playerNb; i++) {
             const playerId = i + 1; // Calculate player id as the next sequential number
             const playerSide = sides[i % sides.length]; // Assign player side, cycling through sides if necessary
-    
-            // Create and add the new player
-            const newPlayer = new Player(playerId, playerSide);
-            this.addPlayer(newPlayer);
-    
-            // Assign controlledPlayer if the player's side matches the received side
-            if (playerSide === this.receivedSide) {
-                this.controlledPlayer = newPlayer;
+            const isControlled = playerSide === this.receivedSide; // Determine if this player is the controlled player
+
+            // Create and add the player directly
+            const player = new Player(playerId, playerSide, isControlled);
+            this.addPlayer(player);
+        
+            // If this is the controlled player, reference it in the controlledPlayer property
+            if (isControlled) {
+                this.controlledPlayer = player;
             }
-            
         }
     
         // Pass static data to all players for their initialization
@@ -57,7 +57,14 @@ export class Game {
     }
   
     // Initialize a variable to store the timestamp of the last update for delta calculation
-    
+
+    handleInitialDynamicData(dynamicData) {
+        this.ball.handleDynamicData(dynamicData);
+        this.players.forEach(player => player.handleDynamicData(dynamicData, false));
+        this.status = parseInt(dynamicData.gs, 10);
+    }
+
+
     handleDynamicData(dynamicData, serverTimestamp) {
         // Convert server timestamp from seconds to milliseconds
         const serverTimestampMs = parseInt(serverTimestamp, 10);
@@ -68,13 +75,6 @@ export class Game {
         this.lastServerUpdate = currentTime - this.latency;
         // console.log("Network latency: ", this.latency, "ms");
 
-        
-        // If lastUpdateTimestamp exists, calculate the delta between updates
-        // if (lastUpdateTimestamp !== null) {
-        //     const deltaBetweenUpdates = serverTimestampMs - lastUpdateTimestamp;
-        //     console.log("Delta between server updates: ", deltaBetweenUpdates, "ms");
-        // }
-       
         this.ball.handleDynamicData(dynamicData, this.latency);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
         this.status = parseInt(dynamicData.gs, 10);

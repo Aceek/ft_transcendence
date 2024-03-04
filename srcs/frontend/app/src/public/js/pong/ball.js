@@ -15,25 +15,30 @@ export class Ball {
 
 
     handleDynamicData(dynamicData, latency) {
-    // console.log("Handling ball dynamic data");
-    const serverX = parseFloat(dynamicData.b_x);
-    const serverY = parseFloat(dynamicData.b_y);
-    const vx = parseFloat(dynamicData.b_vx);
-    const vy = parseFloat(dynamicData.b_vy);
-
-    const latencyInSeconds = latency / 1000;
-    const adjustedX = serverX + vx * latencyInSeconds;
-    const adjustedY = serverY + vy * latencyInSeconds;
-
-    // Update the ball's position with the adjusted values
-    this.x = adjustedX;
-    this.y = adjustedY;
-    this.vx = vx;
-    this.vy = vy;
-
-    // Optional: Log the adjusted position for debugging
-    // console.log(`Adjusted Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
-    }
-    
+      const serverX = parseFloat(dynamicData.b_x);
+      const serverY = parseFloat(dynamicData.b_y);
+      const vx = parseFloat(dynamicData.b_vx);
+      const vy = parseFloat(dynamicData.b_vy);
+  
+      if (latency !== undefined && latency > 0) {
+          const latencyInSeconds = latency / 1000;
+          const adjustedX = serverX + vx * latencyInSeconds;
+          const adjustedY = serverY + vy * latencyInSeconds;
+  
+          this.x = adjustedX;
+          this.y = adjustedY;
+      } else {
+          this.x = serverX;
+          this.y = serverY;
+      }
+  
+      this.vx = vx;
+      this.vy = vy;
+  
+      // Optional: Log for debugging
+      // console.log(`Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency ? latency + 'ms' : 'N/A'}`);
   }
+  
+    
+}
   
