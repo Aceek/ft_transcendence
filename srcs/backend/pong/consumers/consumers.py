@@ -4,8 +4,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .paddle import Paddle
 from .connect_utils import *
-from ..game.config import *
-from ..game.player import Player
 from ..game.channel_com import ChannelCom
 from ..game.game import GameLogic
 from ..game.enum import GameStatus
@@ -36,6 +34,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
         self.paddle = Paddle(self.user_id, self.redis_ops)
         await self.paddle.assignment()
+        await self.paddle.set_boundaries()
+        await self.paddle.set_axis_keys()
+
         await self.send_paddle_assignement()
 
         # Check if the client is the first to connect to the room; 
@@ -74,10 +75,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Handle "paddle_position_update" message
         if "type" in data and data["type"] == "paddle_position_update":
-            paddle_y = data.get('PaddleY')
-            if paddle_y is not None and self.paddle.side is not None:
-                if await self.paddle.check_movement(paddle_y):
-                    await self.paddle.set_data_to_redis(paddle_y)
+            paddle_pos = data.get('paddle_pos')
+            if paddle_pos is not None and self.paddle.side is not None:
+                if await self.paddle.check_movement(paddle_pos):
+                    await self.paddle.set_data_to_redis(paddle_pos)
 
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
@@ -96,11 +97,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
         
     async def game_dynamic_data(self, event):
-        # Logic to handle dynamic data message
+        # Extract data and timestamp from the event
         data = event['data']
+        timestamp = event.get('timestamp', None)  # Use .get to avoid KeyError if 'timestamp' is missing
         await self.send(text_data=json.dumps({
             'type': 'game.dynamic_data',
-            'data': data
+            'data': data,
+            'timestamp': timestamp 
         }))
 
     async def game_countdown(self, event):
@@ -116,6 +119,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'type': 'game.paddle_side',
                 'paddle_side': self.paddle.side.name,
             }))
+            print(f"paddle side {self.paddle.side.name} assigned for user: {self.user_id}")
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
 

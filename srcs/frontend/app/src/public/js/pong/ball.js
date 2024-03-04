@@ -13,12 +13,27 @@ export class Ball {
         this.size = parseInt(staticData.ballSize, 10);
     }
 
-    handleDynamicData(dynamicData) {
-        // console.log("Handling ball dynamic data");
-        this.x = parseFloat(dynamicData.b_x);
-        this.y = parseFloat(dynamicData.b_y);
-        this.vx = parseFloat(dynamicData.b_vx);
-        this.vy = parseFloat(dynamicData.b_vy);
-      }
+
+    handleDynamicData(dynamicData, latency) {
+    // console.log("Handling ball dynamic data");
+    const serverX = parseFloat(dynamicData.b_x);
+    const serverY = parseFloat(dynamicData.b_y);
+    const vx = parseFloat(dynamicData.b_vx);
+    const vy = parseFloat(dynamicData.b_vy);
+
+    const latencyInSeconds = latency / 1000;
+    const adjustedX = serverX + vx * latencyInSeconds;
+    const adjustedY = serverY + vy * latencyInSeconds;
+
+    // Update the ball's position with the adjusted values
+    this.x = adjustedX;
+    this.y = adjustedY;
+    this.vx = vx;
+    this.vy = vy;
+
+    // Optional: Log the adjusted position for debugging
+    // console.log(`Adjusted Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
+    }
+    
   }
   
