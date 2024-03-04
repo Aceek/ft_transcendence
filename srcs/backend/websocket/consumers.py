@@ -6,69 +6,67 @@ from channels.layers import get_channel_layer
 
 
 class MatchmakingConsumer(AsyncWebsocketConsumer):
+    user_mode = None
+
     async def connect(self):
         await self.accept()
-
         if self.scope["user"].is_anonymous:
-            await self.send(
-                text_data=json.dumps({"message": "You are not authenticated"})
-            )
+            await self.send_error("You are not authenticated")
             await self.close()
             return
-
         self.user_id = str(self.scope["user"].id)
-
-        # Connexion à Redis
-        self.redis = await aioredis.from_url(
-            "redis://redis:6379", db=0
-        )
-
-        # Vérifie si le joueur est déjà en file d'attente
-        in_queue = await self.redis.get(f"user_{self.user_id}_ws_channel")
-        
-        if in_queue:
-            await self.send(text_data=json.dumps({"message": "You are already in queue"}))
-            await self.close()
-            return
-
-        # Stocke le channel name avec l'ID utilisateur dans Redis pour pouvoir envoyer des messages plus tard
+        self.redis = await aioredis.from_url("redis://redis:6379", db=0)
         await self.redis.set(f"user_{self.user_id}_ws_channel", self.channel_name)
 
-        # Ajoute un utilisateur à la liste d'attente dans Redis
-        await self.redis.lpush("matchmaking_queue", self.user_id)
+        self.mark_for_remove = False
 
-        # Vérifie si un match peut être fait
-        await self.check_for_match()
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        mode = data.get("mode")
+        if data["action"] == "startMatchmaking" and mode:
+            await self.start_matchmaking(mode)
 
-    async def check_for_match(self):
-        queue_length = await self.redis.llen("matchmaking_queue")
+    async def start_matchmaking(self, mode):
+        user_in_any_queue = await self.redis.sismember("global_matchmaking_queue", self.user_id)
+        if user_in_any_queue:
+            await self.send_error("You are already in a queue")
+            await self.close()
+            return
+        
+        added_to_global_queue = await self.redis.sadd("global_matchmaking_queue", self.user_id)
+        
+        if not added_to_global_queue:
+            await self.send_error("You are already in a queue")
+            await self.close()
+            return
 
-        if queue_length >= 2:
-            player1_id, player2_id = await self.get_players_from_queue()
+        queue_name = f"matchmaking_queue_{mode}"
+        await self.redis.lpush(queue_name, self.user_id)
+        await self.redis.set(f"user_{self.user_id}_mode", mode)
 
-            room_id = str(uuid.uuid4())
-            room_url = f"/pong/{room_id}/"
+        self.user_mode = mode
+        self.mark_for_remove = True
 
-            print(f"Match found between {player1_id} and {player2_id} in room {room_url}")
+        await self.check_for_match(queue_name, mode)
 
-            # Envoyer l'URL de la salle aux deux joueurs
-            await self.notify_players_about_match([player1_id, player2_id], room_url)
-            await self.redis.delete(f"user_{self.user_id}_ws_channel")
-        else:
-            await self.send(text_data=json.dumps({"message": "You are in queue"}))
-
-    async def get_players_from_queue(self):
-        # Récupère les deux premiers utilisateurs de la liste d'attente et les décode si nécessaire
-        player1_id = await self.redis.rpop("matchmaking_queue")
-        player2_id = await self.redis.rpop("matchmaking_queue")
-
-        player1_id = player1_id.decode("utf-8") if player1_id else None
-        player2_id = player2_id.decode("utf-8") if player2_id else None
-
-        return player1_id, player2_id
+    async def check_for_match(self, queue_name, mode):
+        required_players = int(mode[0])
+        queue_length = await self.redis.llen(queue_name)
+        print(f"Queue length for {mode}: {queue_length}")
+        if queue_length >= required_players:
+            player_ids = [
+                await self.redis.rpop(queue_name) for _ in range(required_players)
+            ]
+            player_ids = [pid.decode("utf-8") for pid in player_ids if pid]
+            if len(player_ids) == required_players:
+                room_id = str(uuid.uuid4())
+                room_url = f"/pong/{room_id}"
+                await self.notify_players_about_match(player_ids, room_url)
+                for pid in player_ids:
+                    await self.redis.srem("global_matchmaking_queue", pid)
+                    await self.redis.delete(f"user_{pid}_ws_channel")
 
     async def notify_players_about_match(self, player_ids, room_url):
-        # Récupère les channel names des joueurs et envoie le message
         channel_layer = get_channel_layer()
         for player_id in player_ids:
             player_channel = await self.redis.get(f"user_{player_id}_ws_channel")
@@ -86,8 +84,27 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                     },
                 )
 
-    async def disconnect(self, close_code):
-        await self.redis.close()
-
     async def send_message(self, event):
         await self.send(text_data=event["text"])
+
+
+        
+
+    async def disconnect(self, close_code):
+        if self.mark_for_remove:
+            user_mode = await self.redis.get(f"user_{self.user_id}_mode")
+            if user_mode:
+                user_mode = user_mode.decode("utf-8")
+                queue_name = f"matchmaking_queue_{user_mode}"
+                await self.redis.lrem(queue_name, 0, self.user_id)
+            
+            await self.redis.srem("global_matchmaking_queue", self.user_id)
+            await self.redis.delete(f"user_{self.user_id}_mode")
+            await self.redis.delete(f"user_{self.user_id}_ws_channel")
+            
+        await self.redis.close()
+
+    async def send_error(self, message):
+        await self.send(text_data=json.dumps({"error": True, "message": message}))
+
+        
