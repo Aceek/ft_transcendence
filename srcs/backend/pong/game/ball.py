@@ -13,7 +13,7 @@ class Ball:
 
     def reset_value(self):
         self.x = int(self.game.screen_width * 0.5)
-        self.y = int(self.game.screen_width * 0.5)
+        self.y = int(self.game.screen_height * 0.5)
         
         speed = generate_adjusted_random_speed(self.game.ball_speed, 15)
         angle_rad = calculate_launch_angle(self.game.player_nb, 60)

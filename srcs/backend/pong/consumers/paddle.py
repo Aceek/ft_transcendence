@@ -1,7 +1,7 @@
-from ..game.config import *
 from ..game.enum import PlayerPosition
 from ..game.utils import get_player_key_map
-
+from ..game.config import PADDLE_HEIGHT, PADDLE_SPEED, PADDLE_BORDER_DISTANCE,\
+                          SCREEN_HEIGHT, SCREEN_WIDTH
 
 class Paddle:
     def __init__(self, user_id, redis_ops, player_nb):
@@ -12,10 +12,14 @@ class Paddle:
 
         self.size = PADDLE_HEIGHT
         self.speed = PADDLE_SPEED
+        self.border_distance = PADDLE_BORDER_DISTANCE
+
+        self.screen_height = SCREEN_HEIGHT
+        self.screen_width = SCREEN_WIDTH
 
         self.boundary_min = 0
-        self.collision_boundary_min = PADDLE_BORDER_DISTANCE
-        self.other_collision_boundary_min = PADDLE_BORDER_DISTANCE
+        self.collision_boundary_min = self.border_distance
+        self.other_collision_boundary_min = self.border_distance
         
         self.boundary_max = None
         self.collision_boundary_max = None
@@ -54,13 +58,13 @@ class Paddle:
 
     async def set_boundaries(self):
         if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
-            self.boundary_max = SCREEN_WIDTH
-            self.collision_boundary_max = SCREEN_WIDTH - PADDLE_BORDER_DISTANCE
-            self.other_collision_boundary_max = SCREEN_HEIGHT - PADDLE_BORDER_DISTANCE
+            self.boundary_max = self.screen_width
+            self.collision_boundary_max = self.screen_width - self.border_distance
+            self.other_collision_boundary_max = self.screen_height - self.border_distance
         else:
-            self.boundary_max = SCREEN_HEIGHT
-            self.collision_boundary_max = SCREEN_HEIGHT - PADDLE_BORDER_DISTANCE
-            self.other_collision_boundary_max = SCREEN_WIDTH - PADDLE_BORDER_DISTANCE
+            self.boundary_max = self.screen_height
+            self.collision_boundary_max = self.screen_height - self.border_distance
+            self.other_collision_boundary_max = self.screen_width - self.border_distance
 
     async def set_axis_keys(self):
         self.axis_key = 'paddle_x' if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'

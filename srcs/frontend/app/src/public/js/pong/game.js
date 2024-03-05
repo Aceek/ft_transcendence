@@ -62,15 +62,15 @@ export class Game {
         // Convert server timestamp from seconds to milliseconds
         const serverTimestampMs = parseInt(serverTimestamp, 10);
         const currentTime = (new Date()).getTime();
-
+        
         // Calculate the network latency
         this.latency = currentTime - serverTimestampMs;
         this.lastServerUpdate = currentTime - this.latency;
         // console.log("Network latency: ", this.latency, "ms");
-       
-        this.ball.handleDynamicData(dynamicData, this.latency);
-        this.players.forEach(player => player.handleDynamicData(dynamicData));
+        
         this.status = parseInt(dynamicData.gs, 10);
+        this.ball.handleDynamicData(dynamicData, this.latency, this.status);
+        this.players.forEach(player => player.handleDynamicData(dynamicData));
     }
 
     handlePaddleSideAssignment(paddleSide) {

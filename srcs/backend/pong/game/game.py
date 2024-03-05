@@ -24,7 +24,7 @@ class GameLogic:
         self.paddle_height = PADDLE_HEIGHT
         self.paddle_width = PADDLE_WIDTH
         self.paddle_speed = PADDLE_SPEED
-        self.paddle_distance_from_border = PADDLE_BORDER_DISTANCE
+        self.paddle_border_distance = PADDLE_BORDER_DISTANCE
         self.ball_size = BALL_SIZE
         self.ball_speed = BALL_SPEED
 

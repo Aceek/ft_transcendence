@@ -14,13 +14,13 @@ export class Ball {
     }
 
 
-    handleDynamicData(dynamicData, latency) {
+    handleDynamicData(dynamicData, latency, gameStatus) {
       const serverX = parseFloat(dynamicData.b_x);
       const serverY = parseFloat(dynamicData.b_y);
       const vx = parseFloat(dynamicData.b_vx);
       const vy = parseFloat(dynamicData.b_vy);
   
-      if (latency == null) {
+      if (latency == null || gameStatus !== 1) {
           this.x = serverX;
           this.y = serverY;
       } else {
@@ -36,7 +36,7 @@ export class Ball {
       this.vx = vx;
       this.vy = vy;
   
-      // console.log(`Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
+      console.log(`Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
   }
   
     

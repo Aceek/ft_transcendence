@@ -21,19 +21,19 @@ class Player:
     def reset_value(self):
         self.score = self.game.score_start
         if self.side == PlayerPosition.LEFT:
-            self.paddle_x = self.game.paddle_distance_from_border
+            self.paddle_x = self.game.paddle_border_distance
             self.paddle_y = self.game.screen_height // 2 - self.paddle_height // 2
         elif self.side == PlayerPosition.RIGHT:
             self.paddle_x = self.game.screen_width - self.paddle_width - \
-                self.game.paddle_distance_from_border
+                self.game.paddle_border_distance
             self.paddle_y =  self.game.screen_height // 2 - self.paddle_height // 2
         elif self.side == PlayerPosition.BOTTOM:
             self.paddle_x = self.game.screen_width // 2 - self.paddle_width // 2
             self.paddle_y = self.game.screen_height - self.paddle_height - \
-                self.game.paddle_distance_from_border
+                self.game.paddle_border_distance
         elif self.side == PlayerPosition.UP:
             self.paddle_x = self.game.screen_width // 2 - self.paddle_width // 2
-            self.paddle_y = self.game.paddle_distance_from_border
+            self.paddle_y = self.game.paddle_border_distance
         
 #------------------------------CONDITION-------------------------------------
 
