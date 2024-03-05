@@ -67,20 +67,12 @@ export class Game {
         this.latency = currentTime - serverTimestampMs;
         this.lastServerUpdate = currentTime - this.latency;
         // console.log("Network latency: ", this.latency, "ms");
-
-        
-        // If lastUpdateTimestamp exists, calculate the delta between updates
-        // if (lastUpdateTimestamp !== null) {
-        //     const deltaBetweenUpdates = serverTimestampMs - lastUpdateTimestamp;
-        //     console.log("Delta between server updates: ", deltaBetweenUpdates, "ms");
-        // }
        
         this.ball.handleDynamicData(dynamicData, this.latency);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
         this.status = parseInt(dynamicData.gs, 10);
     }
 
-    
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();
     }

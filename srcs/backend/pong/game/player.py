@@ -1,41 +1,44 @@
-from .config import *
 from .enum import PlayerPosition
 from .utils import get_player_key_map
 
 class Player:
-    def __init__(self, side, redis_ops):
+    def __init__(self, side, game):
         self.side = side
-        self.reset_value()
-        self.redis_ops = redis_ops
-        self.key_map = get_player_key_map(side)
-        
-        self.speed = PADDLE_SPEED
+        self.game = game
+        self.redis_ops = game.redis_ops
+
         if self.side == PlayerPosition.LEFT or self.side == PlayerPosition.RIGHT:
-            self.paddle_height = PADDLE_HEIGHT
-            self.paddle_width = PADDLE_WIDTH
+            self.paddle_height = self.game.paddle_height
+            self.paddle_width = self.game.paddle_width
         elif self.side == PlayerPosition.BOTTOM or self.side == PlayerPosition.UP:
-            self.paddle_height = PADDLE_WIDTH
-            self.paddle_width = PADDLE_HEIGHT
+            self.paddle_height = self.game.paddle_width
+            self.paddle_width = self.game.paddle_height
+        self.speed = self.game.paddle_speed
+
+        self.key_map = get_player_key_map(side)
+        self.reset_value()
 
     def reset_value(self):
-        self.score = SCORE_START
+        self.score = self.game.score_start
         if self.side == PlayerPosition.LEFT:
-            self.paddle_x = PADDLE_BORDER_DISTANCE
-            self.paddle_y = SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2
+            self.paddle_x = self.game.paddle_distance_from_border
+            self.paddle_y = self.game.screen_height // 2 - self.paddle_height // 2
         elif self.side == PlayerPosition.RIGHT:
-            self.paddle_x = SCREEN_WIDTH - PADDLE_WIDTH - PADDLE_BORDER_DISTANCE
-            self.paddle_y =  SCREEN_HEIGHT // 2 - PADDLE_HEIGHT // 2
+            self.paddle_x = self.game.screen_width - self.paddle_width - \
+                self.game.paddle_distance_from_border
+            self.paddle_y =  self.game.screen_height // 2 - self.paddle_height // 2
         elif self.side == PlayerPosition.BOTTOM:
-            self.paddle_x = SCREEN_WIDTH // 2 - PADDLE_HEIGHT // 2
-            self.paddle_y = SCREEN_HEIGHT - PADDLE_WIDTH - PADDLE_BORDER_DISTANCE
+            self.paddle_x = self.game.screen_width // 2 - self.paddle_width // 2
+            self.paddle_y = self.game.screen_height - self.paddle_height - \
+                self.game.paddle_distance_from_border
         elif self.side == PlayerPosition.UP:
-            self.paddle_x = SCREEN_WIDTH // 2 - PADDLE_HEIGHT // 2
-            self.paddle_y = PADDLE_BORDER_DISTANCE
+            self.paddle_x = self.game.screen_width // 2 - self.paddle_width // 2
+            self.paddle_y = self.game.paddle_distance_from_border
         
 #------------------------------CONDITION-------------------------------------
 
     def check_win(self):
-        return self.score >= SCORE_LIMIT
+        return self.score >= self.game.score_limit
 
 #------------------------------REDIS-------------------------------------
 

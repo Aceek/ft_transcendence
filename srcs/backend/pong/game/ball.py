@@ -1,24 +1,22 @@
-import random
 import math
 
-from .config import *
 from .enum import PlayerPosition
 from .utils import calculate_launch_angle, generate_adjusted_random_speed
 
 class Ball:
-    def __init__(self, redis_ops, player_nb):
-        self.redis_ops = redis_ops
-        self.player_nb = player_nb
-        self.size = BALL_SIZE
+    def __init__(self, game):
+        self.game = game  
+        self.redis_ops = game.redis_ops
+        self.size = game.ball_size
         self.reset_value()
 
 
     def reset_value(self):
-        self.x = int(SCREEN_WIDTH * 0.5)
-        self.y = int(SCREEN_HEIGHT * 0.5)
+        self.x = int(self.game.screen_width * 0.5)
+        self.y = int(self.game.screen_width * 0.5)
         
-        speed = generate_adjusted_random_speed(BALL_SPEED, 15)
-        angle_rad = calculate_launch_angle(self.player_nb, 60)
+        speed = generate_adjusted_random_speed(self.game.ball_speed, 15)
+        angle_rad = calculate_launch_angle(self.game.player_nb, 60)
 
         # Calculate the velocity components based on the angle
         self.vx = speed * math.cos(angle_rad)
@@ -36,14 +34,14 @@ class Ball:
 #------------------------------CONDITION-------------------------------------
 
     def check_wall_collision(self):
-        if self.player_nb == 4:
+        if self.game.player_nb == 4:
             return False
-        elif self.player_nb == 3:
+        elif self.game.player_nb == 3:
             if self.y - self.size / 2 < 0:
                 return True
         else:
             if (self.y - self.size / 2 < 0 or
-                    self.y + self.size / 2 > SCREEN_HEIGHT):
+                    self.y + self.size / 2 > self.game.screen_height):
                 return True
         return False
 
@@ -75,19 +73,19 @@ class Ball:
 
     def check_score(self):     
         # Normal check for game of 2 players
-        if self.player_nb <=2:        
+        if self.game.player_nb <=2:        
             if self.x < 0 - self.size / 2:
                 return True, PlayerPosition.RIGHT
-            elif self.x > SCREEN_WIDTH + self.size / 2:
+            elif self.x > self.game.screen_width + self.size / 2:
                 return True, PlayerPosition.LEFT
         else:
             # Custum check for game of more then 2 players
             # allowing the goal to the last player who touched the ball
             if self.x < 0 - self.size / 2 or \
-            self.x > SCREEN_WIDTH + self.size / 2 or \
+            self.x > self.game.screen_width + self.size / 2 or \
             self.y < 0 - self.size / 2 or \
             self.y < 0 - self.size / 2 or \
-            self.y > SCREEN_HEIGHT + self.size / 2:
+            self.y > self.game.screen_height + self.size / 2:
                 return True, self.lastPlayertouched
 
         return False, None
@@ -96,7 +94,7 @@ class Ball:
 
     def handle_wall_bounce(self):
         self.vy *= -1
-        self.y = max(self.size / 2, min(self.y, SCREEN_HEIGHT - self.size / 2))
+        self.y = max(self.size / 2, min(self.y, self.game.screen_height - self.size / 2))
         
     def handle_paddle_bounce_calculation(self, player_position, players):
         player = players[player_position.value]

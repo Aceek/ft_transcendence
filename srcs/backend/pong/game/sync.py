@@ -1,8 +1,5 @@
 import asyncio
 
-from .enum import *
-from .config import *
-
 class GameSync:
     def __init__(self, redis_ops, room_name, player_nb):
         self.redis_ops = redis_ops

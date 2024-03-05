@@ -24,7 +24,12 @@ class GameLogic:
         self.paddle_height = PADDLE_HEIGHT
         self.paddle_width = PADDLE_WIDTH
         self.paddle_speed = PADDLE_SPEED
+        self.paddle_distance_from_border = PADDLE_BORDER_DISTANCE
         self.ball_size = BALL_SIZE
+        self.ball_speed = BALL_SPEED
+
+        self.score_start = SCORE_START
+        self.score_limit = SCORE_LIMIT
 
     # -------------------------------INIT-----------------------------------
 
@@ -53,13 +58,13 @@ class GameLogic:
         await self.redis_ops.set_static_data(self.static_data)
 
         # Init players
-        self.players = [Player(position, self.redis_ops) for position in \
+        self.players = [Player(position, self) for position in \
                         PlayerPosition if position.value < self.player_nb]
         for player in self.players:
                 await player.set_data_to_redis()
 
         # Init ball
-        self.ball = Ball(self.redis_ops, self.player_nb) 
+        self.ball = Ball(self) 
         await self.ball.set_data_to_redis()
 
         # Send data to first client and set the game to not started
