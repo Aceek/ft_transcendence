@@ -84,10 +84,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)
-        # Handle "close_connection" message
-        elif "type" in data and data["type"] == "close_connection":
-            print("Webosocket connection close due to user changing page")
-            await self.disconnect(1000)
         else:
             print("Received unknown message type or missing key.")
 

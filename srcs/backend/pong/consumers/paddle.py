@@ -66,23 +66,26 @@ class Paddle:
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
 
     async def assignment(self):
-        # Iterate through all possible positions
-        for position in PlayerPosition:
-            # Use get_player_key_map to fetch the key map for the current position
-            self.key_map = get_player_key_map(position)
+        # Attempt to acquire a lock for the paddle assignment process
+        lock = self.redis_ops.connection.lock(f"lock:game:{self.redis_ops.room_name}:assignment", timeout=5)
+        await lock.acquire()
 
-            # Construct the Redis key using the position from the key map
-            key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
-            
-            # Check if the user_id is already assigned to a paddle for this position
-            if await self.redis_ops.connection.sismember(key, self.user_id):
-                self.side = position
-                return
-            # Check if there's room to add a new player to this position
-            elif not await self.redis_ops.connection.scard(key):
-                await self.redis_ops.connection.sadd(key, self.user_id)
-                self.side = position
-                return
+        try:
+            for position in PlayerPosition:
+                self.key_map = get_player_key_map(position)
+                key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
+
+                if await self.redis_ops.connection.sismember(key, self.user_id):
+                    self.side = position
+                    return
+                elif not await self.redis_ops.connection.scard(key):
+                    await self.redis_ops.connection.sadd(key, self.user_id)
+                    self.side = position
+                    return
+        finally:
+            # Ensure the lock is released after the operation
+            await lock.release()
+
 
         # This prints the side to which the user was assigned, if any
         if self.side is not None:
