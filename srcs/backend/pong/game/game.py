@@ -10,11 +10,12 @@ from .channel_com import ChannelCom
 from ..redis.redis_ops import RedisOps
 
 class GameLogic:
-    def __init__(self, room_name, room_group_name, game_mode, player_nb):
+    def __init__(self, room_name, room_group_name, game_mode, player_nb, game_type):
         self.room_name = room_name
         self.room_group_name = room_group_name
         self.game_mode = game_mode
         self.player_nb = player_nb
+        self.game_type = game_type
         
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT

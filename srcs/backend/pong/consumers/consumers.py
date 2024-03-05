@@ -24,6 +24,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         # self.user = self.scope["user"]
         self.game_mode = get_game_mode(self.scope)
         self.player_nb = get_number_of_players(self.scope)
+        self.game_type = get_game_type(self.scope)
+        self.tournament_id = get_tournament_id(self.scope)
         self.room_name, self.room_group_name = get_room_names(self.scope)
 
         # Add this channel to the group and instanciate the Channel commmunication class
@@ -47,7 +49,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         if await self.redis_ops.get_game_status() is None:
             if await self.redis_ops.add_game_logic_flag():
                 asyncio.create_task(GameLogic(self.room_name, self.room_group_name, \
-                                              self.game_mode, self.player_nb).run())
+                                              self.game_mode, self.player_nb, \
+                                              self.game_type).run())
         else:
             # Retrieve and send data from the existing game
             await self.send_game_data()

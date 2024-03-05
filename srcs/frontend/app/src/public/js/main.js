@@ -105,9 +105,12 @@ export async function router(path, updateHistory = true) {
 async function matchRegex(path) {
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
-  const pongMatch = path.match(/^\/pong\/([a-zA-Z0-9_-]+)$/);
-  const pongGameModeMatch = path.match(/^\/pong\/(multiplayer|tournament)\/([2-4])\/([a-zA-Z0-9_-]+)$/);
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
+  // pong routes
+  const onlineStandardMatch = path.match(/^\/pong\/online\/([2-4])\/standard\/([a-zA-Z0-9_-]+)$/);
+  const onlineTournamentMatch = path.match(/^\/pong\/online\/2\/tournament\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
+  const offlineStandardMatch = path.match(/^\/pong\/offline\/2\/standard\/([a-zA-Z0-9_-]+)$/);
+
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
@@ -119,19 +122,13 @@ async function matchRegex(path) {
     console.log("Loading profile page with UID:", UID);
     await displayFriendsProfile(UID);
     return true;
-  } else if (pongMatch) {
-    const pongID = pongMatch[1];
-    await getPongGamePage(pongID);
-    return true;
-  } else if (pongGameModeMatch) {
-    // const mode = pongGameModeMatch[1];
-    // const players = pongGameModeMatch[2];
-    const matchID = pongGameModeMatch[3];
-    await getPongGamePage(matchID);
-    return true;
   } else if (tournamentMatch) {
     const tournamentID = tournamentMatch[1];
     await displayTournamentPage(tournamentID);
+    return true;
+  } else if (onlineStandardMatch || onlineTournamentMatch || offlineStandardMatch) {
+    console.log("Loading pong game:");
+    await getPongGamePage();
     return true;
   }
   return false;

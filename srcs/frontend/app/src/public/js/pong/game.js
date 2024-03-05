@@ -79,6 +79,6 @@ export class Game {
     
     handleCountdown(seconds) {
         console.log("countdown :", seconds);
-        this.countdown = seconds; // Use 'this' to refer to instance variable
+        this.countdown = seconds;
     }
 }

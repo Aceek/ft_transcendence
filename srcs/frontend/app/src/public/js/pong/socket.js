@@ -1,23 +1,29 @@
 // socket.js
 
-// Function to initialize the WebSocket connection
 export function initializeSocket() {
     return new Promise((resolve, reject) => {
         const hostname = window.location.hostname;
         const port = window.location.port;
 
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
-        const mode = pathSegments[1];
+
+        const mode = pathSegments[1]; // Assuming the first segment after `/ws/` is the mode (`online`/`offline`)
         const numberOfPlayers = pathSegments[2];
-        const roomID = pathSegments[3];
+        const gameType = pathSegments[3];
 
-        let socketUrl;
+        let tournamentID, roomID, socketUrl;
 
-        if (port) {
-            socketUrl = `wss://${hostname}:${port}/ws/pong/${mode}/${numberOfPlayers}/${roomID}/`;
+        if (gameType === 'tournament') {
+            tournamentID = pathSegments[4];
+            roomID = pathSegments[5];
         } else {
-            socketUrl = `wss://${hostname}/ws/pong/${mode}/${numberOfPlayers}/${roomID}/`;
+            roomID = pathSegments[4];
         }
+
+        socketUrl = `wss://${hostname}${port ? ':' + port : ''}/ws/pong/` +
+            `${mode}/${numberOfPlayers}/${gameType}/` +
+            `${tournamentID ? tournamentID + '/' : ''}${roomID}/`;
+
 
         console.log(socketUrl);
 
