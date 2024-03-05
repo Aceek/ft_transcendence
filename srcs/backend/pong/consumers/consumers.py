@@ -21,9 +21,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         
         # Retrieve and set the user's ID and room names based on the connection's scope
         self.user_id = get_user_id(self.scope)
+        # self.user = self.scope["user"]
+        self.game_mode = get_game_mode(self.scope)
+        self.player_nb = get_number_of_players(self.scope)
         self.room_name, self.room_group_name = get_room_names(self.scope)
-
-        print("user connected : ", self.user_id)
 
         # Add this channel to the group and instanciate the Channel commmunication class
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
@@ -34,7 +35,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.redis_ops.add_connected_users(self.user_id)
         
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
-        self.paddle = Paddle(self.user_id, self.redis_ops)
+        self.paddle = Paddle(self.user_id, self.redis_ops, self.player_nb)
         await self.paddle.assignment()
         await self.paddle.set_boundaries()
         await self.paddle.set_axis_keys()
@@ -45,7 +46,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         # if so, client acquire the game logic flag and start game logic in a new task
         if await self.redis_ops.get_game_status() is None:
             if await self.redis_ops.add_game_logic_flag():
-                asyncio.create_task(GameLogic(self.room_name, self.room_group_name).run())
+                asyncio.create_task(GameLogic(self.room_name, self.room_group_name, \
+                                              self.game_mode, self.player_nb).run())
         else:
             # Retrieve and send data from the existing game
             await self.send_game_data()

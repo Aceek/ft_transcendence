@@ -106,6 +106,7 @@ async function matchRegex(path) {
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
   const pongMatch = path.match(/^\/pong\/([a-zA-Z0-9_-]+)$/);
+  const pongGameModeMatch = path.match(/^\/pong\/(multiplayer|tournament)\/([2-4])\/([a-zA-Z0-9_-]+)$/);
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
 
   if (profileStatsMatch) {
@@ -120,9 +121,13 @@ async function matchRegex(path) {
     return true;
   } else if (pongMatch) {
     const pongID = pongMatch[1];
-    console.log("Loading room page with roomID:", pongID);
     await getPongGamePage(pongID);
-    console.log("Loaded room page with roomID:", pongID);
+    return true;
+  } else if (pongGameModeMatch) {
+    // const mode = pongGameModeMatch[1];
+    // const players = pongGameModeMatch[2];
+    const matchID = pongGameModeMatch[3];
+    await getPongGamePage(matchID);
     return true;
   } else if (tournamentMatch) {
     const tournamentID = tournamentMatch[1];

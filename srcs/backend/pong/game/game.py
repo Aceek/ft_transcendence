@@ -10,21 +10,33 @@ from .channel_com import ChannelCom
 from ..redis.redis_ops import RedisOps
 
 class GameLogic:
-    def __init__(self, room_name, room_group_name):
+    def __init__(self, room_name, room_group_name, game_mode, player_nb):
         self.room_name = room_name
         self.room_group_name = room_group_name
+        self.game_mode = game_mode
+        self.player_nb = player_nb
+        
+        self.screen_width = SCREEN_WIDTH
+        self.screen_height = SCREEN_HEIGHT
+        if self.player_nb > 2:
+            self.screen_width = self.screen_height
+
+        self.paddle_height = PADDLE_HEIGHT
+        self.paddle_width = PADDLE_WIDTH
+        self.paddle_speed = PADDLE_SPEED
+        self.ball_size = BALL_SIZE
 
     # -------------------------------INIT-----------------------------------
 
     def init_static_data(self):
         static_data = {
-            "ballSize": int(BALL_SIZE),
-            "paddleWidth": int(PADDLE_WIDTH),
-            "paddleHeight": int(PADDLE_HEIGHT),
-            "paddleSpeed": int(PADDLE_SPEED),
-            "playerNb": int(PLAYER_NB),
-            "canvasHeight": int(SCREEN_HEIGHT),
-            "canvasWidth": int(SCREEN_WIDTH),
+            "ballSize": self.ball_size,
+            "paddleWidth": self.paddle_width,
+            "paddleHeight": self.paddle_height,
+            "paddleSpeed": self.paddle_speed,
+            "playerNb": self.player_nb,
+            "canvasHeight": self.screen_height,
+            "canvasWidth": self.screen_width,
         }
         return static_data
     
@@ -32,11 +44,8 @@ class GameLogic:
         """Initial env setup."""
         self.redis_ops = await RedisOps.create(self.room_name)
         self.channel_com = ChannelCom(self.room_group_name)
-        self.game_sync = GameSync(self.redis_ops, self.room_name)
+        self.game_sync = GameSync(self.redis_ops, self.room_name, self.player_nb)
 
-        # # Delete redis gamelogic flag
-        # await self.redis_ops.del_game_logic_flag()
-        
     async def init_game(self):
         """Initial game setup."""
         # Init static data
@@ -44,12 +53,13 @@ class GameLogic:
         await self.redis_ops.set_static_data(self.static_data)
 
         # Init players
-        self.players = [Player(position, self.redis_ops) for position in PlayerPosition if position.value < PLAYER_NB]
+        self.players = [Player(position, self.redis_ops) for position in \
+                        PlayerPosition if position.value < self.player_nb]
         for player in self.players:
                 await player.set_data_to_redis()
 
         # Init ball
-        self.ball = Ball(self.redis_ops) 
+        self.ball = Ball(self.redis_ops, self.player_nb) 
         await self.ball.set_data_to_redis()
 
         # Send data to first client and set the game to not started

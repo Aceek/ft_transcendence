@@ -4,9 +4,10 @@ from ..game.utils import get_player_key_map
 
 
 class Paddle:
-    def __init__(self, user_id, redis_ops):
+    def __init__(self, user_id, redis_ops, player_nb):
         self.user_id = user_id
         self.redis_ops = redis_ops
+        self.player_nb = player_nb
         self.side = None
 
         self.size = PADDLE_HEIGHT
@@ -110,7 +111,7 @@ class Paddle:
             return False
 
         # Early exit if only 2 players
-        if PLAYER_NB < 3:
+        if self.player_nb < 3:
             return True
 
         # Check if the paddle is in potential range of others

@@ -5,14 +5,21 @@ export function initializeSocket() {
     return new Promise((resolve, reject) => {
         const hostname = window.location.hostname;
         const port = window.location.port;
-        const roomID = window.location.pathname.split('/').pop();
+
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const mode = pathSegments[1];
+        const numberOfPlayers = pathSegments[2];
+        const roomID = pathSegments[3];
+
         let socketUrl;
 
         if (port) {
-            socketUrl = `wss://${hostname}:${port}/ws/pong/${roomID}/`;
+            socketUrl = `wss://${hostname}:${port}/ws/pong/${mode}/${numberOfPlayers}/${roomID}/`;
         } else {
-            socketUrl = `wss://${hostname}/ws/pong/${roomID}/`;
+            socketUrl = `wss://${hostname}/ws/pong/${mode}/${numberOfPlayers}/${roomID}/`;
         }
+
+        console.log(socketUrl);
 
         const socket = new WebSocket(socketUrl);
 

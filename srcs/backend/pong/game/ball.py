@@ -6,18 +6,19 @@ from .enum import PlayerPosition
 from .utils import calculate_launch_angle, generate_adjusted_random_speed
 
 class Ball:
-    def __init__(self, redis_ops):
-        self.reset_value()
+    def __init__(self, redis_ops, player_nb):
         self.redis_ops = redis_ops
-        
+        self.player_nb = player_nb
         self.size = BALL_SIZE
+        self.reset_value()
+
 
     def reset_value(self):
-        self.x = BALL_X
-        self.y = BALL_Y
+        self.x = int(SCREEN_WIDTH * 0.5)
+        self.y = int(SCREEN_HEIGHT * 0.5)
         
         speed = generate_adjusted_random_speed(BALL_SPEED, 15)
-        angle_rad = calculate_launch_angle(PLAYER_NB, 60)
+        angle_rad = calculate_launch_angle(self.player_nb, 60)
 
         # Calculate the velocity components based on the angle
         self.vx = speed * math.cos(angle_rad)
@@ -35,9 +36,9 @@ class Ball:
 #------------------------------CONDITION-------------------------------------
 
     def check_wall_collision(self):
-        if PLAYER_NB == 4:
+        if self.player_nb == 4:
             return False
-        elif PLAYER_NB == 3:
+        elif self.player_nb == 3:
             if self.y - self.size / 2 < 0:
                 return True
         else:
@@ -74,7 +75,7 @@ class Ball:
 
     def check_score(self):     
         # Normal check for game of 2 players
-        if PLAYER_NB <=2:        
+        if self.player_nb <=2:        
             if self.x < 0 - self.size / 2:
                 return True, PlayerPosition.RIGHT
             elif self.x > SCREEN_WIDTH + self.size / 2:
