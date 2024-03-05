@@ -17,6 +17,7 @@ import {
   displayChatPage,
   resetCurrentFriendId,
 } from "./chat/chat.js";
+import { pongSocket } from "./pong/main.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url =
@@ -35,6 +36,15 @@ export function closeChatWebSocket(path) {
   ) {
     chatSocket.close();
     resetCurrentFriendId();
+  }
+}
+
+export function closePongWebSocket() {
+  if (
+    pongSocket &&
+    pongSocket.readyState === WebSocket.OPEN
+  ) {
+    pongSocket.close();
   }
 }
 
@@ -60,9 +70,9 @@ export function clearLoadedCss() {
   });
 }
 
-
 function resetDataForReloadingPage(path) {
   closeChatWebSocket(path);
+  closePongWebSocket();
   clearLoadedCss();
   clearTournamentConversationsMessages();
 }
@@ -112,6 +122,7 @@ async function matchRegex(path) {
     const pongID = pongMatch[1];
     console.log("Loading room page with roomID:", pongID);
     await getPongGamePage(pongID);
+    console.log("Loaded room page with roomID:", pongID);
     return true;
   } else if (tournamentMatch) {
     const tournamentID = tournamentMatch[1];

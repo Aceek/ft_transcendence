@@ -23,6 +23,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.user_id = get_user_id(self.scope)
         self.room_name, self.room_group_name = get_room_names(self.scope)
 
+        print("user connected : ", self.user_id)
+
         # Add this channel to the group and instanciate the Channel commmunication class
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         self.channel_com = ChannelCom(self.room_group_name)
@@ -79,12 +81,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             if paddle_pos is not None and self.paddle.side is not None:
                 if await self.paddle.check_movement(paddle_pos):
                     await self.paddle.set_data_to_redis(paddle_pos)
-
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)
+        # Handle "close_connection" message
+        elif "type" in data and data["type"] == "close_connection":
+            print("Webosocket connection close due to user changing page")
+            await self.disconnect(1000)
         else:
             print("Received unknown message type or missing key.")
+
     
     # ----------------------------SEND-------------------------------------
 

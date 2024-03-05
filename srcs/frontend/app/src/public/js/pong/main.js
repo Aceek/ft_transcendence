@@ -3,21 +3,34 @@ import { KeyEventController } from './keyEventController.js';
 import { GameRenderer } from './gameRenderer.js';
 import { Game } from './game.js';
 
-console.log("Pong.js is executed!");
+export let pongSocket;
+let game;
+let renderer;
 
-// --------------------------------INIT------------------------------------
+export async function setupGame() {
+    console.log("Pong.js is executed!");
+    const canvas = document.getElementById('pongCanvas');
+    if (!canvas) {
+        console.error("Canvas element not found");
+        return;
+    }
+    const ctx = canvas.getContext('2d');
 
-const canvas = document.getElementById('pongCanvas');
-const ctx = canvas.getContext('2d');
+    game = new Game(); // Initialize game
+    renderer = new GameRenderer(ctx, game); // Initialize renderer
 
-const game = new Game();
+    try {
+        pongSocket = await initializeSocket();
+        messageHandler(pongSocket, game);
 
-const renderer = new GameRenderer(ctx, game);
+        new KeyEventController(pongSocket, game);
 
-const socket = initializeSocket();
-messageHandler(socket, game);
+        requestAnimationFrame(mainLoop);
+    } catch (error) {
+        console.error("Failed to initialize WebSocket:", error);
+    }
+}
 
-new KeyEventController(socket, game);
 
 //-----------------------------MAIN LOOP------------------------------------
 
@@ -26,25 +39,17 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
     return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
 }
 
-let lastUpdate = Date.now()
-let delta = 0
-
 function mainLoop() {
-    delta = Date.now() - lastUpdate;
+    let delta = Date.now() - lastUpdate;
 
-    if (game.status === 1) {
-        // Interpolate position only if shouldInterpolate is true
+    if (game && game.status === 1) {
         game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, delta);
         game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, delta);
-
-        // console.log("Interpolated Ball position - X:", game.ball.x, "Y:", game.ball.y);
     }
 
     lastUpdate = Date.now();
-
-    renderer.draw();
+    renderer && renderer.draw();
     requestAnimationFrame(mainLoop);
 }
 
-// Start the game loop
-requestAnimationFrame(mainLoop);
+let lastUpdate = Date.now()

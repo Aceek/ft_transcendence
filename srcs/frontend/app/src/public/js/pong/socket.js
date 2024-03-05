@@ -2,31 +2,32 @@
 
 // Function to initialize the WebSocket connection
 export function initializeSocket() {
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    const roomID = window.location.pathname.split('/').pop();
-    let socketUrl;
+    return new Promise((resolve, reject) => {
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const roomID = window.location.pathname.split('/').pop();
+        let socketUrl;
 
-    if (port) {
-        socketUrl = `wss://${hostname}:${port}/ws/pong/${roomID}/`;
-    } else {
-        socketUrl = `wss://${hostname}/ws/pong/${roomID}/`;
-    }
+        if (port) {
+            socketUrl = `wss://${hostname}:${port}/ws/pong/${roomID}/`;
+        } else {
+            socketUrl = `wss://${hostname}/ws/pong/${roomID}/`;
+        }
 
-	console.log("WebSocket curl", socketUrl);
-    const socket = new WebSocket(socketUrl);
+        const socket = new WebSocket(socketUrl);
 
-    socket.onopen = function(event) {
-        console.log("WebSocket connection opened:", event);
-    };
+        socket.addEventListener('open', () => {
+            console.log("WebSocket connection opened");
+            resolve(socket); // Resolve the promise with the socket when it's open
+        });
 
-    socket.onclose = function(event) {
-        console.log("WebSocket connection closed:", event);
-    };
-
-    // Return the socket to allow for further customization
-    return socket;
+        socket.addEventListener('error', (error) => {
+            console.error("WebSocket error observed:", error);
+            reject(error); // Reject the promise on error
+        });
+    });
 }
+
 
 // Function to set up WebSocket message handling
 export function messageHandler(socket, game) {

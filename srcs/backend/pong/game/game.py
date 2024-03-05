@@ -34,8 +34,8 @@ class GameLogic:
         self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self.redis_ops, self.room_name)
 
-        # Delete redis gamelogic flag
-        await self.redis_ops.del_game_logic_flag()
+        # # Delete redis gamelogic flag
+        # await self.redis_ops.del_game_logic_flag()
         
     async def init_game(self):
         """Initial game setup."""
@@ -84,6 +84,9 @@ class GameLogic:
             if await self.game_sync.wait_for_players_to_start():
                 await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
                 await self.launch_game()
+
+        # Delete redis gamelogic flag
+        await self.redis_ops.del_game_logic_flag()
         
         await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
         self.last_update_time = time.time()
