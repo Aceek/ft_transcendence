@@ -27,14 +27,18 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             await self.start_matchmaking(mode)
 
     async def start_matchmaking(self, mode):
-        user_in_any_queue = await self.redis.sismember("global_matchmaking_queue", self.user_id)
+        user_in_any_queue = await self.redis.sismember(
+            "global_matchmaking_queue", self.user_id
+        )
         if user_in_any_queue:
             await self.send_error("You are already in a queue")
             await self.close()
             return
-        
-        added_to_global_queue = await self.redis.sadd("global_matchmaking_queue", self.user_id)
-        
+
+        added_to_global_queue = await self.redis.sadd(
+            "global_matchmaking_queue", self.user_id
+        )
+
         if not added_to_global_queue:
             await self.send_error("You are already in a queue")
             await self.close()
@@ -52,7 +56,6 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     async def check_for_match(self, queue_name, mode):
         required_players = int(mode[0])
         queue_length = await self.redis.llen(queue_name)
-        print(f"Queue length for {mode}: {queue_length}")
         if queue_length >= required_players:
             player_ids = [
                 await self.redis.rpop(queue_name) for _ in range(required_players)
@@ -87,9 +90,6 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     async def send_message(self, event):
         await self.send(text_data=event["text"])
 
-
-        
-
     async def disconnect(self, close_code):
         if self.mark_for_remove:
             user_mode = await self.redis.get(f"user_{self.user_id}_mode")
@@ -97,14 +97,12 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
                 user_mode = user_mode.decode("utf-8")
                 queue_name = f"matchmaking_queue_{user_mode}"
                 await self.redis.lrem(queue_name, 0, self.user_id)
-            
+
             await self.redis.srem("global_matchmaking_queue", self.user_id)
             await self.redis.delete(f"user_{self.user_id}_mode")
             await self.redis.delete(f"user_{self.user_id}_ws_channel")
-            
+
         await self.redis.close()
 
     async def send_error(self, message):
         await self.send(text_data=json.dumps({"error": True, "message": message}))
-
-        

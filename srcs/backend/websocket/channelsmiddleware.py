@@ -3,6 +3,7 @@ import django
 django.setup()
 from channels.db import database_sync_to_async
 from authentication.authentication import CookieJWTAuthentication
+from django.contrib.auth.models import AnonymousUser
 
 
 @database_sync_to_async
@@ -26,6 +27,7 @@ class JwtAuthMiddlewareInstance:
         self.inner = middleware.inner
 
     async def __call__(self, receive, send):
+        raw_token = None
         headers = dict(self.scope["headers"])
         cookies = headers.get(b"cookie", b"").decode("utf-8")
         for cookie in cookies.split("; "):
@@ -34,8 +36,13 @@ class JwtAuthMiddlewareInstance:
                 break
 
         if raw_token:
-            user = await get_user_from_jwt(raw_token)
-            self.scope["user"] = user
+            try:
+                user = await get_user_from_jwt(raw_token)
+                self.scope["user"] = user
+            except Exception as e:
+                self.scope["user"] = AnonymousUser()
+        else:
+            self.scope["user"] = AnonymousUser()
 
         return await self.inner(self.scope, receive, send)
 

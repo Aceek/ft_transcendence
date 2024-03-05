@@ -10,6 +10,8 @@ import { handleIncomingMessage } from "./websocketChat.js";
 import { sendUpdateRequest } from "../profile/profileUtils.js";
 import { getFriendList } from "../profile/getProfile.js";
 import { api_url, router } from "../main.js";
+import { handleSendChallenge } from "../user_activity_websocket/user_activity_websocket.js";
+
 
 export async function displaySearchResults(users, container, friendsListIds) {
   users.forEach((user) => {
@@ -141,6 +143,7 @@ export async function setupInviteToPlayButton(uid) {
   const inviteToPlayButton = document.getElementById("invite-to-play-button");
   inviteToPlayButton.addEventListener("click", async () => {
     console.log("Invite to play button clicked user = ", uid);
+    await handleSendChallenge(uid);
     // router("/play/" + uid);
   });
 }

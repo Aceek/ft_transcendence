@@ -34,7 +34,7 @@ def update_users_status_offline():
         else:
             with transaction.atomic():
                 User = get_user_model()
-                User.objects.all().update(status='offline')
+                all_users = User.objects.all().update(status='offline')
             break
 
 @register()

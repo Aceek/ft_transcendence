@@ -6,6 +6,7 @@ from datetime import datetime
 import aioredis
 import time
 from datetime import timedelta
+import uuid
 
 
 class UserActivityConsumer(AsyncWebsocketConsumer):
@@ -25,7 +26,12 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(
             self.user_activity_group_name, self.channel_name
         )
-        await self.send(text_data=json.dumps({"status": "connected"}))
+
+        self.communication_group_name = f"user_communication_{self.user_id}"
+        await self.channel_layer.group_add(
+            self.communication_group_name, self.channel_name
+        )
+
         self.redis = await aioredis.from_url("redis://redis:6379", db=0)
 
         await self.mark_online()
@@ -50,10 +56,14 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
         self.user.save()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.user_activity_group_name, self.channel_name
-        )
-        await self.redis.close()
+        if hasattr(self, 'user_activity_group_name'):
+            await self.channel_layer.group_discard(
+                self.user_activity_group_name, self.channel_name
+            )
+        if hasattr(self, 'communication_group_name'):
+            await self.channel_layer.group_discard(
+                self.communication_group_name, self.channel_name
+            )
         self.connected = False
 
     async def receive(self, text_data):
@@ -64,8 +74,19 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({"action": "pong"}))
         elif action == "track_status":
             await self.track_status_and_send(data["user_ids"])
-        else:
-            await self.send_error("Invalid action")
+        elif action == "challenge_received":
+            challenger_id = data["challenger_id"]
+            await self.challenge_received(challenger_id)
+        elif action == "challenge_response":
+            challenger_id = data["challenger_id"]
+            response = data["response"]
+            await self.send_challenge_response(challenger_id, response)
+        elif action == "challenge_user":
+            challenged_id = data["challenged_id"]
+            await self.send_challenge_user(challenged_id)
+        elif action == "cancel_challenge":
+            challenged_id = data["challenged_id"]
+            await self.send_cancel_challenge(challenged_id)
 
     async def send_error(self, error_message):
         await self.send(text_data=json.dumps({"error": error_message}))
@@ -88,7 +109,6 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
                 else:
                     await self.mark_online()
 
-
         try:
             while self.connected:
                 await asyncio.sleep(20)
@@ -99,9 +119,7 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
             )
             if checks_left <= 0:
                 await self.mark_user_offline()
-                await self.redis.delete(
-                    f"user:{self.user_id}:inactivity_checks"
-                )
+                await self.redis.delete(f"user:{self.user_id}:inactivity_checks")
 
     async def track_status_and_send(self, user_ids):
         await self.track_status(user_ids)
@@ -136,6 +154,132 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
                     "action": event["action"],
                     "status": event["status"],
                     "user_id": event["user_id"],
+                }
+            )
+        )
+
+    async def send_challenge_user(self, challenged_id):
+        challegend_id_online = await self.isUserOnline(challenged_id)
+        challenged_channel = f"user_communication_{challenged_id}"
+        if challegend_id_online:
+            await self.channel_layer.group_send(
+                challenged_channel,
+                {
+                    "type": "challenge_user",
+                    "action": "challenge_received",
+                    "challenger_id": self.user_id,
+                },
+            )
+        else:
+            await self.send_error_challenge(challenged_id, "User is not available")
+
+    async def challenge_user(self, event):
+        challenger_id = event["challenger_id"]
+
+        message = {"action": "challenge_received", "challenger_id": challenger_id}
+
+        await self.send(text_data=json.dumps(message))
+
+    async def send_error_challenge(self, challenged_id, message):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "action": "challenge_error",
+                    "message": challenged_id + ": " + message,
+                }
+            )
+        )
+
+    @database_sync_to_async
+    def isUserOnline(self, user_id):
+        from CustomUser.models import CustomUser
+
+        user = CustomUser.objects.get(id=user_id)
+        return user.status == "online"
+
+    async def challenge_received(self, challenger_id):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "action": "challenge_received",
+                    "challenger_id": challenger_id,
+                }
+            )
+        )
+
+    async def send_challenge_response_to_self(self):
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "action": "challenge_response",
+                    "response": "accepted",
+                    "challenger_id": self.user_id,
+                    "room_url": f"/pong/123",
+                }
+            )
+        )
+
+    def create_room_url(self):
+        room_id = str(uuid.uuid4())
+        return f"/pong/{room_id}"
+
+    async def send_challenge_response(self, challenger_id, response):
+        challenger_channel = f"user_communication_{challenger_id}"
+        is_challegend_online = await self.isUserOnline(challenger_id)
+        room_url = self.create_room_url()
+        if is_challegend_online:
+            await self.channel_layer.group_send(
+                challenger_channel,
+                {
+                    "type": "challenge_response",
+                    "challenger_id": self.user_id,
+                    "action": "challenge_response",
+                    "response": response,
+                    "room_url": room_url,
+                },
+            )
+            await self.send_challenge_response_to_self()
+        else:
+            await self.send_error_challenge(challenger_id, "User is not available")
+        
+    async def challenge_response(self, event):
+        response = event["response"]
+        challenger_id = event["challenger_id"]
+        room_url = event["room_url"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "action": "challenge_response",
+                    "response": response,
+                    "challenger_id": challenger_id,
+                    "room_url": room_url,
+                }
+            )
+        )
+
+
+    async def send_cancel_challenge(self, challenged_id):
+        challenged_channel = f"user_communication_{challenged_id}"
+        is_challegend_online = await self.isUserOnline(challenged_id)
+        if is_challegend_online:
+            await self.channel_layer.group_send(
+                challenged_channel,
+                {
+                    "type": "cancel_challenge",
+                    "action": "cancel_challenge",
+                    "challenger_id": self.user_id,
+                },
+            )
+        else:
+            await self.send_error_challenge(challenged_id, "User is not available")
+
+    async def cancel_challenge(self, event):
+        challenger_id = event["challenger_id"]
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "action": "cancel_challenge",
+                    "challenger_id": challenger_id,
                 }
             )
         )
