@@ -1,8 +1,9 @@
 // player.js
 export class Player {
-    constructor(id, side) {
+    constructor(id, side, isControlled) {
         this.id = id;
         this.side = side;
+        this.isControlled = isControlled;
         this.paddleWidth = 0;
         this.paddleHeight = 0;
         this.paddleSpeed = 0;

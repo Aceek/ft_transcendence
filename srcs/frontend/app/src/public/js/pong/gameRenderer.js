@@ -13,7 +13,7 @@ export class GameRenderer {
             this.drawScores();
             this.drawBall(this.game.ball.x, this.game.ball.y);
             this.game.players.forEach(player => {
-                this.drawPaddle(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
+                this.drawPaddle(player);
             });
         }
         
@@ -48,11 +48,15 @@ export class GameRenderer {
         }
     }
 
-    drawPaddle(x, y, paddleWidth, paddleHeight) {
-        this.ctx.fillStyle = "#fff";
-        this.ctx.fillRect(x, y, paddleWidth, paddleHeight);
+    drawPaddle(player) {
+        if (player.isControlled) {
+            this.ctx.fillStyle = "#FFF";
+        } else {
+            this.ctx.fillStyle = "#A9A9A9";
+        }
+        this.ctx.fillRect(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
     }
-
+    
     drawBall(x, y) {
         this.ctx.fillStyle = "#fff";
         this.ctx.fillRect(x - this.game.ball.size / 2, y - this.game.ball.size / 2, this.game.ball.size, this.game.ball.size);
