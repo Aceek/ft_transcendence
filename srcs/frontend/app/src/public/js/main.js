@@ -16,7 +16,8 @@ import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentA
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 import { get2FAPage } from "./2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
-import { handleUserActivity, closeUserActivitySocket } from "./user_activity_websocket/user_activity_websocket.js";
+import { handleUserActivity } from "./user_activity_websocket/user_activity_modal.js";
+import { closeUserActivitySocket } from "./user_activity_websocket/user_activity_utils.js";
 import {
   chatSocket,
   displayChatPage,

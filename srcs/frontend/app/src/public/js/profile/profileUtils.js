@@ -2,7 +2,7 @@ import { router } from "../main.js";
 import { requestDataWithToken } from "../pageUtils.js";
 import { getGameHistory, getFriendList } from "./getProfile.js";
 import { createButtonFriend } from "./profileFriends.js";
-import { sendTrackStatus } from "../user_activity_websocket/user_activity_websocket.js";
+import { sendTrackStatus } from "../user_activity_websocket/user_activity_utils.js";
 
 
 const historyContext = {

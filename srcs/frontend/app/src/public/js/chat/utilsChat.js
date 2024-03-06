@@ -10,7 +10,7 @@ import { handleIncomingMessage } from "./websocketChat.js";
 import { sendUpdateRequest } from "../profile/profileUtils.js";
 import { getFriendList } from "../profile/getProfile.js";
 import { api_url, router } from "../main.js";
-import { handleSendChallenge } from "../user_activity_websocket/user_activity_websocket.js";
+import { handleSendChallenge } from "../user_activity_websocket/user_activity_handle.js";
 
 
 export async function displaySearchResults(users, container, friendsListIds) {

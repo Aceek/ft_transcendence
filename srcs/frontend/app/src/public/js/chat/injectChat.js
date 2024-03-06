@@ -11,7 +11,7 @@ import {
 } from "./utilsChat.js";
 import { getProfile } from "../profile/getProfile.js";
 import { conversations } from "./chat.js";
-import { sendTrackStatus } from "../user_activity_websocket/user_activity_websocket.js";
+import { sendTrackStatus } from "../user_activity_websocket/user_activity_utils.js";
 
 export async function injectFriendsInChat(friends) {
   const friendsInChat = document.getElementById("friends_in_chat");
