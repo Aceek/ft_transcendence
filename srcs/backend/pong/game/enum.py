@@ -9,3 +9,5 @@ class GameStatus(Enum):
 class PlayerPosition(Enum):
     LEFT = 0
     RIGHT = 1
+    BOTTOM = 2
+    UP = 3

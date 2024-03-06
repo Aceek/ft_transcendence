@@ -1,6 +1,7 @@
 import asyncio
 
 from .enum import *
+from .config import *
 
 class GameSync:
     def __init__(self, redis_ops, room_name):
@@ -41,7 +42,7 @@ class GameSync:
 
     async def check_for_players_ready(self):
         connected_users_count = await self.redis_ops.get_connected_users()
-        if connected_users_count == 2:
+        if connected_users_count == PLAYER_NB:
             return True, "Both players connected."
         elif connected_users_count == 0:
             return False, "No player in the room anymore."
@@ -51,7 +52,7 @@ class GameSync:
         """Check condition for game restart waiting."""
         connected_users_count = await self.redis_ops.get_connected_users()
         restart_requests_count = await self.redis_ops.get_restart_requests()
-        if restart_requests_count == connected_users_count == 2:
+        if restart_requests_count == connected_users_count == PLAYER_NB:
             return True, "All players in room are ready to restart the game."
         elif connected_users_count == 0:
             return False, "All players in room have left."

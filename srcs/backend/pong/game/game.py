@@ -18,13 +18,13 @@ class GameLogic:
 
     def init_static_data(self):
         static_data = {
-            "canvasHeight": int(SCREEN_HEIGHT),
-            "canvasWidth": int(SCREEN_WIDTH),
+            "ballSize": int(BALL_SIZE),
             "paddleWidth": int(PADDLE_WIDTH),
             "paddleHeight": int(PADDLE_HEIGHT),
             "paddleSpeed": int(PADDLE_SPEED),
-            "paddleBorderDistance": int(PADDLE_DISTANCE_FROM_BORDER),
-            "ballSize": int(BALL_SIZE),
+            "playerNb": int(PLAYER_NB),
+            "canvasHeight": int(SCREEN_HEIGHT),
+            "canvasWidth": int(SCREEN_WIDTH),
         }
         return static_data
     
@@ -44,8 +44,7 @@ class GameLogic:
         await self.redis_ops.set_static_data(self.static_data)
 
         # Init players
-        self.players = [Player(PlayerPosition.LEFT, self.redis_ops), 
-                        Player(PlayerPosition.RIGHT, self.redis_ops)]
+        self.players = [Player(position, self.redis_ops) for position in PlayerPosition if position.value < PLAYER_NB]
         for player in self.players:
                 await player.set_data_to_redis()
 
@@ -138,10 +137,12 @@ class GameLogic:
     async def game_loop(self):
         """The main game loop."""
         await self.launch_game()
+        target_loop_duration = 1 / TICK_RATE
 
         try:
             print("Game loop started.")
             while True:
+                loop_start_time = time.time()
                 current_time = time.time()
                 delta_time = current_time - self.last_update_time
                 self.last_update_time = current_time
@@ -151,7 +152,11 @@ class GameLogic:
 
                 await self.game_tick(delta_time)
 
-                await asyncio.sleep(1/TICK_RATE)
+                # Calculate the remaining tick time to send the data at fixed interval
+                loop_execution_time = time.time() - loop_start_time
+                sleep_duration = max(0, target_loop_duration - loop_execution_time)
+                
+                await asyncio.sleep(sleep_duration)
 
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()
@@ -189,9 +194,10 @@ class GameLogic:
         scored, scorer_position = self.ball.check_score()
         if scored:
             self.ball.reset_value()
-            await self.players[scorer_position.value].update_score()
-            if self.players[scorer_position.value].check_win():
-                await self.update_game_status_and_notify(GameStatus.COMPLETED)
+            if scorer_position is not None:
+                await self.players[scorer_position.value].update_score()
+                if self.players[scorer_position.value].check_win():
+                    await self.update_game_status_and_notify(GameStatus.COMPLETED)
         
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()
