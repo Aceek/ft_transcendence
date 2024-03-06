@@ -57,17 +57,17 @@ class Ball:
                 # Check for vertical overlap
                 if paddle_y <= self.y - self.size / 2 <= paddle_y + paddle_height or \
                     paddle_y <= self.y + self.size / 2 <= paddle_y + paddle_height:
-                    if player.side == PlayerPosition.LEFT or player.side == PlayerPosition.RIGHT:
+                    if player.position == PlayerPosition.LEFT or player.position == PlayerPosition.RIGHT:
                         self.vx *= -1
-                    elif player.side == PlayerPosition.BOTTOM or player.side == PlayerPosition.UP:
+                    elif player.position == PlayerPosition.BOTTOM or player.position == PlayerPosition.UP:
                         self.vy *= -1
                     return True
             return False
 
         for player in players:
             if detect_collision_and_handle_edge_bounce(player):
-                self.lastPlayertouched = player.side
-                return True, player.side
+                self.lastPlayertouched = player.position
+                return True, player.position
                     
         return False, None
 

@@ -1,6 +1,7 @@
 import aioredis
 
-from ..game.enum import GameStatus
+from ..game.enum import GameStatus, PlayerPosition
+from ..game.utils import get_player_key_map
 
 class RedisOps:
     def __init__(self, room_name):
@@ -71,13 +72,32 @@ class RedisOps:
             return GameStatus(int(current_status))
         return None
 
-    async def get_connected_users(self):
+    async def get_connected_users_nb(self):
         key = f"game:{self.room_name}:connected_users"
         return await self.connection.scard(key)
     
     async def get_restart_requests(self):
         key = f"game:{self.room_name}:restart_requests"
         return await self.connection.scard(key)
+    
+    async def get_connected_users_id(self):
+        key = f"game:{self.room_name}:connected_users"
+        users_id = await self.connection.smembers(key)
+        users_id_list = list(users_id)
+        print(f"Connected users in room {self.room_name}: {users_id_list}")
+        return users_id_list
+    
+    async def get_player_position(self, user_id):
+        for position in PlayerPosition:
+            key_map = get_player_key_map(position)  # Assuming this function maps positions to key parts correctly
+            key = f"game:{self.room_name}:paddle:{key_map['position']}"
+            
+            # Check if the user ID is a member of the set associated with the current position
+            if await self.connection.sismember(key, user_id):
+                return position  # Return the position as a string if the player is found
+        
+        return None  
+
 
 # -------------------------------ADD-----------------------------------
 

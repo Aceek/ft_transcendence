@@ -48,9 +48,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         # if so, client acquire the game logic flag and start game logic in a new task
         if await self.redis_ops.get_game_status() is None:
             if await self.redis_ops.add_game_logic_flag():
-                # asyncio.create_task(GameLogic(self.room_name, self.room_group_name, \
-                #                               self.game_mode, self.player_nb, \
-                #                               self.game_type).run())
                 asyncio.create_task(GameLogic(self).run())
         else:
             # Retrieve and send data from the existing game
@@ -70,7 +67,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.redis_ops.del_restart_request(self.user_id)
 
         # If no users are connected anymore, clear all data related to this room
-        if await self.redis_ops.get_connected_users() == 0:
+        if await self.redis_ops.get_connected_users_nb() == 0:
             await self.redis_ops.clear_all_data()
         
         # Remove this channel from the group

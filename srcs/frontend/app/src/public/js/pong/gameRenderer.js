@@ -5,28 +5,24 @@ export class GameRenderer {
     }
 
     draw() {
-        if (this.game.status === -1) {
-            return;
-        }
-        
-        this.ctx.clearRect(0, 0, this.game.canvasWidth, this.game.canvasHeight);
-        
-        this.game.players.forEach(player => {
-            this.drawPaddle(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
-        });
-        
-        this.drawBall(this.game.ball.x, this.game.ball.y);
-        
-        this.drawWhiteDashLine();
 
-        this.drawScores();
+        this.ctx.clearRect(0, 0, this.game.canvasWidth, this.game.canvasHeight);
+        this.drawWhiteDashLine();
+        
+        if (this.game.status !== -1) {
+            this.drawScores();
+            this.drawBall(this.game.ball.x, this.game.ball.y);
+            this.game.players.forEach(player => {
+                this.drawPaddle(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
+            });
+        }
         
         if (this.game.countdown !== null && this.game.countdown > 0) {
             this.drawTwoPartMessage(this.game.countdown.toString(),
                 "Get ready...")
         }
 
-        if (this.game.status === 0 && (this.game.countdown === null || this.game.countdown === 0)) {
+        if (this.game.status === -1 && (this.game.countdown === null || this.game.countdown === 0)) {
             this.drawTwoPartMessage("Room joined!", 
                 "Waiting for other players to start...");
         }

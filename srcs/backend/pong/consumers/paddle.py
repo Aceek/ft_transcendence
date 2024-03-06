@@ -71,26 +71,32 @@ class Paddle:
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
 
     async def assignment(self):
+        print(f"Starting paddle assignment for user: {self.user_id} in room: {self.redis_ops.room_name}")
+        
         # Attempt to acquire a lock for the paddle assignment process
-        lock = self.redis_ops.connection.lock(f"lock:game:{self.redis_ops.room_name}:assignment", timeout=5)
+        lock_key = f"lock:game:{self.redis_ops.room_name}:assignment"
+        lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
 
         try:
             for position in PlayerPosition:
                 self.key_map = get_player_key_map(position)
                 key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
+                print(f"Checking position {position} for user {self.user_id}")
 
                 if await self.redis_ops.connection.sismember(key, self.user_id):
                     self.side = position
+                    print(f"User {self.user_id} already assigned to {position}")
                     return
                 elif not await self.redis_ops.connection.scard(key):
                     await self.redis_ops.connection.sadd(key, self.user_id)
                     self.side = position
+                    print(f"Assigned user {self.user_id} to new position {position}")
                     return
         finally:
             # Ensure the lock is released after the operation
             await lock.release()
-
+            print(f"Released lock {lock_key} and completed assignment for user {self.user_id}.")
 
         # This prints the side to which the user was assigned, if any
         if self.side is not None:

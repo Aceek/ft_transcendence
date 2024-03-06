@@ -9,6 +9,8 @@ from .sync import GameSync
 from .channel_com import ChannelCom
 from ..redis.redis_ops import RedisOps
 
+from .database_ops import DatabaseOps
+
 class GameLogic:
     def __init__(self, consumers):
         self.room_name = consumers.room_name
@@ -16,7 +18,10 @@ class GameLogic:
         self.game_mode = consumers.game_mode
         self.player_nb = consumers.player_nb
         self.game_type = consumers.game_type
-        self.tournament_id = consumers.tournament_id
+        if self.game_type == "tournament":
+            self.tournament_id = consumers.tournament_id
+        else:
+            self.tournament_id = "none"
 
         #debug print
         print(f"Room Name: {self.room_name}")
@@ -44,6 +49,9 @@ class GameLogic:
         self.score_start = SCORE_START
         self.score_limit = SCORE_LIMIT
 
+        self.players = []
+        self.ball = None
+
     # -------------------------------INIT-----------------------------------
 
     def init_static_data(self):
@@ -68,6 +76,7 @@ class GameLogic:
         self.redis_ops = await RedisOps.create(self.room_name)
         self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self.redis_ops, self.room_name, self.player_nb)
+        self.database_ops = DatabaseOps()
 
     async def init_game(self):
         """Initial game setup."""
@@ -75,19 +84,38 @@ class GameLogic:
         self.static_data = self.init_static_data() 
         await self.redis_ops.set_static_data(self.static_data)
 
+        await self.get_static_data_and_send()
+
+    async def init_objects(self):
+        """Initial game setup."""
+        
         # Init players
-        self.players = [Player(position, self) for position in \
-                        PlayerPosition if position.value < self.player_nb]
-        for player in self.players:
-                await player.set_data_to_redis()
+        await self.init_players()
 
         # Init ball
         self.ball = Ball(self) 
         await self.ball.set_data_to_redis()
 
-        # Send data to first client and set the game to not started
-        await self.get_static_data_and_send()
         await self.get_dynamic_data_and_send()
+
+    async def init_players(self):
+        """Initializes player objects with position and associated CustomUser."""
+        users_id = await self.redis_ops.get_connected_users_id()
+        for user_id in users_id:
+            custom_user = await self.database_ops.get_custom_user(user_id)
+            if custom_user is not None:
+                position = await self.redis_ops.get_player_position(user_id)
+                if position is not None:
+                    player = Player(position, self, custom_user)
+                    await player.set_data_to_redis()
+                    self.players.append(player)
+                else:
+                    print(f"Unknown position received for user ID {user_id}: {position}")
+
+    async def reset_players(self):
+        for player in self.players:
+            player.reset_value()
+            await player.set_data_to_redis()
 
     # ---------------------------DATA UPDATES-----------------------------------
 
@@ -109,17 +137,15 @@ class GameLogic:
     # -------------------------------LAUNCHER-----------------------------------
 
     async def launch_game(self):
-        """Launch game."""    
+        """Launch game."""
+        await self.update_game_status_and_notify(GameStatus.NOT_STARTED)    
         await self.countdown()
 
         # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
         if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
             if await self.game_sync.wait_for_players_to_start():
-                await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
+                # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
                 await self.launch_game()
-
-        # Delete redis gamelogic flag
-        await self.redis_ops.del_game_logic_flag()
         
         await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
         self.last_update_time = time.time()
@@ -150,7 +176,7 @@ class GameLogic:
     async def is_game_resuming(self):
         print("Checking if the game is resuming...")
         if await self.game_sync.wait_for_players_to_start():
-            await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
+            # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
             await self.launch_game()
             return True
 
@@ -164,10 +190,11 @@ class GameLogic:
         await self.init_env()
         await self.init_game()
 
-        # Notify the first client that the init is successful
-        await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
-
         if await self.game_sync.wait_for_players_to_start():
+            # Send the initial data to all new connected users
+            await self.get_static_data_and_send()
+            await self.init_objects()
+            # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
             await self.game_loop()
 
     async def game_loop(self):
@@ -196,7 +223,8 @@ class GameLogic:
 
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()
-                await self.init_game()
+                await self.reset_players()
+                # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
                 await self.game_loop()
             
         except asyncio.CancelledError:
@@ -207,6 +235,11 @@ class GameLogic:
              # Handle other exceptions that might occur
               await self.redis_ops.clear_all_data()
               print(f"An unexpected error occurred: {e}")
+        finally:
+            # Ensure the Redis game logic flag is removed regardless of how the loop exits
+            await self.redis_ops.clear_all_data()
+            print("Redis game logic flag removed.")
+
 
     async def game_tick(self, delta_time):
         """Perform a single tick of the game lop."""

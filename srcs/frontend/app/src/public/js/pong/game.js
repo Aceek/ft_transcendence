@@ -41,7 +41,7 @@ export class Game {
         const canvas = document.getElementById('pongCanvas'); // Ensure this ID matches your canvas element
         canvas.width = this.canvasWidth;
         canvas.height = this.canvasHeight;
-    
+        
         const sides = ['left', 'right', 'bottom', 'up']; // Adjust or extend this array for more sides/players if needed
         for (let i = 0; i < this.playerNb; i++) {
             const playerId = i + 1; // Calculate player id as the next sequential number
@@ -60,6 +60,7 @@ export class Game {
     }
     
     handleDynamicData(dynamicData, serverTimestamp) {
+        console.log("Handling dynamic data:", dynamicData);
         // Convert server timestamp from seconds to milliseconds
         const serverTimestampMs = parseInt(serverTimestamp, 10);
         const currentTime = (new Date()).getTime();

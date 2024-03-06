@@ -39,7 +39,7 @@ class GameSync:
         return False
 
     async def check_for_players_ready(self):
-        connected_users_count = await self.redis_ops.get_connected_users()
+        connected_users_count = await self.redis_ops.get_connected_users_nb()
         if connected_users_count == self.player_nb:
             return True, "Both players connected."
         elif connected_users_count == 0:
@@ -48,7 +48,7 @@ class GameSync:
 
     async def check_for_restart_conditions(self):
         """Check condition for game restart waiting."""
-        connected_users_count = await self.redis_ops.get_connected_users()
+        connected_users_count = await self.redis_ops.get_connected_users_nb()
         restart_requests_count = await self.redis_ops.get_restart_requests()
         if restart_requests_count == connected_users_count == self.player_nb:
             return True, "All players in room are ready to restart the game."
