@@ -149,7 +149,6 @@ export function loadScript(url) {
 
 export function deleteNavbar() {
   if (document.getElementById('navbar')) {
-    console.log("Deleting navbar");
     document.getElementById('navbar').remove();
   }
 }

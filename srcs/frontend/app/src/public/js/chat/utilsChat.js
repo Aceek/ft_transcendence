@@ -142,7 +142,6 @@ export function resetBadgeBgSuccess(uid) {
 export async function setupInviteToPlayButton(uid) {
   const inviteToPlayButton = document.getElementById("invite-to-play-button");
   inviteToPlayButton.addEventListener("click", async () => {
-    console.log("Invite to play button clicked user = ", uid);
     await handleSendChallenge(uid);
   });
 }

@@ -13,7 +13,6 @@ import { userActivitySocket } from "./user_activity_websocket.js";
 import { router } from "../main.js";
 
 export function handleMessage(data) {
-
   if (data.action === "status_update") {
     updateStatusOnPage(data);
   } else if (data.action === "challenge_received") {
@@ -24,6 +23,7 @@ export function handleMessage(data) {
     hamdleChallengeError(data);
   } else if (data.action == "cancel_challenge") {
     handleChallengeCanceled(data);
+  } else if (data.action == "pong") {
   } else {
     console.log("Unknown message from server: ", data);
   }
