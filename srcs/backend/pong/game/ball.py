@@ -66,29 +66,32 @@ class Ball:
 
         for player in players:
             if detect_collision_and_handle_edge_bounce(player):
-                self.lastPlayertouched = player.position
-                return True, player.position
+                self.lastPlayertouched = player
+                return True, player
                     
         return False, None
 
     def check_score(self):     
-        # Normal check for game of 2 players
-        if self.game.player_nb <=2:        
+        # Normal check for a game of 2 players
+        if self.game.player_nb <= 2:        
             if self.x < 0 - self.size / 2:
-                return True, PlayerPosition.RIGHT
+                # Find and return the player object for PlayerPosition.RIGHT
+                return True, next((player for player in self.game.players if player.position == PlayerPosition.RIGHT), None)
             elif self.x > self.game.screen_width + self.size / 2:
-                return True, PlayerPosition.LEFT
+                # Find and return the player object for PlayerPosition.LEFT
+                return True, next((player for player in self.game.players if player.position == PlayerPosition.LEFT), None)
         else:
-            # Custum check for game of more then 2 players
-            # allowing the goal to the last player who touched the ball
+            # Custom check for a game of more than 2 players
+            # Allowing the goal to the last player who touched the ball
             if self.x < 0 - self.size / 2 or \
             self.x > self.game.screen_width + self.size / 2 or \
             self.y < 0 - self.size / 2 or \
             self.y < 0 - self.size / 2 or \
             self.y > self.game.screen_height + self.size / 2:
-                return True, self.lastPlayertouched
+                return True, self.lastPlayerTouched  # Assuming this is the Player object
 
         return False, None
+
 
 #------------------------------HANDLER-------------------------------------
 

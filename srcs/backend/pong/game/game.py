@@ -4,12 +4,12 @@ import time
 from .ball import Ball
 from .player import Player
 from .config import *
-from .enum import GameStatus, PlayerPosition
+from .enum import GameStatus
 from .sync import GameSync
 from .channel_com import ChannelCom
+from .database_ops import DatabaseOps
 from ..redis.redis_ops import RedisOps
 
-from .database_ops import DatabaseOps
 
 class GameLogic:
     def __init__(self, consumers):
@@ -51,6 +51,7 @@ class GameLogic:
 
         self.players = []
         self.ball = None
+        self.winner = None
 
     # -------------------------------INIT-----------------------------------
 
@@ -116,6 +117,7 @@ class GameLogic:
         for player in self.players:
             player.reset_value()
             await player.set_data_to_redis()
+        self.winner = None
 
     # ---------------------------DATA UPDATES-----------------------------------
 
@@ -144,7 +146,6 @@ class GameLogic:
         # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
         if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
             if await self.game_sync.wait_for_players_to_start():
-                # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
                 await self.launch_game()
         
         await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
@@ -176,7 +177,6 @@ class GameLogic:
     async def is_game_resuming(self):
         print("Checking if the game is resuming...")
         if await self.game_sync.wait_for_players_to_start():
-            # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
             await self.launch_game()
             return True
 
@@ -194,7 +194,6 @@ class GameLogic:
             # Send the initial data to all new connected users
             await self.get_static_data_and_send()
             await self.init_objects()
-            # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
             await self.game_loop()
 
     async def game_loop(self):
@@ -224,21 +223,15 @@ class GameLogic:
             if await self.game_sync.wait_for_players_to_restart():
                 await self.redis_ops.del_all_restart_requests()
                 await self.reset_players()
-                # await self.update_game_status_and_notify(GameStatus.NOT_STARTED)
                 await self.game_loop()
             
         except asyncio.CancelledError:
-             # Handle cleanup upon asyncio task cancellation
-             await self.redis_ops.clear_all_data()
              print("Game loop cancelled. Performing cleanup.")
         except Exception as e:
-             # Handle other exceptions that might occur
-              await self.redis_ops.clear_all_data()
               print(f"An unexpected error occurred: {e}")
         finally:
-            # Ensure the Redis game logic flag is removed regardless of how the loop exits
             await self.redis_ops.clear_all_data()
-            print("Redis game logic flag removed.")
+            print("All Redis room data cleared successfully.")
 
 
     async def game_tick(self, delta_time):
@@ -255,19 +248,21 @@ class GameLogic:
             await player.get_paddle_from_redis()
 
         # Check and handle paddle collision
-        collision, position = self.ball.check_paddle_collision(self.players)
+        collision, player = self.ball.check_paddle_collision(self.players)
         if collision:
-            self.ball.handle_paddle_bounce_calculation(position, self.players)
+            self.ball.handle_paddle_bounce_calculation(player.position, self.players)
         
         # Check and handle goal scored
-        scored, scorer_position = self.ball.check_score()
+        scored, player = self.ball.check_score()
         if scored:
             self.ball.reset_value()
-            if scorer_position is not None:
-                await self.players[scorer_position.value].update_score()
-                if self.players[scorer_position.value].check_win():
+            if player is not None:
+                await player.update_score()
+                if player.check_win():
+                    self.winner = player
                     await self.update_game_status_and_notify(GameStatus.COMPLETED)
-        
+                    await self.database_ops.update_match_history(self.winner, self.players)
+
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()
 

@@ -1,4 +1,5 @@
 from channels.db import database_sync_to_async
+from channels.db import database_sync_to_async
 
 class DatabaseOps:
     @database_sync_to_async
@@ -14,19 +15,9 @@ class DatabaseOps:
             print(f"User with ID {user_id} does not exist.")
             return None
 
+    @database_sync_to_async
+    def update_match_history(self, winner, players):
+        from stats.manage_stats import ManageHistory
 
-    # @database_sync_to_async
-    # def get_match(self, match_id):
-    #     """Asynchronously retrieves a Match object based on match ID."""
-    #     try:
-    #         return Match.objects.get(pk=match_id)
-    #     except Match.DoesNotExist:
-    #         return None
+        self.manage_history = ManageHistory(players[0].user, players[1].user, winner.user)
 
-    # @database_sync_to_async
-    # def get_tournament(self, tournament_id):
-    #     """Asynchronously retrieves a Tournament object based on tournament ID."""
-    #     try:
-    #         return Tournament.objects.get(pk=tournament_id)
-    #     except Tournament.DoesNotExist:
-    #         return None

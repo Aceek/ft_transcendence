@@ -60,7 +60,7 @@ export class Game {
     }
     
     handleDynamicData(dynamicData, serverTimestamp) {
-        console.log("Handling dynamic data:", dynamicData);
+        // console.log("Handling dynamic data:", dynamicData);
         // Convert server timestamp from seconds to milliseconds
         const serverTimestampMs = parseInt(serverTimestamp, 10);
         const currentTime = (new Date()).getTime();
