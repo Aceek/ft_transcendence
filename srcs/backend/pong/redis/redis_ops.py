@@ -80,12 +80,12 @@ class RedisOps:
         key = f"game:{self.room_name}:restart_requests"
         return await self.connection.scard(key)
     
-    async def get_connected_users_id(self):
+    async def get_connected_users_ids(self):
         key = f"game:{self.room_name}:connected_users"
-        users_id = await self.connection.smembers(key)
-        users_id_list = list(users_id)
-        print(f"Connected users in room {self.room_name}: {users_id_list}")
-        return users_id_list
+        users_ids = await self.connection.smembers(key)
+        users_ids_list = list(users_ids)
+        print(f"Connected users in room {self.room_name}: {users_ids_list}")
+        return users_ids_list
     
     async def get_player_position(self, user_id):
         for position in PlayerPosition:
@@ -97,7 +97,6 @@ class RedisOps:
                 return position  # Return the position as a string if the player is found
         
         return None  
-
 
 # -------------------------------ADD-----------------------------------
 

@@ -18,27 +18,29 @@ export class GameRenderer {
         }
         
         if (this.game.countdown !== null && this.game.countdown > 0) {
-            this.drawTwoPartMessage(this.game.countdown.toString(),
-                "Get ready...")
-        }
-
-        if (this.game.status === -1 && (this.game.countdown === null || this.game.countdown === 0)) {
+            if (this.game.type === 'tournament' && this.game.status === 2) {
+                // Specific message for opponent forfeiting in a tournament
+                this.drawTwoPartMessage(this.game.countdown.toString(),
+                "Opponent forfeiting in...");
+            } else {
+                // General countdown message
+                this.drawTwoPartMessage(this.game.countdown.toString(),
+                "Get ready...");
+            }
+        } else if (this.game.status === 2) {
+            if (!(this.game.type === 'tournament' && this.game.countdown === 0)) {
+                this.drawTwoPartMessage("Game Paused!",
+                    "Waiting for other players to resume...");
+            }
+        } else if (this.game.status === -1) {
             this.drawTwoPartMessage("Room joined!", 
                 "Waiting for other players to start...");
-        }
-
-        if (this.game.status === 2 && (this.game.countdown === null || this.game.countdown === 0)) {
-            this.drawTwoPartMessage("Game Paused!",
-                "Waiting for other players to resume...");
-        }
-
-        if (this.game.status === 3 && (this.game.countdown === null || this.game.countdown === 0)) {
+        } else if (this.game.status === 3) {
             if (this.game.type === 'standard') {
                 this.drawTwoPartMessage("Game Over!",
                     "Press Enter to restart...");
             } else if (this.game.type === 'tournament') {
-                this.drawTwoPartMessage("Game Over!",
-                    "");
+                this.drawTwoPartMessage("Game Over!", "");
             }
         }
         
