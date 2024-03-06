@@ -85,6 +85,10 @@ class GameLogic:
         self.game_sync = GameSync(self)
         self.database_ops = DatabaseOps()
 
+        if self.type == "tournament":
+            self.match = await self.database_ops.get_match(self.match_id)
+            self.tournament = await self.database_ops.get_tournament(self.tournament_id)
+
     async def init_game(self):
         """Initial game setup."""
         # Init static data
@@ -98,6 +102,7 @@ class GameLogic:
         
         # Init players
         await self.init_players()
+        self.winner = None
 
         # Init ball
         self.ball = Ball(self) 
@@ -123,7 +128,6 @@ class GameLogic:
         for player in self.players:
             player.reset_value()
             await player.set_data_to_redis()
-        self.winner = None
 
     async def get_winner_by_forfeit(self):
         """Determine the winner by forfeit based on the remaining connected player."""
@@ -232,14 +236,17 @@ class GameLogic:
             # Handle the case of a forfeit, the winner is the remaining player
             if self.winner is None:
                 self.winner = await self.get_winner_by_forfeit()
-            await self.database_ops.update_match_history(self.winner, self.players)
 
             # Only try to restart the match for standard games
             if self.type == "standard":
+                await self.database_ops.update_match_history(self.winner, self.players)
                 if await self.game_sync.wait_for_players_to_restart():
                     await self.redis_ops.del_all_restart_requests()
                     await self.reset_players()
                     await self.game_loop()
+            elif self.type == "tournament":
+                await self.database_ops.update_tournament(self.tournament, self.match, self.winner)
+
             
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")
