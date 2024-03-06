@@ -144,7 +144,6 @@ export async function setupInviteToPlayButton(uid) {
   inviteToPlayButton.addEventListener("click", async () => {
     console.log("Invite to play button clicked user = ", uid);
     await handleSendChallenge(uid);
-    // router("/play/" + uid);
   });
 }
 
