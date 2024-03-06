@@ -56,11 +56,11 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
         self.user.save()
 
     async def disconnect(self, close_code):
-        if hasattr(self, 'user_activity_group_name'):
+        if hasattr(self, "user_activity_group_name"):
             await self.channel_layer.group_discard(
                 self.user_activity_group_name, self.channel_name
             )
-        if hasattr(self, 'communication_group_name'):
+        if hasattr(self, "communication_group_name"):
             await self.channel_layer.group_discard(
                 self.communication_group_name, self.channel_name
             )
@@ -207,14 +207,14 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
             )
         )
 
-    async def send_challenge_response_to_self(self):
+    async def send_challenge_response_to_self(self, response, room_url):
         await self.send(
             text_data=json.dumps(
                 {
                     "action": "challenge_response",
-                    "response": "accepted",
+                    "response": response,
                     "challenger_id": self.user_id,
-                    "room_url": f"/pong/123",
+                    "room_url": room_url,
                 }
             )
         )
@@ -238,10 +238,10 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
                     "room_url": room_url,
                 },
             )
-            await self.send_challenge_response_to_self()
+            await self.send_challenge_response_to_self(response, room_url)
         else:
             await self.send_error_challenge(challenger_id, "User is not available")
-        
+
     async def challenge_response(self, event):
         response = event["response"]
         challenger_id = event["challenger_id"]
@@ -256,7 +256,6 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
                 }
             )
         )
-
 
     async def send_cancel_challenge(self, challenged_id):
         challenged_channel = f"user_communication_{challenged_id}"

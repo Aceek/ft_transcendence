@@ -1,3 +1,4 @@
+import { router } from "../main.js";
 import { fetchTemplate } from "../pageUtils.js";
 
 let userActivitySocket = null;
@@ -217,16 +218,16 @@ async function injectModalChallengeWaiting(uid) {
 }
 
 async function handleChallengeReceived(challengerId) {
-  if (isChallengeModalOpen()) {
-    userActivitySocket.send(
-      JSON.stringify({
-        action: "challenge_response",
-        challenger_id: challengerId,
-        response: "decline",
-      })
-    );
-    return;
-  }
+  // if (isChallengeModalOpen()) {
+  //   userActivitySocket.send(
+  //     JSON.stringify({
+  //       action: "challenge_response",
+  //       challenger_id: challengerId,
+  //       response: "decline",
+  //     })
+  //   );
+  //   return;
+  // }
   await injectModalChallengeReceived(challengerId);
 
   window.addEventListener("beforeunload", function (e) {
@@ -320,16 +321,14 @@ function hideModal(modalId) {
 }
 
 function handleChallengeResponse(data) {
-  const modal = bootstrap.Modal.getInstance(
-    document.getElementById("challengeModalWaiting")
-  );
 
   updateModalChallengeResponse(data);
 
-  if (data.response === "accept") {
+  if (data.response === "accept" && data.room_url) {
     console.log("Challenge accepted");
     const url_room = data.room_url;
     console.log("Redirection vers la page de jeu, url:", url_room);
+    router(url_room);
   } else {
     console.log("Challenge declined");
   }
