@@ -76,12 +76,14 @@ services:
     command: npm start
 
   nginx:
-    image: nginx:alpine
+    build: 
+      context: nginx/
+      dockerfile: Dockerfile
     ports:
       - "443:443"
       - "80:80"
     volumes:
-      - ./nginx:/etc/nginx/conf.d
+      - ./nginx/conf.d:/etc/nginx/conf.d
       - ./frontend/app/src:/usr/share/nginx/html
       - ./nginx/certs:/usr/share/nginx/certs
       - ./backend/media:/usr/share/nginx/media
