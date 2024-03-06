@@ -1,5 +1,5 @@
-import { api_url, router } from "./main.js";
-import { fetchTemplate, loadProfileCss, changeUrlHistory, postData, delProfileCss, addEventListenerDOMElem, addEventListenerByIdPreventDouble } from "./pageUtils.js";
+import { api_url, router } from "../main.js";
+import { fetchTemplate, loadProfileCss, changeUrlHistory, postData, delProfileCss, addEventListenerDOMElem, addEventListenerByIdPreventDouble } from "../pageUtils.js";
 
 let keydownHandler = null;
 

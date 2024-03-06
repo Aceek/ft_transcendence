@@ -61,6 +61,20 @@ REST_FRAMEWORK = {
 # Custom user model
 AUTH_USER_MODEL = "CustomUser.CustomUser"
 
+# force https
+SECURE_SSL_REDIRECT = True
+
+# secure cookie
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# xss protection
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# secure proxy ssl header
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # Chemin où les fichiers médias sont stockés sur le serveur
 MEDIA_ROOT = BASE_DIR / "media"
 

@@ -2,7 +2,7 @@ import {
   getLoginPage,
   checkOAuthCode,
   checkEmailVerification,
-} from "./login.js";
+} from "./login/login.js";
 import { getHomePage } from "./home/home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./networkUtils.js";
@@ -14,7 +14,7 @@ import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
 import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
-import { get2FAPage } from "./2fa.js";
+import { get2FAPage } from "./2fa/2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
 import { handleUserActivity } from "./user_activity_websocket/user_activity_modal.js";
 import { closeUserActivitySocket } from "./user_activity_websocket/user_activity_utils.js";

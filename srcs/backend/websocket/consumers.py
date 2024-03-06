@@ -9,6 +9,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     user_mode = None
 
     async def connect(self):
+        self.mark_for_remove = False
         await self.accept()
         if self.scope["user"].is_anonymous:
             await self.send_error("You are not authenticated")
@@ -17,8 +18,6 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         self.user_id = str(self.scope["user"].id)
         self.redis = await aioredis.from_url("redis://redis:6379", db=0)
         await self.redis.set(f"user_{self.user_id}_ws_channel", self.channel_name)
-
-        self.mark_for_remove = False
 
     async def receive(self, text_data):
         data = json.loads(text_data)

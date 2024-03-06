@@ -1,4 +1,4 @@
-import { router, api_url, credentialsOption } from "./main.js";
+import { router, api_url, credentialsOption } from "../main.js";
 import {
   fetchTemplate,
   addEventListenerById,
@@ -7,7 +7,7 @@ import {
   changeUrlHistory,
   deleteNavbar,
   addEventListenerByIdPreventDouble
-} from "./pageUtils.js";
+} from "../pageUtils.js";
 
 async function fetch42AuthLink() {
   try {
