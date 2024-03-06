@@ -15,14 +15,18 @@ export function connectUserActivitySocket() {
 
   userActivitySocket.onmessage = function (e) {
     const data = JSON.parse(e.data);
+    if (data.error === "anonymous_user") {
+      userActivitySocket.close();
+      userActivitySocket = null;
+      return;
+    }
     handleMessage(data);
   };
 
   userActivitySocket.onclose = function (e) {
-    console.error(
-      "User activity socket closed unexpectedly trying to reconnect"
-    );
-    userActivitySocket = null;
+    if (!userActivitySocket) {
+      return;
+    }
     setTimeout(() => connectUserActivitySocket(), 5000);
   };
 

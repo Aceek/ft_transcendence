@@ -108,12 +108,12 @@ export function ajusterInterfaceProfil() {
   avatar.style.marginBottom = "10px";
   const friendsListCol = document.getElementById("friends-list-col");
   friendsListCol.remove();
-  const editAccountButton = document.getElementById("editAccountButton");
-  editAccountButton.remove();
-  const twofaElement = document.getElementById("2fa");
-  twofaElement.remove();
   const gameHistoryDiv = document.getElementById("gameHistoryDiv");
   gameHistoryDiv.className = "col-md12 col-lg-12";
   const profileButton = document.getElementById("profileButton");
   profileButton.disabled = true;
+  const twofaButton = document.getElementById("twofaButton");
+  if (twofaButton) {
+    twofaButton.remove();
+  }
 }

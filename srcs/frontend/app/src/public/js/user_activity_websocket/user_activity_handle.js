@@ -13,9 +13,8 @@ import { userActivitySocket } from "./user_activity_websocket.js";
 import { router } from "../main.js";
 
 export function handleMessage(data) {
-  if (data.error) {
-    console.error("Error from server: ", data.message);
-  } else if (data.action === "status_update") {
+
+  if (data.action === "status_update") {
     updateStatusOnPage(data);
   } else if (data.action === "challenge_received") {
     handleChallengeReceived(data.challenger_id);

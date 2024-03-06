@@ -28,7 +28,6 @@ export async function displayProfileStatsInfo(userUID = null) {
 
 
 export async function displayStats(userUID = null) {
-  // await verifyDOMProfileLoaded(userUID);
   await displayProfileStatsInfo(userUID);
   await fetchTemplate("/public/html/stats.html")
     .then(async (statsDivString) => {

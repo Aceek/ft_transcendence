@@ -20,6 +20,7 @@ export function sendPing(socket) {
 }
 
 export function closeUserActivitySocket() {
+  console.log("Closing user activity socket")
   if (userActivitySocket && userActivitySocket.readyState === WebSocket.OPEN) {
     userActivitySocket.close();
   }

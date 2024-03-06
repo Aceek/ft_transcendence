@@ -89,7 +89,7 @@ class UserActivityConsumer(AsyncWebsocketConsumer):
             await self.send_cancel_challenge(challenged_id)
 
     async def send_error(self, error_message):
-        await self.send(text_data=json.dumps({"error": error_message}))
+        await self.send(text_data=json.dumps({"error": "anonymous_user", "message": error_message}))
 
     async def handle_ping(self):
         self.last_ping = datetime.now()

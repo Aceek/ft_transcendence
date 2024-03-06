@@ -26,7 +26,7 @@ export async function displayProfile() {
 
   } catch (error) {
     console.error("Error:", error);
-    router("/home"); // redirect to 404 page
+    router("/home");
   }
 }
 
