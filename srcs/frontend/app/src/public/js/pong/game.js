@@ -8,6 +8,7 @@ export class Game {
         this.controlledPlayer = null;
         this.status = -1;
         this.isInitialized = false;
+        this.restartRequest = false;
 
         this.lastServerUpdate = 0;
         this.latency = null

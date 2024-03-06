@@ -60,6 +60,11 @@ function mainLoop() {
     if (game && game.status === 1) {
         game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, delta);
         game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, delta);
+    
+        // reset this value if the game if the game is restart
+        if (game.restartRequest == true) {
+            game.restartRequest = false;
+        }
     }
 
     lastUpdate = Date.now();

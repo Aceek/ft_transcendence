@@ -36,14 +36,16 @@ export class GameRenderer {
             this.drawTwoPartMessage("Room joined!", 
                 "Waiting for other players to start...");
         } else if (this.game.status === 3) {
-            if (this.game.type === 'standard') {
-                this.drawTwoPartMessage("Game Over!",
-                    "Press Enter to restart...");
-            } else if (this.game.type === 'tournament') {
+            if (this.game.type === 'tournament') {
                 this.drawTwoPartMessage("Game Over!", "");
+            } else {
+                let restartMessage = "Press Enter to restart...";
+                if (this.game.restartRequest === true) {
+                    restartMessage += " ✓";
+                }
+                this.drawTwoPartMessage("Game Over!", restartMessage);
             }
         }
-        
     }
 
     drawPaddle(x, y, paddleWidth, paddleHeight) {
