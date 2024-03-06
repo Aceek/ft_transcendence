@@ -26,7 +26,7 @@ export class KeyEventController {
         }
     
         // Handle game restart on 'Enter'
-        if (key === "Enter" && this.game.status === 3) {
+        if (key === "Enter" && this.game.status === 3 && this.game.type === "standard") {
             this.socket.send(JSON.stringify({ type: "restart_game" }));
             console.log("Restart game message sent.");
             return;

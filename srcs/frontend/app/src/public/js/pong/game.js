@@ -28,17 +28,17 @@ export class Game {
     }
 
     handleStaticData(staticData) {
-        console.log("Handling static data:", staticData);
+        // console.log("Handling static data:", staticData);
         
         this.playerNb = parseInt(staticData.playerNb, 10);
         this.canvasWidth = parseInt(staticData.canvasWidth, 10);
         this.canvasHeight = parseInt(staticData.canvasHeight, 10);
-        this.gameID = staticData.gameID;
-        this.gameMode = staticData.gameMode;
-        this.gameType = staticData.gameType;
+        this.matchID = staticData.gameID;
+        this.mode = staticData.gameMode;
+        this.type = staticData.gameType;
         this.tournamentId = staticData.tournamentId;
         
-        const canvas = document.getElementById('pongCanvas'); // Ensure this ID matches your canvas element
+        const canvas = document.getElementById('pongCanvas');
         canvas.width = this.canvasWidth;
         canvas.height = this.canvasHeight;
         
@@ -60,7 +60,7 @@ export class Game {
     }
     
     handleDynamicData(dynamicData, serverTimestamp) {
-        // console.log("Handling dynamic data:", dynamicData);
+        console.log("Handling dynamic data:", dynamicData);
         // Convert server timestamp from seconds to milliseconds
         const serverTimestampMs = parseInt(serverTimestamp, 10);
         const currentTime = (new Date()).getTime();

@@ -33,9 +33,15 @@ export class GameRenderer {
         }
 
         if (this.game.status === 3 && (this.game.countdown === null || this.game.countdown === 0)) {
-            this.drawTwoPartMessage("Game Over!",
-                "Press Enter to restart...")
+            if (this.game.type === 'standard') {
+                this.drawTwoPartMessage("Game Over!",
+                    "Press Enter to restart...");
+            } else if (this.game.type === 'tournament') {
+                this.drawTwoPartMessage("Game Over!",
+                    "");
+            }
         }
+        
     }
 
     drawPaddle(x, y, paddleWidth, paddleHeight) {
