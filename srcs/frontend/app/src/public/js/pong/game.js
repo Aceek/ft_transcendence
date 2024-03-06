@@ -7,6 +7,7 @@ export class Game {
         this.players = [];
         this.controlledPlayer = null;
         this.status = -1;
+        this.isInitialized = false;
 
         this.lastServerUpdate = 0;
         this.latency = null
@@ -57,6 +58,8 @@ export class Game {
         }
         this.players.forEach(player => player.handleStaticData(staticData));
         this.ball.handleStaticData(staticData);
+
+        this.isInitialized = true;
     }
     
     handleDynamicData(dynamicData, serverTimestamp) {

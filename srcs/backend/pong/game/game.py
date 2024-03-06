@@ -244,8 +244,8 @@ class GameLogic:
                     await self.redis_ops.del_all_restart_requests()
                     await self.reset_players()
                     await self.game_loop()
-            elif self.type == "tournament":
-                await self.database_ops.update_tournament(self.tournament, self.match, self.winner)
+            # elif self.type == "tournament":
+            #     await self.database_ops.update_tournament(self.tournament, self.match, self.winner)
 
             
         except asyncio.CancelledError:

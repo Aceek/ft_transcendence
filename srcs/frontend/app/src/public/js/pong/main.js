@@ -16,8 +16,8 @@ export async function setupGame() {
     }
     const ctx = canvas.getContext('2d');
 
-    game = new Game(); // Initialize game
-    renderer = new GameRenderer(ctx, game); // Initialize renderer
+    game = new Game();
+    renderer = new GameRenderer(ctx, game);
 
     try {
         pongSocket = await initializeSocket();
@@ -25,12 +25,27 @@ export async function setupGame() {
 
         new KeyEventController(pongSocket, game);
 
-        requestAnimationFrame(mainLoop);
+        waitForInitialization().then(() => {
+            canvas.style.display = 'block'; // Make the canvas visible after initialization
+            requestAnimationFrame(mainLoop);
+        });
     } catch (error) {
         console.error("Failed to initialize WebSocket:", error);
     }
 }
 
+function waitForInitialization() {
+    return new Promise(resolve => {
+        const checkInitialization = () => {
+            if (game.isInitialized) {
+                resolve();
+            } else {
+                setTimeout(checkInitialization, 100); // Check every 100ms
+            }
+        };
+        checkInitialization();
+    });
+}
 
 //-----------------------------MAIN LOOP------------------------------------
 

@@ -4,7 +4,7 @@ body {
 }
 
 canvas {
-    display: block;
+    display: none;
     margin: auto;
     background-color: #000;
 }
