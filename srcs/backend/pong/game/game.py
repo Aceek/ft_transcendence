@@ -19,8 +19,10 @@ class GameLogic:
         self.player_nb = consumers.player_nb
         self.type = consumers.game_type
         if self.type == "tournament":
+            self.match_id = consumers.match_id
             self.tournament_id = consumers.tournament_id
         else:
+            self.match_id = "none"
             self.tournament_id = "none"
 
         #debug print
@@ -29,6 +31,10 @@ class GameLogic:
         print(f"Game Mode: {self.mode}")
         print(f"Number of Players: {self.player_nb}")
         print(f"Game Type: {self.type}")
+        if hasattr(consumers, 'match_id') and self.match_id:
+            print(f"Match ID: {self.match_id}")
+        else:
+            print("Tournament ID: Not applicable")
         if hasattr(consumers, 'tournament_id') and self.tournament_id:
             print(f"Tournament ID: {self.tournament_id}")
         else:
@@ -63,10 +69,10 @@ class GameLogic:
             "paddleSpeed": self.paddle_speed,
             "canvasHeight": self.screen_height,
             "canvasWidth": self.screen_width,
-            "gameID": self.room_name,
             "gameMode": self.mode,
             "playerNb": self.player_nb,
             "gameType": self.type,
+            "matchId": self.match_id,
             "tournamentId": self.tournament_id
         }
         return static_data

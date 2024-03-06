@@ -7,23 +7,24 @@ export function initializeSocket() {
 
         const pathSegments = window.location.pathname.split('/').filter(Boolean);
 
-        const mode = pathSegments[1]; // Assuming the first segment after `/ws/` is the mode (`online`/`offline`)
-        const numberOfPlayers = pathSegments[2];
+        const mode = pathSegments[1];
+        const playerNb = pathSegments[2];
         const gameType = pathSegments[3];
 
-        let tournamentID, roomID, socketUrl;
+        let tournamentID, matchId, roomID, socketUrl;
 
         if (gameType === 'tournament') {
             tournamentID = pathSegments[4];
-            roomID = pathSegments[5];
+            matchId = pathSegments[5];
+            roomID = pathSegments[6];
+            socketUrl = `wss://${hostname}${port ? ':' + port : ''}/ws/pong/` +
+                        `${mode}/${playerNb}/${gameType}/` +
+                        `${tournamentID}/${matchId}/${roomID}/`;
         } else {
             roomID = pathSegments[4];
+            socketUrl = `wss://${hostname}${port ? ':' + port : ''}/ws/pong/` +
+                        `${mode}/${playerNb}/${gameType}/${roomID}/`;
         }
-
-        socketUrl = `wss://${hostname}${port ? ':' + port : ''}/ws/pong/` +
-            `${mode}/${numberOfPlayers}/${gameType}/` +
-            `${tournamentID ? tournamentID + '/' : ''}${roomID}/`;
-
 
         console.log(socketUrl);
 

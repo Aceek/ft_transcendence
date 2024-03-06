@@ -108,8 +108,9 @@ async function matchRegex(path) {
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
   // pong routes
   const onlineStandardMatch = path.match(/^\/pong\/online\/([2-4])\/standard\/([a-zA-Z0-9_-]+)$/);
-  const onlineTournamentMatch = path.match(/^\/pong\/online\/2\/tournament\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
+  const onlineTournamentMatch = path.match(/^\/pong\/online\/2\/tournament\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
   const offlineStandardMatch = path.match(/^\/pong\/offline\/2\/standard\/([a-zA-Z0-9_-]+)$/);
+
 
 
   if (profileStatsMatch) {
