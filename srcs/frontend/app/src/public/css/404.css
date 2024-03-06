@@ -1,0 +1,16 @@
+body {
+  color: #1a202c;
+  text-align: end;
+  background-color: #e2e8f0; 
+}
+.error-template {
+  padding: 40px 15px;
+  text-align: center;
+}
+.error-actions {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+.btn {
+  margin-right: 10px;
+}

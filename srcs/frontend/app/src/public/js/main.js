@@ -18,6 +18,7 @@ import { get2FAPage } from "./2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
 import { handleUserActivity } from "./user_activity_websocket/user_activity_modal.js";
 import { closeUserActivitySocket } from "./user_activity_websocket/user_activity_utils.js";
+import { display404 } from "./display404.js";
 import {
   chatSocket,
   displayChatPage,
@@ -48,19 +49,7 @@ export function clearLoadedCss() {
   const head = document.head;
   const links = Array.from(head.querySelectorAll("link"));
   links.forEach((link) => {
-    if (link.href.includes("profile.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("tournament.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("tournamentsAll.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("chat.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("2fa.css")) {
+    if (link.id === "CssFromPageSPA" && !link.href.includes("navbar.css")) {
       head.removeChild(link);
     }
   });
@@ -134,7 +123,7 @@ async function handleAuthenticatedRoutes(path) {
   } else {
     switch (path) {
       case "/home":
-        getHomePage();
+        await getHomePage();
         break;
       case "/profile/stats":
         console.log("Loading personal profile stats page");
@@ -153,9 +142,8 @@ async function handleAuthenticatedRoutes(path) {
         console.log("Loading chat page");
         break;
       default:
-        path = "/home";
         console.log("Path not found, loading default page");
-        getHomePage();
+        await display404();
     }
   }
   updateActiveLink(path);

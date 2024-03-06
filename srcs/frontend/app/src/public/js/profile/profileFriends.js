@@ -17,7 +17,7 @@ export async function displayFriendsProfile(UID) {
     await addFriendsButton(profile.id);
   } catch (error) {
     console.error("Error:", error);
-    router("/home"); // redirect to 404 page
+    router("/home");
   }
 }
 

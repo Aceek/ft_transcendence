@@ -108,6 +108,7 @@ export function loadProfileCss(url) {
     link.type = "text/css";
     link.rel = "stylesheet";
     link.href = url;
+    link.id = "CssFromPageSPA";
 
     head.appendChild(link);
   }

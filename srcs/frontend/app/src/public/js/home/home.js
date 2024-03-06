@@ -1,5 +1,4 @@
 import {
-  changeUrlHistory,
   addEventListenerById,
   loadProfileCss,
   fetchTemplate,
@@ -13,13 +12,14 @@ function addEventListeners() {
   });
 }
 
+
+
 export async function getHomePage() {
   try {
     const homeHtml = await fetchTemplate("/public/html/home.html");
     document.getElementById("main").innerHTML = homeHtml;
     loadProfileCss("/public/css/home.css");
     addEventListeners();
-    changeUrlHistory("/home");
   } catch (error) {
     console.error("Error fetching home.html:", error);
     router("/home");
