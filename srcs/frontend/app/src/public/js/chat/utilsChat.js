@@ -175,7 +175,7 @@ export async function blockUser(uid) {
       api_url + "users/profile/update",
       dataToUpdate
     );
-    if (updateSuccess) {
+    if (updateSuccess.success) {
       await displayChatPage();
     } else {
       console.error("Error blocking user");
@@ -193,7 +193,7 @@ export async function unblockUser(uid) {
       api_url + "users/remove_blocked",
       dataToUpdate
     );
-    if (updateSuccess) {
+    if (updateSuccess.success) {
       await displayChatPage();
     } else {
       console.error("Error unblocking user");
@@ -216,7 +216,7 @@ export async function addFriend(uid) {
       api_url + "users/profile/update",
       dataToUpdate
     );
-    if (updateSuccess) {
+    if (updateSuccess.success) {
       await displayChatPage();
     } else {
       console.error("Error adding friend");
@@ -234,7 +234,7 @@ export async function removeFriend(uid) {
       api_url + "users/remove_friends",
       dataToUpdate
     );
-    if (updateSuccess) {
+    if (updateSuccess.success) {
       await displayChatPage();
     } else {
       console.error("Error removing friend");

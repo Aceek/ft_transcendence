@@ -10,6 +10,7 @@ import {
 } from "./profileUtils.js";
 import { getProfile } from "./getProfile.js";
 import { injectFriendsSearsh } from "./searchFriends.js";
+import { extractErrorMessages } from "../tournament/getUtils.js";
 
 export async function displayProfile() {
   loadProfileCss("/public/css/profile.css");
@@ -38,7 +39,6 @@ async function attachSubmitListener(profile) {
         event.preventDefault();
         await handleSubmit(profile);
       }
-      console.log("Form submitted");
     });
 
   document
@@ -48,7 +48,6 @@ async function attachSubmitListener(profile) {
         event.preventDefault();
         await handleSubmit(profile);
       }
-      console.log("Form submitted");
     });
 
   const statsButton = document.getElementById("statsButton");
@@ -89,11 +88,13 @@ async function handleSubmit(profile) {
     dataToUpdate
   );
 
-  if (updateSuccess) {
-    console.log("Mise à jour réussie !");
+  if (updateSuccess.success) {
     updateProfileAndPrintMessages(profile, dataToUpdate, fields);
+    document.getElementById("email").value = profile.email;
   } else {
-    console.error("Erreur lors de la mise à jour.");
+    let errorMessage = await updateSuccess.response.json();
+    errorMessage = extractErrorMessages(errorMessage);
+    printConfirmationMessage(errorMessage, "emailDiv", "red");
     document.getElementById("username").value = profile.username;
     document.getElementById("email").value = profile.email;
   }
@@ -124,7 +125,7 @@ export async function changeAvatar(profile) {
         formData
       );
 
-      if (updateSuccess) {
+      if (updateSuccess.success) {
         console.log("Avatar modification réussie !");
         updateAvatarImage(file);
       } else {

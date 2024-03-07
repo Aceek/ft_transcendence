@@ -49,9 +49,6 @@ export async function requestDataWithToken(url = "", data, method = "GET") {
 
   try {
     const response = await fetch(url, requestOptions);
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
     return response;
   } catch (error) {
     console.error("Erreur lors de la requête:", error.message);

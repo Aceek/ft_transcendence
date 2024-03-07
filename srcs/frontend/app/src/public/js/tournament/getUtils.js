@@ -177,7 +177,7 @@ export async function attachSubmitNewTournamentListener() {
   }
 }
 
-function extractErrorMessages(errors) {
+export function extractErrorMessages(errors) {
   let errorMessages = "";
 
   if (Array.isArray(errors)) {

@@ -47,7 +47,7 @@ export async function createButtonFriend(
         api_url + url,
         dataToUpdate
       );
-      if (updateSuccess) {
+      if (updateSuccess.success) {
         console.log("Ami ajouté / supprimé avec succès");
         if (onButtonClick) onButtonClick();
         friendButton.remove();

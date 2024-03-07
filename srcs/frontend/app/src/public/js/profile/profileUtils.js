@@ -25,14 +25,12 @@ export async function sendUpdateRequest(url, data, method = "PATCH") {
   try {
     const response = await requestDataWithToken(url, data, method);
     if (response.status === 200) {
-      return true;
+      return { success: true, response };
     } else {
-      console.error(response.statusText);
-      return false;
+      return { success: false, response };
     }
   } catch (error) {
-    console.error("Error :", error);
-    return false;
+    return { success: false, error };
   }
 }
 
@@ -170,8 +168,7 @@ export function attashTwofaButtonListener(twofaButton, profile) {
       dataToUpdate
     );
 
-    if (updateSuccess) {
-      console.log("2FA modifié avec succès !");
+    if (updateSuccess.success) {
       if (profile.is_2fa_enabled) {
         profile.is_2fa_enabled = false;
       } else {
@@ -179,7 +176,6 @@ export function attashTwofaButtonListener(twofaButton, profile) {
       }
       injectUserInfo(profile);
     } else {
-      console.error("Erreur lors de la modification de 2FA.");
     }
   });
 
