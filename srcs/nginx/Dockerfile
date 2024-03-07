@@ -50,9 +50,7 @@ RUN tar -xvzf nginx-$NGINX_VERSION.tar.gz
 
 WORKDIR /opt/nginx-$NGINX_VERSION
 
-RUN NGINX_FLAGS=$(echo $NGINX_FLAGS | sed 's/--with-cc-opt='\''-Os -Wformat -Werror=format-security -g'\''//g' | sed 's/--with-ld-opt='\''-Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs'\''//g'); ./configure $NGINX_FLAGS --add-dynamic-module=/opt/ModSecurity-nginx/
-
-RUN ./configure $NGINX_FLAGS --add-dynamic-module=/opt/ModSecurity-nginx --with-compat
+RUN ./configure --add-dynamic-module=/opt/ModSecurity-nginx --with-compat
 
 RUN make modules
 
