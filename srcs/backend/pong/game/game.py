@@ -61,7 +61,7 @@ class GameLogic:
 
     # -------------------------------INIT-----------------------------------
 
-    def init_static_data(self):
+    def get_static_data(self):
         static_data = {
             "ballSize": self.ball_size,
             "paddleWidth": self.paddle_width,
@@ -76,7 +76,6 @@ class GameLogic:
             "tournamentId": self.tournament_id
         }
         return static_data
-
     
     async def init_env(self):
         """Initial env setup."""
@@ -89,10 +88,10 @@ class GameLogic:
             self.match = await self.database_ops.get_match(self.match_id)
             self.tournament = await self.database_ops.get_tournament(self.tournament_id)
 
-    async def init_game(self):
+    async def init_static_data(self):
         """Initial game setup."""
         # Init static data
-        self.static_data = self.init_static_data() 
+        self.static_data = self.get_static_data() 
         await self.redis_ops.set_static_data(self.static_data)
 
         await self.get_static_data_and_send()
@@ -163,7 +162,7 @@ class GameLogic:
 
     async def launch_game(self):
         """Launch game."""
-        await self.update_game_status_and_notify(GameStatus.NOT_STARTED)    
+        await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
         await self.game_sync.countdown()
 
         # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
@@ -201,11 +200,12 @@ class GameLogic:
     async def run(self):
         """Running the task"""
         await self.init_env()
-        await self.init_game()
+        await self.init_static_data()
+        await self.update_game_status_and_notify(GameStatus.UNSTARTED)
 
         if await self.game_sync.wait_for_players_to_start(False):
             # Send the initial data to all new connected users
-            await self.get_static_data_and_send()
+            # await self.get_static_data_and_send()
             await self.init_objects()
             await self.game_loop()
 
@@ -239,7 +239,9 @@ class GameLogic:
 
             # Only try to restart the match for standard games
             if self.type == "standard":
-                await self.database_ops.update_match_history(self.winner, self.players)
+                # Feature currenlty not working for 2+ players
+                if self.player_nb < 3:
+                    await self.database_ops.update_match_history(self.winner, self.players)
                 if await self.game_sync.wait_for_players_to_restart():
                     await self.redis_ops.del_all_restart_requests()
                     await self.reset_players()

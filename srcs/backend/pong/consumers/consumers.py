@@ -19,9 +19,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Accept the incoming connection
         await self.accept()
         
-        # Retrieve and set the user's ID and room names based on the connection's scope
+        # Retrieve game infos based on the connection's scope
         self.user_id = get_user_id(self.scope)
-        # self.user = self.scope["user"]
         self.game_mode = get_game_mode(self.scope)
         self.player_nb = get_number_of_players(self.scope)
         self.game_type = get_game_type(self.scope)
@@ -47,12 +46,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Check if the client is the first to connect to the room; 
         # if so, client acquire the game logic flag and start game logic in a new task
-        if await self.redis_ops.get_game_status() is None:
+        current_status = await self.redis_ops.get_game_status()
+        if current_status is None:
             if await self.redis_ops.add_game_logic_flag():
                 asyncio.create_task(GameLogic(self).run())
         else:
             # Retrieve and send data from the existing game
-            await self.send_game_data()
+            await self.send_game_data(current_status)
 
     # -------------------------------DISCONNECT-----------------------------------
                 
@@ -129,14 +129,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
 
-    async def send_game_data(self):
-            # Retrieve static and dynamic data from the existing game
+    async def send_game_data(self, current_status):
+        if current_status is not None:
             static_data = await self.redis_ops.get_static_data()
-            dynamic_data = await self.redis_ops.get_dynamic_data()
-
-            # Prepare the data as if it were coming from a channel event
             static_event = {'data': static_data}
-            dynamic_event = {'data': dynamic_data}
-
             await self.game_static_data(static_event)
+
+        if current_status != GameStatus.UNSTARTED:
+            dynamic_data = await self.redis_ops.get_dynamic_data()
+            dynamic_event = {'data': dynamic_data}
             await self.game_dynamic_data(dynamic_event)
