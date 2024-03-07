@@ -1,4 +1,3 @@
-// ball.js
 export class Ball {
     constructor() {
       this.size = 0;
@@ -38,7 +37,5 @@ export class Ball {
   
     //   console.log(`Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
   }
-  
-    
-  }
+}
   

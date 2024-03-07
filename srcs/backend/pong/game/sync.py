@@ -35,11 +35,9 @@ class GameSync:
 
     async def wait_for_players_to_start(self, current_status):
         """Check if players are ready to start the game."""
-        # Special handling for tournament games
         if self.game_type == "tournament" and current_status == GameStatus.SUSPENDED:
             return await self.wait_for_tournament_to_resume()
         
-        # Default handling for non-tournament games
         return await self.wait_for_players(
             self.check_for_players_ready,
             "Checking if players are ready"
@@ -70,11 +68,10 @@ class GameSync:
             remaining_time = int(duration - (time.time() - start_time))
             await self.channel_com.send_countdown(remaining_time)
             
-            await asyncio.sleep(1)  # Wait a bit before the next check
+            await asyncio.sleep(1)
 
-        # If we reach this point, not all players are ready after the countdown
         print("Not all players were ready for the tournament game within the 30 seconds.")
-        await self.channel_com.send_countdown(0)  # Indicate the countdown has finished
+        await self.channel_com.send_countdown(0)
         return False
 
     async def check_for_players_ready(self):

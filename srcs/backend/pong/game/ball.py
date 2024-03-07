@@ -92,7 +92,6 @@ class Ball:
 
         return False, None
 
-
 #------------------------------HANDLER-------------------------------------
 
     def handle_wall_bounce(self):
@@ -128,10 +127,10 @@ class Ball:
             self.vx = speed * math.cos(angle) *-1
             self.vy = speed * math.sin(angle)
         elif position == PlayerPosition.BOTTOM:
-            self.vx = speed * math.sin(angle)       # Reflecting horizontally based on the angle
-            self.vy = speed * math.cos(angle) * -1  # Negative to move upwards
+            self.vx = speed * math.sin(angle)
+            self.vy = speed * math.cos(angle) * -1
         elif position == PlayerPosition.UP:
-            self.vx = speed * math.sin(angle)  # Reflecting horizontally based on the angle
+            self.vx = speed * math.sin(angle)
             self.vy = speed * math.cos(angle)
 
         # print(f"Bounce detected! Ball Position: ({self.x}, {self.y}), Relative Position: {relative_position}, Angle: {angle} radians")
@@ -139,9 +138,8 @@ class Ball:
 #------------------------------REDIS-------------------------------------
 
     async def set_ball_to_redis(self):
-        # Prepare a dictionary with the ball attributes prefixed by 'b_'
         ball_attributes = {
-            'b_x': round(self.x, 2),  # Keep 4 decimal places
+            'b_x': round(self.x, 2),
             'b_y': round(self.y, 2),
             'b_vx': round(self.vx, 2),
             'b_vy': round(self.vy, 2)

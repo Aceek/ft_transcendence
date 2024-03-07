@@ -1,5 +1,4 @@
 from channels.db import database_sync_to_async
-from channels.db import database_sync_to_async
 
 class DatabaseOps:
     @database_sync_to_async

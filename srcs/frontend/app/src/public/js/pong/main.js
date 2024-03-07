@@ -40,7 +40,7 @@ function waitForInitialization() {
             if (game.isInitialized) {
                 resolve();
             } else {
-                setTimeout(checkInitialization, 100); // Check every 100ms
+                setTimeout(checkInitialization, 100);
             }
         };
         checkInitialization();

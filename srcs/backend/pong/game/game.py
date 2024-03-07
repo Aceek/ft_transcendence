@@ -25,20 +25,20 @@ class GameLogic:
             self.match_id = "none"
             self.tournament_id = "none"
 
-        #debug print
-        print(f"Room Name: {self.room_name}")
-        print(f"Room Group Name: {self.room_group_name}")
-        print(f"Game Mode: {self.mode}")
-        print(f"Number of Players: {self.player_nb}")
-        print(f"Game Type: {self.type}")
-        if hasattr(consumers, 'match_id') and self.match_id:
-            print(f"Match ID: {self.match_id}")
-        else:
-            print("Tournament ID: Not applicable")
-        if hasattr(consumers, 'tournament_id') and self.tournament_id:
-            print(f"Tournament ID: {self.tournament_id}")
-        else:
-            print("Tournament ID: Not applicable")
+        # # Debug print
+        # print(f"Room Name: {self.room_name}")
+        # print(f"Room Group Name: {self.room_group_name}")
+        # print(f"Game Mode: {self.mode}")
+        # print(f"Number of Players: {self.player_nb}")
+        # print(f"Game Type: {self.type}")
+        # if hasattr(consumers, 'match_id') and self.match_id:
+        #     print(f"Match ID: {self.match_id}")
+        # else:
+        #     print("Tournament ID: Not applicable")
+        # if hasattr(consumers, 'tournament_id') and self.tournament_id:
+        #     print(f"Tournament ID: {self.tournament_id}")
+        # else:
+        #     print("Tournament ID: Not applicable")
         
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
@@ -196,7 +196,6 @@ class GameLogic:
             await self.launch_game()
             return True
 
-        print("comp;eted")
         await self.update_game_status_and_notify(GameStatus.COMPLETED)
         return False
 
@@ -209,8 +208,6 @@ class GameLogic:
         await self.update_game_status_and_notify(GameStatus.UNSTARTED)
 
         if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
-            # Send the initial data to all new connected users
-            # await self.get_static_data_and_send()
             await self.init_objects()
             await self.game_loop()
 

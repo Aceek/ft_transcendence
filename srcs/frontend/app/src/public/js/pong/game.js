@@ -44,7 +44,7 @@ export class Game {
         canvas.width = this.canvasWidth;
         canvas.height = this.canvasHeight;
         
-        const sides = ['left', 'right', 'bottom', 'up']; // Adjust as needed
+        const sides = ['left', 'right', 'bottom', 'up'];
         for (let i = 0; i < this.playerNb; i++) {
             const playerId = i + 1;
             const playerSide = sides[i % sides.length];

@@ -49,10 +49,8 @@ def calculate_launch_angle(player_nb, angle_range):
     elif player_nb == 4:
         possible_directions = ['left', 'right', 'bottom', 'up']
 
-    # Randomly select a player direction to launch the ball towards
     selected_direction = random.choice(possible_directions)
 
-    # Calculate the central angle for the selected direction
     central_angle = player_directions[selected_direction]
 
     angle_deg = random.randint(central_angle % 360 - angle_range//2, \

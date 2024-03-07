@@ -89,12 +89,12 @@ class RedisOps:
     
     async def get_player_position(self, user_id):
         for position in PlayerPosition:
-            key_map = get_player_key_map(position)  # Assuming this function maps positions to key parts correctly
+            key_map = get_player_key_map(position)
             key = f"game:{self.room_name}:paddle:{key_map['position']}"
             
             # Check if the user ID is a member of the set associated with the current position
             if await self.connection.sismember(key, user_id):
-                return position  # Return the position as a string if the player is found
+                return position 
         
         return None  
 
@@ -139,13 +139,3 @@ class RedisOps:
         key = f"game:{self.room_name}:restart_requests"
         await self.connection.delete(key)
         print(f"Cleared all restart requests for room: {self.room_name}")
-
-
-
-
-
-    # Add more Redis operations as needed...
-
-    # async def close(self):
-    #     self.connection.close()
-    #     await self.connection.wait_closed()

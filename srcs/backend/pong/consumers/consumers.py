@@ -95,7 +95,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     # ----------------------------SEND-------------------------------------
 
     async def game_static_data(self, event):
-        # Logic to handle static data message
         data = event['data']
         await self.send(text_data=json.dumps({
             'type': 'game.static_data',
@@ -103,7 +102,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
         
     async def game_dynamic_data(self, event):
-        # Extract data and timestamp from the event
         data = event['data']
         timestamp = event.get('timestamp', None)  # Use .get to avoid KeyError if 'timestamp' is missing
         await self.send(text_data=json.dumps({

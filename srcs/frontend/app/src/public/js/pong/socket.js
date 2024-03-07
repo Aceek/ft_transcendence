@@ -1,5 +1,3 @@
-// socket.js
-
 export function initializeSocket() {
     return new Promise((resolve, reject) => {
         const hostname = window.location.hostname;

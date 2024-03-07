@@ -25,7 +25,6 @@ export class KeyEventController {
             return;
         }
     
-        // Handle game restart on 'Enter'
         if (key === "Enter" && this.game.status === 3 && this.game.type === "standard") {
             this.socket.send(JSON.stringify({ type: "restart_game" }));
             console.log("Restart game message sent.");
@@ -33,7 +32,6 @@ export class KeyEventController {
             return;
         }
     
-        // Only proceed to update paddle position for active game status
         if (this.game.status === 1) {
             this.updatePaddlePosition(key);
         }
@@ -41,7 +39,6 @@ export class KeyEventController {
 
     updatePaddlePosition(key) {
         let change = this.game.controlledPlayer.paddleSpeed;
-        // Determine the paddle's side
         const side = this.game.controlledPlayer.side;
     
         // Handle vertical movement for left/right sides
@@ -81,14 +78,13 @@ export class KeyEventController {
             currentPos = player.paddleX;
         }
     
-        // Check if there's a significant change in position.
         if (this.lastSentPaddlePos !== currentPos) {
             console.log(`Sending paddle position update for ${player.side}: ${currentPos}`);
             this.socket.send(JSON.stringify({
                 type: "paddle_position_update",
                 paddle_pos: currentPos,
             }));
-            this.lastSentPaddlePos = currentPos; // Update the last sent position.
+            this.lastSentPaddlePos = currentPos;
         } else {
             console.log("No significant change in paddle position. Not sending update.");
         }

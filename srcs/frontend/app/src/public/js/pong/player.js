@@ -1,4 +1,3 @@
-// player.js
 export class Player {
     constructor(id, side, isControlled) {
         this.id = id;
@@ -54,5 +53,4 @@ export class Player {
                 break;
         }
     }
-    
 }

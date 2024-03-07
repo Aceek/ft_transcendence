@@ -19,11 +19,9 @@ export class GameRenderer {
         
         if (this.game.countdown !== null && this.game.countdown > 0) {
             if (this.game.type === 'tournament' && this.game.status === 2) {
-                // Specific message for opponent forfeiting in a tournament
                 this.drawTwoPartMessage(this.game.countdown.toString(),
                 "Opponent forfeiting in...");
             } else {
-                // General countdown message
                 this.drawTwoPartMessage(this.game.countdown.toString(),
                 "Get ready...");
             }
@@ -129,7 +127,6 @@ export class GameRenderer {
             });
         }
     }
-    
 
     drawTwoPartMessage(mainText, subText) {
         this.ctx.fillStyle = "#fff";
