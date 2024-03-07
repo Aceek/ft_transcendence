@@ -59,6 +59,8 @@ class GameLogic:
         self.ball = None
         self.winner = None
 
+        self.target_loop_duration = 1 / TICK_RATE
+
     # -------------------------------INIT-----------------------------------
 
     def get_static_data(self):
@@ -167,10 +169,12 @@ class GameLogic:
 
         # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
         if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
-            if await self.game_sync.wait_for_players_to_start(True):
-                await self.launch_game()
-        
-        await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
+            # Notify all the clients the game is suspendended
+            await self.get_dynamic_data_and_send()
+            if await self.is_game_resuming():
+                await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
+        else:
+            await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
         self.last_update_time = time.time()
 
     # -------------------------CHECK GAME STATE-----------------------------------
@@ -188,10 +192,11 @@ class GameLogic:
 
     async def is_game_resuming(self):
         print("Checking if the game is resuming...")
-        if await self.game_sync.wait_for_players_to_start(True):
+        if await self.game_sync.wait_for_players_to_start(GameStatus.SUSPENDED):
             await self.launch_game()
             return True
 
+        print("comp;eted")
         await self.update_game_status_and_notify(GameStatus.COMPLETED)
         return False
 
@@ -203,7 +208,7 @@ class GameLogic:
         await self.init_static_data()
         await self.update_game_status_and_notify(GameStatus.UNSTARTED)
 
-        if await self.game_sync.wait_for_players_to_start(False):
+        if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
             # Send the initial data to all new connected users
             # await self.get_static_data_and_send()
             await self.init_objects()
@@ -212,7 +217,6 @@ class GameLogic:
     async def game_loop(self):
         """The main game loop."""
         await self.launch_game()
-        target_loop_duration = 1 / TICK_RATE
 
         try:
             print("Game loop started.")
@@ -229,7 +233,7 @@ class GameLogic:
 
                 # Calculate the remaining tick time to send the data at fixed interval
                 loop_execution_time = time.time() - loop_start_time
-                sleep_duration = max(0, target_loop_duration - loop_execution_time)
+                sleep_duration = max(0, self.target_loop_duration - loop_execution_time)
                 
                 await asyncio.sleep(sleep_duration)
 

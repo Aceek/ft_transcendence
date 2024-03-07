@@ -1,6 +1,8 @@
 import asyncio
 import time
 
+from .enum import GameStatus
+
 class GameSync:
     def __init__(self, game):
         self.redis_ops = game.redis_ops
@@ -31,11 +33,11 @@ class GameSync:
                 return False
             await asyncio.sleep(1)
 
-    async def wait_for_players_to_start(self, game_suspended):
+    async def wait_for_players_to_start(self, current_status):
         """Check if players are ready to start the game."""
         # Special handling for tournament games
-        if self.game_type == "tournament" and game_suspended:
-            return await self.wait_for_tournament_start()
+        if self.game_type == "tournament" and current_status == GameStatus.SUSPENDED:
+            return await self.wait_for_tournament_to_resume()
         
         # Default handling for non-tournament games
         return await self.wait_for_players(
@@ -53,7 +55,7 @@ class GameSync:
             return True
         return False
     
-    async def wait_for_tournament_start(self):
+    async def wait_for_tournament_to_resume(self):
         """Wait for players to start with a countdown for tournament games."""
         start_time = time.time()
         duration = 5
