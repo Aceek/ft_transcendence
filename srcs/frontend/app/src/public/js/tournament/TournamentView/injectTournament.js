@@ -186,7 +186,7 @@ export async function createDeleteButtonIfOwner(tournament) {
     deleteButton.style = "margin-left: 10px";
     deleteButton.addEventListener("click", async () => {
       if (await deleteTournament(tournament.uid, "functional_button_div")) {
-        await router("/play");
+        await router("/tournamentAll");
       }
     });
     const containerToAppend = document.getElementById("functional_button_div");
