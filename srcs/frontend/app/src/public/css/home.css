@@ -6,9 +6,7 @@ body{
 
 .custom-btn {
   min-width: 250px;
-  min-height: 150px;
   font-size: xx-large;
-
 }
 
 .custom-btn:hover {

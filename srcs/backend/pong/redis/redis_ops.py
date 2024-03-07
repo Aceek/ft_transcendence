@@ -1,6 +1,7 @@
 import aioredis
 
-from ..game.enum import GameStatus
+from ..game.enum import GameStatus, PlayerPosition
+from ..game.utils import get_player_key_map
 
 class RedisOps:
     def __init__(self, room_name):
@@ -71,13 +72,31 @@ class RedisOps:
             return GameStatus(int(current_status))
         return None
 
-    async def get_connected_users(self):
+    async def get_connected_users_nb(self):
         key = f"game:{self.room_name}:connected_users"
         return await self.connection.scard(key)
     
     async def get_restart_requests(self):
         key = f"game:{self.room_name}:restart_requests"
         return await self.connection.scard(key)
+    
+    async def get_connected_users_ids(self):
+        key = f"game:{self.room_name}:connected_users"
+        users_ids = await self.connection.smembers(key)
+        users_ids_list = list(users_ids)
+        print(f"Connected users in room {self.room_name}: {users_ids_list}")
+        return users_ids_list
+    
+    async def get_player_position(self, user_id):
+        for position in PlayerPosition:
+            key_map = get_player_key_map(position)
+            key = f"game:{self.room_name}:paddle:{key_map['position']}"
+            
+            # Check if the user ID is a member of the set associated with the current position
+            if await self.connection.sismember(key, user_id):
+                return position 
+        
+        return None  
 
 # -------------------------------ADD-----------------------------------
 
@@ -120,13 +139,3 @@ class RedisOps:
         key = f"game:{self.room_name}:restart_requests"
         await self.connection.delete(key)
         print(f"Cleared all restart requests for room: {self.room_name}")
-
-
-
-
-
-    # Add more Redis operations as needed...
-
-    # async def close(self):
-    #     self.connection.close()
-    #     await self.connection.wait_closed()

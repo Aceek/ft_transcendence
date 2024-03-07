@@ -1,6 +1,12 @@
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.checks import register, Error, Warning
+from django.db import connections
+from django.db.utils import OperationalError
+from django.contrib.auth import get_user_model
+import time
+import threading
+from django.db import transaction
 
 
 class CustomuserConfig(AppConfig):
@@ -9,7 +15,27 @@ class CustomuserConfig(AppConfig):
 
     def ready(self):
         import CustomUser.signals
+        thread = threading.Thread(target=update_users_status_offline)
+        thread.start()
 
+
+
+def update_users_status_offline():
+    time.sleep(5)
+    db_conn = connections['default']
+    max_attempts = 10
+    attempts = 0
+    while attempts < max_attempts:
+        try:
+            db_conn.connect()
+        except OperationalError:
+            time.sleep(1)
+            attempts += 1
+        else:
+            with transaction.atomic():
+                User = get_user_model()
+                all_users = User.objects.all().update(status='offline')
+            break
 
 @register()
 def check_settings(app_configs, **kwargs):

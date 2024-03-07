@@ -1,32 +1,45 @@
-// socket.js
-
-// Function to initialize the WebSocket connection
 export function initializeSocket() {
-    const hostname = window.location.hostname;
-    const port = window.location.port;
-    const roomID = window.location.pathname.split('/').pop();
-    let socketUrl;
+    return new Promise((resolve, reject) => {
+        const hostname = window.location.hostname;
+        const port = window.location.port;
 
-    if (port) {
-        socketUrl = `wss://${hostname}:${port}/ws/pong/${roomID}/`;
-    } else {
-        socketUrl = `wss://${hostname}/ws/pong/${roomID}/`;
-    }
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
 
-	console.log("WebSocket curl", socketUrl);
-    const socket = new WebSocket(socketUrl);
+        const mode = pathSegments[1];
+        const playerNb = pathSegments[2];
+        const gameType = pathSegments[3];
 
-    socket.onopen = function(event) {
-        console.log("WebSocket connection opened:", event);
-    };
+        let tournamentID, matchId, roomID, socketUrl;
 
-    socket.onclose = function(event) {
-        console.log("WebSocket connection closed:", event);
-    };
+        if (gameType === 'tournament') {
+            tournamentID = pathSegments[4];
+            matchId = pathSegments[5];
+            roomID = pathSegments[6];
+            socketUrl = `wss://${hostname}${port ? ':' + port : ''}/ws/pong/` +
+                        `${mode}/${playerNb}/${gameType}/` +
+                        `${tournamentID}/${matchId}/${roomID}/`;
+        } else {
+            roomID = pathSegments[4];
+            socketUrl = `wss://${hostname}${port ? ':' + port : ''}/ws/pong/` +
+                        `${mode}/${playerNb}/${gameType}/${roomID}/`;
+        }
 
-    // Return the socket to allow for further customization
-    return socket;
+        console.log(socketUrl);
+
+        const socket = new WebSocket(socketUrl);
+
+        socket.addEventListener('open', () => {
+            console.log("WebSocket connection opened");
+            resolve(socket); // Resolve the promise with the socket when it's open
+        });
+
+        socket.addEventListener('error', (error) => {
+            console.error("WebSocket error observed:", error);
+            reject(error); // Reject the promise on error
+        });
+    });
 }
+
 
 // Function to set up WebSocket message handling
 export function messageHandler(socket, game) {

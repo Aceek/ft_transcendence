@@ -1,4 +1,8 @@
-import { getLoginPage, checkOAuthCode, checkEmailVerification } from "./login.js";
+import {
+  getLoginPage,
+  checkOAuthCode,
+  checkEmailVerification,
+} from "./login/login.js";
 import { getHomePage } from "./home/home.js";
 import { getRegisterPage } from "./register.js";
 import { isAPIConnected } from "./networkUtils.js";
@@ -10,13 +14,17 @@ import { getPongGamePage } from "./pong/displayPong.js";
 import { deleteNavbar } from "./pageUtils.js";
 import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
-import { get2FAPage } from "./2fa.js";
+import { get2FAPage } from "./2fa/2fa.js";
 import { clearTournamentConversationsMessages } from "./chat/tournamentChat.js";
+import { handleUserActivity } from "./user_activity_websocket/user_activity_modal.js";
+import { closeUserActivitySocket } from "./user_activity_websocket/user_activity_utils.js";
+import { display404 } from "./display404.js";
 import {
   chatSocket,
   displayChatPage,
   resetCurrentFriendId,
 } from "./chat/chat.js";
+import { pongSocket } from "./pong/main.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url =
@@ -38,31 +46,28 @@ export function closeChatWebSocket(path) {
   }
 }
 
+export function closePongWebSocket() {
+  if (
+    pongSocket &&
+    pongSocket.readyState === WebSocket.OPEN
+  ) {
+    pongSocket.close();
+  }
+}
+
 export function clearLoadedCss() {
   const head = document.head;
   const links = Array.from(head.querySelectorAll("link"));
   links.forEach((link) => {
-    if (link.href.includes("profile.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("tournament.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("tournamentsAll.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("chat.css")) {
-      head.removeChild(link);
-    }
-    if (link.href.includes("2fa.css")) {
+    if (link.id === "CssFromPageSPA" && !link.href.includes("navbar.css")) {
       head.removeChild(link);
     }
   });
 }
 
-
 function resetDataForReloadingPage(path) {
   closeChatWebSocket(path);
+  closePongWebSocket();
   clearLoadedCss();
   clearTournamentConversationsMessages();
 }
@@ -81,22 +86,32 @@ export async function router(path, updateHistory = true) {
   resetDataForReloadingPage(path);
 
   if (await checkEmailVerification()) {
-    sessionStorage.setItem('validate', 'true');
+    sessionStorage.setItem("validate", "true");
   }
 
   if (await isAPIConnected()) {
     await injectNavBar();
+    await handleUserActivity();
     handleAuthenticatedRoutes(path);
   } else {
+    closeUserActivitySocket();
     handleUnauthenticatedRoutes(path);
   }
 }
 
 async function matchRegex(path) {
+
+  const uuidPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
-  const pongMatch = path.match(/^\/pong\/([a-zA-Z0-9_-]+)$/);
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
+  
+  // pong routes
+  const onlineStandardMatch = path.match(new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`));
+  const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/(${uuidPattern})/(${uuidPattern})/?$`));
+  const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
+
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
@@ -108,26 +123,25 @@ async function matchRegex(path) {
     console.log("Loading profile page with UID:", UID);
     await displayFriendsProfile(UID);
     return true;
-  } else if (pongMatch) {
-    const pongID = pongMatch[1];
-    console.log("Loading room page with roomID:", pongID);
-    await getPongGamePage(pongID);
-    return true;
   } else if (tournamentMatch) {
     const tournamentID = tournamentMatch[1];
     await displayTournamentPage(tournamentID);
+    return true;
+  } else if (onlineStandardMatch || onlineTournamentMatch || offlineStandardMatch) {
+    console.log("Loading pong game:");
+    await getPongGamePage();
     return true;
   }
   return false;
 }
 
 async function handleAuthenticatedRoutes(path) {
-  sessionStorage.removeItem('validate');
+  sessionStorage.removeItem("validate");
   if (await matchRegex(path)) {
   } else {
     switch (path) {
       case "/home":
-        getHomePage();
+        await getHomePage();
         break;
       case "/profile/stats":
         console.log("Loading personal profile stats page");
@@ -146,9 +160,8 @@ async function handleAuthenticatedRoutes(path) {
         console.log("Loading chat page");
         break;
       default:
-        path = "/home";
         console.log("Path not found, loading default page");
-        getHomePage();
+        await display404();
     }
   }
   updateActiveLink(path);
@@ -156,7 +169,7 @@ async function handleAuthenticatedRoutes(path) {
 
 async function handleUnauthenticatedRoutes(path) {
   deleteNavbar();
-  const oauth = await checkOAuthCode()
+  const oauth = await checkOAuthCode();
 
   if (oauth.success) {
     if (oauth.requires2FA) {

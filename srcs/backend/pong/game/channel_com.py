@@ -15,9 +15,12 @@ class ChannelCom:
         await self.channel_layer.group_send(self.room_group_name, message)
 
     async def send_dynamic_data(self, dynamic_data):
+        current_time_ms = int(datetime.now().timestamp() * 1000)
+
         message = {
             "type": "game.dynamic_data",
             "data": dynamic_data,
+            "timestamp": current_time_ms,
         }
         await self.channel_layer.group_send(self.room_group_name, message)
 
