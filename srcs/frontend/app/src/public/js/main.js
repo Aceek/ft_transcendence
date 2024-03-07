@@ -103,14 +103,17 @@ export async function router(path, updateHistory = true) {
 }
 
 async function matchRegex(path) {
+
+  const uuidPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
+  
   // pong routes
-  const onlineStandardMatch = path.match(/^\/pong\/online\/([2-4])\/standard\/([a-zA-Z0-9_-]+)$/);
-  const onlineTournamentMatch = path.match(/^\/pong\/online\/2\/tournament\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
-  const offlineStandardMatch = path.match(/^\/pong\/offline\/2\/standard\/([a-zA-Z0-9_-]+)$/);
-
+  const onlineStandardMatch = path.match(new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`));
+  const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/(${uuidPattern})/(${uuidPattern})/?$`));
+  const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
 
 
   if (profileStatsMatch) {
