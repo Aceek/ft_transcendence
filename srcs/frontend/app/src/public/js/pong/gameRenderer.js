@@ -50,9 +50,9 @@ export class GameRenderer {
 
     drawPaddle(player) {
         if (player.isControlled) {
-            this.ctx.fillStyle = "#FFF";
+            this.ctx.fillStyle = "#fff";
         } else {
-            this.ctx.fillStyle = "#A9A9A9";
+            this.ctx.fillStyle = "#a9a9a9";
         }
         this.ctx.fillRect(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight);
     }
@@ -74,33 +74,33 @@ export class GameRenderer {
 
     drawScores() {
         this.ctx.fillStyle = "#fff";
-        this.ctx.font = '50px "Geo", sans-serif';
-    
+        
         if (this.game.playerNb > 2) {
             // Scores for more than 2 players
+            this.ctx.font = '60px "Geo", sans-serif';
             this.game.players.forEach((player) => {
                 let x, y;
-    
+                
                 switch (player.side) {
                     case 'left':
                         x = this.game.canvasWidth * 0.40; // Centered closer to the middle on the left side
                         y = this.game.canvasHeight / 2; // Centered vertically
                         break;
-                    case 'right':
-                        x = this.game.canvasWidth * 0.60; // Centered closer to the middle on the right side
-                        y = this.game.canvasHeight / 2; // Centered vertically
-                        break;
-                    case 'up':
+                        case 'right':
+                            x = this.game.canvasWidth * 0.60; // Centered closer to the middle on the right side
+                            y = this.game.canvasHeight / 2; // Centered vertically
+                            break;
+                            case 'up':
                         x = this.game.canvasWidth / 2; // Centered horizontally
                         y = this.game.canvasHeight * 0.40; // Centered closer to the middle on the top side
                         break;
-                    case 'bottom':
+                        case 'bottom':
                         x = this.game.canvasWidth / 2; // Centered horizontally
                         y = this.game.canvasHeight * 0.60; // Centered closer to the middle on the bottom side
                         break;
-                }
-                
-                // Ensure text is centered around the calculated x and y coordinates
+                    }
+                    
+                    // Ensure text is centered around the calculated x and y coordinates
                 this.ctx.textAlign = 'center'; // Align text to be centered horizontally
                 this.ctx.textBaseline = 'middle'; // Align text to be centered vertically
                 
@@ -108,11 +108,12 @@ export class GameRenderer {
             });
         } else {
             // Original scoring logic for 2 players
+            this.ctx.font = '100px "Geo", sans-serif';
             this.game.players.forEach((player) => {
                 let x;
                 const distanceFromCenter = this.game.canvasHeight * 0.20;
-                const distanceFromTop = this.game.canvasHeight * 0.25;
-    
+                const distanceFromTop = this.game.canvasHeight * 0.20;
+                
                 if (player.side === 'left') {
                     // Align the left player's score to the left of the center line
                     x = (this.game.canvasWidth / 2) - distanceFromCenter;

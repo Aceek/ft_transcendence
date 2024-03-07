@@ -1,10 +1,10 @@
 body {
     margin: 0;
-	font-family: 'Geo', sans-serif;
 }
 
 canvas {
     display: none;
     margin: auto;
     background-color: #000;
+    font-family: 'Geo', sans-serif;
 }
