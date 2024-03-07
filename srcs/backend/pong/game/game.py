@@ -273,7 +273,7 @@ class GameLogic:
         # Check and handle paddle collision
         collision, player = self.ball.check_paddle_collision(self.players)
         if collision:
-            self.ball.handle_paddle_bounce_calculation(player.position, self.players)
+            self.ball.handle_paddle_bounce_calculation(player)
         
         # Check and handle goal scored
         scored, player = self.ball.check_score()
