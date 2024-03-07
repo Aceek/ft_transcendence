@@ -32,17 +32,18 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         self.channel_com = ChannelCom(self.room_group_name)
         
-        # Initialize Redis operations helper for the room and add the user as connected
+        # Initialize Redis operations helper for the room
         self.redis_ops = await RedisOps.create(self.room_name)
-        await self.redis_ops.add_connected_users(self.user_id)
         
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
         self.paddle = Paddle(self.user_id, self.redis_ops, self.player_nb)
         await self.paddle.assignment()
         await self.paddle.set_boundaries()
         await self.paddle.set_axis_keys()
-
         await self.send_paddle_assignement()
+
+        # Once paddle has been assigned, notify the server that the player is assigned and ready to play
+        await self.redis_ops.add_connected_users(self.user_id)
 
         # Check if the client is the first to connect to the room; 
         # if so, client acquire the game logic flag and start game logic in a new task

@@ -77,6 +77,7 @@ class Paddle:
         lock_key = f"lock:game:{self.redis_ops.room_name}:assignment"
         lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
+        print(f"Lock acquired {lock_key} for user {self.user_id}.")
 
         try:
             for position in PlayerPosition:
