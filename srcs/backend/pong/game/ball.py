@@ -22,7 +22,7 @@ class Ball:
         self.vx = speed * math.cos(angle_rad)
         self.vy = speed * math.sin(angle_rad)
 
-        self.lastPlayertouched = None
+        self.lastPlayerTouched = None
 
     async def set_data_to_redis(self):
         await self.set_ball_to_redis()
@@ -66,7 +66,7 @@ class Ball:
 
         for player in players:
             if detect_collision_and_handle_edge_bounce(player):
-                self.lastPlayertouched = player
+                self.lastPlayerTouched = player
                 return True, player
                     
         return False, None
@@ -88,7 +88,7 @@ class Ball:
             self.y < 0 - self.size / 2 or \
             self.y < 0 - self.size / 2 or \
             self.y > self.game.screen_height + self.size / 2:
-                return True, self.lastPlayerTouched  # Assuming this is the Player object
+                return True, self.lastPlayerTouched
 
         return False, None
 
