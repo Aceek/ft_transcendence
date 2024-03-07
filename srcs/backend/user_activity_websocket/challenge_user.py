@@ -67,7 +67,7 @@ class ChallengeUserMixin:
 
     def create_room_url(self):
         room_id = str(uuid.uuid4())
-        return f"/pong/{room_id}"
+        return f"/pong/online/2/standard/{room_id}"
 
     async def send_challenge_response(self, challenger_id, response):
         challenger_channel = f"user_communication_{challenger_id}"

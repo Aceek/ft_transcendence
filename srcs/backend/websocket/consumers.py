@@ -62,7 +62,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
             player_ids = [pid.decode("utf-8") for pid in player_ids if pid]
             if len(player_ids) == required_players:
                 room_id = str(uuid.uuid4())
-                room_url = f"/pong/{room_id}"
+                room_url = self.get_room_url(room_id, required_players)
                 await self.notify_players_about_match(player_ids, room_url)
                 for pid in player_ids:
                     await self.redis.srem("global_matchmaking_queue", pid)
@@ -105,3 +105,6 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
     async def send_error(self, message):
         await self.send(text_data=json.dumps({"error": True, "message": message}))
+
+    def get_room_url(self, room_id, required_players):
+        return f"/pong/online/{required_players}/standard/{room_id}"
