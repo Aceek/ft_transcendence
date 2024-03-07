@@ -16,7 +16,6 @@ class MatchesSerializer(serializers.ModelSerializer):
             and instance.is_finished == False
             and (instance.user1 == request.user or instance.user2 == request.user)
         ):
-            representation["room_url"] = f"/room/tournament/{instance.uid}/"
             representation["ready_to_play"] = True
         return representation
 

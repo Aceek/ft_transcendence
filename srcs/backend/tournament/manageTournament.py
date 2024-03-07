@@ -26,6 +26,7 @@ class ManageTournament:
                 is_finished=True,
                 round=self.tournament.round,
             )
+            byeMatch.room_url = ""
             self.set_end_match(byeMatch, byeUser, False)
             byeMatch.save()
         # create matches
@@ -39,6 +40,7 @@ class ManageTournament:
                 is_active=True,
                 round=self.tournament.round,
             )
+            match.room_url = f"/pong/online/2/tournament/{str(match.uid)}"
             match.save()
             self.send_messages_join_match_users(match)
             self.notify_match_ready(match)
