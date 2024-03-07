@@ -132,7 +132,6 @@ class Paddle:
         # Check if the paddle is in potential range of others
         relevant_position = None
         if new_pos <= self.collision_boundary_min:
-            print(f"New position {new_pos} is at or below the minimum collision boundary.")
             relevant_position, relevant_boundary = await self.get_collision_details("min")
         elif new_pos + self.size >= self.collision_boundary_max:
             print(f"New position {new_pos} + size {self.size} is at or above the maximum collision boundary.")
@@ -140,30 +139,21 @@ class Paddle:
 
         # If a potentially colliding position is found
         if relevant_position is not None:
-            print(f"Found relevant position at {relevant_position}, checking for actual collision.")
             other_key_map = get_player_key_map(relevant_position)
             other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
             
-            # Debug print for checking the key and retrieved value
-            print(f"Retrieved other paddle position string: '{other_paddle_pos_str}' for position: {relevant_position}")
-
             # Other player does not exist in the game, thus no need to check
             if other_paddle_pos_str is None:
-                print("Other paddle does not exist, no collision.")
                 return True
             else:
                 other_paddle_pos = int(other_paddle_pos_str)
-                print(f"Other paddle position converted to integer: {other_paddle_pos}")
 
             # Checking collision based on boundaries
             if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min:
-                print(f"Overlap detected with {relevant_position} paddle at min boundary.")
                 return False
             elif relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
-                print(f"Overlap detected with {relevant_position} paddle at max boundary.")
                 return False
 
-        print("No relevant collision detected, movement is safe.")
         return True
 
 
