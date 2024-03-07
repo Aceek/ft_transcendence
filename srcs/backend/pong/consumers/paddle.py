@@ -74,7 +74,7 @@ class Paddle:
         print(f"Starting paddle assignment for user: {self.user_id} in room: {self.redis_ops.room_name}")
         
         # Attempt to acquire a lock for the paddle assignment process
-        lock_key = f"lock:game:{self.redis_ops.room_name}:assignment"
+        lock_key = f"game:{self.redis_ops.room_name}:lock:assignment"
         lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
         print(f"Lock acquired {lock_key} for user {self.user_id}.")
