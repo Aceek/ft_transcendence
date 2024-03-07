@@ -23,6 +23,20 @@ export async function injectNavBar() {
     console.error("Error in injectNavBar:", error);
   }
 }
+
+export function collapseNavbarIfExpanded() {
+  const navbarCollapse = document.getElementById("navbarNavDropdown");
+  const navbarToggler = document.querySelector(".navbar-toggler");
+  const isExpanded = navbarToggler.getAttribute("aria-expanded") === "true";
+
+  if (isExpanded) {
+    const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+      toggle: false,
+    });
+    bsCollapse.hide();
+  }
+}
+
 async function addEventListenerToNavLinks() {
   const navLinks = document.querySelectorAll(".active-link");
   navLinks.forEach((link) => {
@@ -31,6 +45,7 @@ async function addEventListenerToNavLinks() {
       link.addEventListener("click", (event) => {
         event.preventDefault();
         const path = link.getAttribute("href");
+        collapseNavbarIfExpanded();
         router(path);
       });
     }

@@ -108,6 +108,7 @@ export function loadProfileCss(url) {
     link.type = "text/css";
     link.rel = "stylesheet";
     link.href = url;
+    link.id = "CssFromPageSPA";
 
     head.appendChild(link);
   }
@@ -149,7 +150,6 @@ export function loadScript(url) {
 
 export function deleteNavbar() {
   if (document.getElementById('navbar')) {
-    console.log("Deleting navbar");
     document.getElementById('navbar').remove();
   }
 }

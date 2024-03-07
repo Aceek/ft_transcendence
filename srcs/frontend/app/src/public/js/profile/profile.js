@@ -23,9 +23,10 @@ export async function displayProfile() {
     injectFriendsSearsh();
     await attachSubmitListener(profile);
     await changeAvatar(profile);
+
   } catch (error) {
     console.error("Error:", error);
-    router("/home"); // redirect to 404 page
+    router("/home");
   }
 }
 

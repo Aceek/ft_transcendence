@@ -10,8 +10,8 @@ import {
   setupInviteToPlayButton,
 } from "./utilsChat.js";
 import { getProfile } from "../profile/getProfile.js";
-import { subscribeToStatusUpdates } from "./websocketChat.js";
 import { conversations } from "./chat.js";
+import { sendTrackStatus } from "../user_activity_websocket/user_activity_utils.js";
 
 export async function injectFriendsInChat(friends) {
   const friendsInChat = document.getElementById("friends_in_chat");
@@ -29,8 +29,7 @@ export async function injectFriendsInChat(friends) {
             <img src="${friend.avatar || "/public/images/profile.jpg"}" class="rounded-circle me-2" alt="${friend.username}" width="40" height="40">
             <div>
                 ${friend.username}
-                <div class="small"><span class="connection-status text-online">Unknow</span></div>
-
+                <span id="status-${friend.id}" class=${friend.status === "online" ? "text-success" : "text-danger"}>• ${friend.status}</span>
             </div>
         </div>
         <div class="badge bg-secondary">0</div>
@@ -39,6 +38,7 @@ export async function injectFriendsInChat(friends) {
 
     friendsInChat.appendChild(listItem);
   });
+  sendTrackStatus(friends.results.map((friend) => friend.id));
   await attachLinkListenerChat();
 }
 
@@ -46,6 +46,7 @@ export async function injectUsersNotFriendsInChat(friendsListIds) {
   for (const uid in conversations) {
     if (!friendsListIds.includes(uid)) {
       await injectNewUserInChat(uid);
+
     }
   }
 }
@@ -135,7 +136,7 @@ export async function injectNewUserInChat(uid) {
           <img src="${newUser.avatar || "/public/images/profile.jpg"}" class="rounded-circle me-2" alt="${newUser.username}" width="40" height="40">
           <div>
               ${newUser.username}
-              <div class="small"><span class="connection-status text-online">Unknown</span></div>
+              <span id="status-${newUser.id}" class=${newUser.status === "online" ? "text-success" : "text-danger"}>• ${newUser.status}</span>
           </div>
       </div>
       <div class="badge bg-secondary">0</div>
@@ -144,6 +145,5 @@ export async function injectNewUserInChat(uid) {
 
   friendsInChat.appendChild(listItem);
   await attachLinkListenerChat();
-  uid = [uid];
-  subscribeToStatusUpdates(uid);
+  sendTrackStatus([uid]);
 }

@@ -43,7 +43,7 @@ async function displayUsersInSearch(usersInSearch) {
         <img src="${user.avatar || "/public/images/profile.jpg"}" alt="Avatar de ${user.username}" class="rounded-circle me-3" width="75" height="75">
         <div>
           <span class="profile-link" data-uid="${user.id}"><strong>${user.username}</strong></span>
-          <span class="text-success ms-2">• En ligne</span>
+          <span class=${user.status === "online" ? "text-success" : "text-danger"}>• ${user.status}</span>
         </div>
       </div>
     `;

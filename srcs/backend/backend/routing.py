@@ -2,6 +2,7 @@ from django.urls import re_path
 from websocket.consumers import MatchmakingConsumer
 from pong.consumers.consumers import GameConsumer
 from chat.consumers import ChatConsumer
+from user_activity_websocket.consumers import UserActivityConsumer
 
 uuid_pattern = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 
@@ -16,4 +17,7 @@ websocket_urlpatterns = [
 
     # chat path
     re_path(r'ws/chat/?$', ChatConsumer.as_asgi()),
+
+    # user activity path
+    re_path(r'ws/user_activity/?$', UserActivityConsumer.as_asgi()),
 ]

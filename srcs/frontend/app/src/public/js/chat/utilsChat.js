@@ -10,6 +10,8 @@ import { handleIncomingMessage } from "./websocketChat.js";
 import { sendUpdateRequest } from "../profile/profileUtils.js";
 import { getFriendList } from "../profile/getProfile.js";
 import { api_url, router } from "../main.js";
+import { handleSendChallenge } from "../user_activity_websocket/user_activity_handle.js";
+
 
 export async function displaySearchResults(users, container, friendsListIds) {
   users.forEach((user) => {
@@ -61,23 +63,6 @@ export function createConversationObjects(friends, clientSender) {
   });
 }
 
-export function handleStatusUpdate(data) {
-  const { user_id, status } = data;
-  const friendLink = document.querySelector(`[data-uid="${user_id}"]`);
-
-  if (friendLink) {
-    const statusElement = friendLink.querySelector(".connection-status");
-    if (status === "online") {
-      statusElement.classList.add("text-online");
-      statusElement.classList.remove("text-offline");
-      statusElement.textContent = "Chat online";
-    } else {
-      statusElement.classList.add("text-offline");
-      statusElement.classList.remove("text-online");
-      statusElement.textContent = "Chat offline";
-    }
-  }
-}
 
 function isSenderFriend(sender, friendsListIds) {
   return friendsListIds.includes(sender);
@@ -157,8 +142,7 @@ export function resetBadgeBgSuccess(uid) {
 export async function setupInviteToPlayButton(uid) {
   const inviteToPlayButton = document.getElementById("invite-to-play-button");
   inviteToPlayButton.addEventListener("click", async () => {
-    console.log("Invite to play button clicked user = ", uid);
-    // router("/play/" + uid);
+    await handleSendChallenge(uid);
   });
 }
 
