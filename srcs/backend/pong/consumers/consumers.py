@@ -24,8 +24,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.game_mode = get_game_mode(self.scope)
         self.player_nb = get_number_of_players(self.scope)
         self.game_type = get_game_type(self.scope)
-        self.match_id = get_match_id(self.scope)
-        self.tournament_id = get_tournament_id(self.scope)
         self.room_name, self.room_group_name = get_room_names(self.scope)
 
         # Add this channel to the group and instanciate the Channel commmunication class

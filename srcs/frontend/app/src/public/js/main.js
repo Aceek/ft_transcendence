@@ -109,7 +109,7 @@ async function matchRegex(path) {
   
   // pong routes
   const onlineStandardMatch = path.match(new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`));
-  const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/(${uuidPattern})/(${uuidPattern})/?$`));
+  const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/?$`));
   const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
 
 

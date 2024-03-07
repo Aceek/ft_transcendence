@@ -18,12 +18,6 @@ class GameLogic:
         self.mode = consumers.game_mode
         self.player_nb = consumers.player_nb
         self.type = consumers.game_type
-        if self.type == "tournament":
-            self.match_id = consumers.match_id
-            self.tournament_id = consumers.tournament_id
-        else:
-            self.match_id = "none"
-            self.tournament_id = "none"
 
         # # Debug print
         # print(f"Room Name: {self.room_name}")
@@ -74,8 +68,6 @@ class GameLogic:
             "gameMode": self.mode,
             "playerNb": self.player_nb,
             "gameType": self.type,
-            "matchId": self.match_id,
-            "tournamentId": self.tournament_id
         }
         return static_data
     
@@ -85,10 +77,6 @@ class GameLogic:
         self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self)
         self.database_ops = DatabaseOps()
-
-        if self.type == "tournament":
-            self.match = await self.database_ops.get_match(self.match_id)
-            self.tournament = await self.database_ops.get_tournament(self.tournament_id)
 
     async def init_static_data(self):
         """Initial game setup."""
