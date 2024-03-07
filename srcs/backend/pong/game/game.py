@@ -235,10 +235,10 @@ class GameLogic:
                     await self.redis_ops.del_all_restart_requests()
                     await self.reset_players()
                     await self.game_loop()
-            # elif self.type == "tournament":
-            #     await self.database_ops.update_tournament(self.tournament, self.match, self.winner)
+            elif self.type == "tournament":
+                match, tournament = await self.database_ops.get_match_and_tournament(self.room_name)
+                await self.database_ops.update_tournament(match, tournament, self.winner)
 
-            
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")
         except Exception as e:
