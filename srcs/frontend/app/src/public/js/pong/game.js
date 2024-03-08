@@ -37,7 +37,7 @@ export class Game {
         this.canvasHeight = parseInt(staticData.canvasHeight, 10);
         this.mode = staticData.gameMode;
         this.type = staticData.gameType;
-        this.matchID = staticData.matchID;
+        this.matchId = staticData.matchID;
         this.tournamentId = staticData.tournamentId;
         
         const canvas = document.getElementById('pongCanvas');

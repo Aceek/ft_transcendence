@@ -35,8 +35,9 @@ export class GameRenderer {
                 "Waiting for other players to start...");
         } else if (this.game.status === 3) {
             if (this.game.type === 'tournament') {
-                this.drawTwoPartMessage("Game Over!", "");
-            } else {
+                this.drawTwoPartMessage("Game Over!",
+                    "Press Enter to go back to tournament page...");
+            } else if (this.game.type === "standard") {
                 let restartMessage = "Press Enter to restart...";
                 if (this.game.restartRequest === true) {
                     restartMessage += " ✓";

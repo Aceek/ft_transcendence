@@ -53,6 +53,10 @@ class GameLogic:
         self.ball = None
         self.winner = None
 
+        self.match = None
+        self.tournament = None
+        self.tournament_id = ""
+
         self.target_loop_duration = 1 / TICK_RATE
 
     # -------------------------------INIT-----------------------------------
@@ -65,9 +69,11 @@ class GameLogic:
             "paddleSpeed": self.paddle_speed,
             "canvasHeight": self.screen_height,
             "canvasWidth": self.screen_width,
-            "gameMode": self.mode,
             "playerNb": self.player_nb,
+            "gameMode": self.mode,
             "gameType": self.type,
+            "matchId": self.room_name,
+            "tournamentId": self.tournament_id,
         }
         return static_data
     
@@ -77,6 +83,10 @@ class GameLogic:
         self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self)
         self.database_ops = DatabaseOps()
+        if self.type == "tournament":
+            self.match, self.tournament = \
+                await self.database_ops.get_match_and_tournament(self.room_name)
+            self.tournament_id = str(self.tournament.uid)
 
     async def init_static_data(self):
         """Initial game setup."""
@@ -236,8 +246,7 @@ class GameLogic:
                     await self.reset_players()
                     await self.game_loop()
             elif self.type == "tournament":
-                match, tournament = await self.database_ops.get_match_and_tournament(self.room_name)
-                await self.database_ops.update_tournament(match, tournament, self.winner)
+                await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
 
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")

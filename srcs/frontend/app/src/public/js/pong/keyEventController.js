@@ -25,11 +25,21 @@ export class KeyEventController {
             return;
         }
     
-        if (key === "Enter" && this.game.status === 3 && this.game.type === "standard") {
-            this.socket.send(JSON.stringify({ type: "restart_game" }));
-            console.log("Restart game message sent.");
-            this.game.restartRequest = true;
-            return;
+        if (key === "Enter") {
+            if (this.game.status === 3) {
+                if (this.game.type === "tournament") {
+                    // Assuming you have a way to get the tournament's page URL or ID
+                    const tournamentPageUrl = `/tournament/${this.game.tournamentId}`; //
+                    console.log("Redirecting to tournament page.");
+                    window.location.href = tournamentPageUrl;
+                    return;
+                } else if (this.game.type === "standard") {
+                    this.socket.send(JSON.stringify({ type: "restart_game" }));
+                    console.log("Restart game message sent.");
+                    this.game.restartRequest = true;
+                    return;
+                }
+            }
         }
     
         if (this.game.status === 1) {
