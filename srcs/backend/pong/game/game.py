@@ -7,7 +7,7 @@ from .config import *
 from .enum import GameStatus
 from .sync import GameSync
 from .channel_com import ChannelCom
-from .database_ops import DatabaseOps
+from ..database.database_ops import DatabaseOps
 from ..redis.redis_ops import RedisOps
 
 
@@ -18,12 +18,6 @@ class GameLogic:
         self.mode = consumers.game_mode
         self.player_nb = consumers.player_nb
         self.type = consumers.game_type
-        if self.type == "tournament":
-            self.match_id = consumers.match_id
-            self.tournament_id = consumers.tournament_id
-        else:
-            self.match_id = "none"
-            self.tournament_id = "none"
 
         # # Debug print
         # print(f"Room Name: {self.room_name}")
@@ -59,6 +53,10 @@ class GameLogic:
         self.ball = None
         self.winner = None
 
+        self.match = None
+        self.tournament = None
+        self.tournament_id = ""
+
         self.target_loop_duration = 1 / TICK_RATE
 
     # -------------------------------INIT-----------------------------------
@@ -71,11 +69,11 @@ class GameLogic:
             "paddleSpeed": self.paddle_speed,
             "canvasHeight": self.screen_height,
             "canvasWidth": self.screen_width,
-            "gameMode": self.mode,
             "playerNb": self.player_nb,
+            "gameMode": self.mode,
             "gameType": self.type,
-            "matchId": self.match_id,
-            "tournamentId": self.tournament_id
+            "matchId": self.room_name,
+            "tournamentId": self.tournament_id,
         }
         return static_data
     
@@ -85,10 +83,11 @@ class GameLogic:
         self.channel_com = ChannelCom(self.room_group_name)
         self.game_sync = GameSync(self)
         self.database_ops = DatabaseOps()
-
         if self.type == "tournament":
-            self.match = await self.database_ops.get_match(self.match_id)
-            self.tournament = await self.database_ops.get_tournament(self.tournament_id)
+            self.match, self.tournament = \
+                await self.database_ops.get_match_and_tournament(self.room_name)
+            if self.tournament is not None:
+                self.tournament_id = str(self.tournament.uid)
 
     async def init_static_data(self):
         """Initial game setup."""
@@ -120,6 +119,7 @@ class GameLogic:
                 position = await self.redis_ops.get_player_position(user_id)
                 if position is not None:
                     player = Player(position, self, custom_user)
+                    await player.set_username_to_redis(player.username)
                     await player.set_data_to_redis()
                     self.players.append(player)
                 else:
@@ -247,10 +247,9 @@ class GameLogic:
                     await self.redis_ops.del_all_restart_requests()
                     await self.reset_players()
                     await self.game_loop()
-            # elif self.type == "tournament":
-            #     await self.database_ops.update_tournament(self.tournament, self.match, self.winner)
+            elif self.type == "tournament":
+                await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
 
-            
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")
         except Exception as e:

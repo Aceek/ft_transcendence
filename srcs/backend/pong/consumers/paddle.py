@@ -16,6 +16,8 @@ class Paddle:
 
         self.screen_height = SCREEN_HEIGHT
         self.screen_width = SCREEN_WIDTH
+        if self.player_nb > 2:
+            self.screen_width = self.screen_height
 
         self.boundary_min = 0
         self.collision_boundary_min = self.border_distance
@@ -74,9 +76,10 @@ class Paddle:
         print(f"Starting paddle assignment for user: {self.user_id} in room: {self.redis_ops.room_name}")
         
         # Attempt to acquire a lock for the paddle assignment process
-        lock_key = f"lock:game:{self.redis_ops.room_name}:assignment"
+        lock_key = f"game:{self.redis_ops.room_name}:lock:assignment"
         lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
+        print(f"Lock acquired {lock_key} for user {self.user_id}.")
 
         try:
             for position in PlayerPosition:
@@ -124,14 +127,17 @@ class Paddle:
         if self.player_nb < 3:
             return True
 
+        print(f"Checking potential collision for new position: {new_pos}")
+        
         # Check if the paddle is in potential range of others
         relevant_position = None
         if new_pos <= self.collision_boundary_min:
             relevant_position, relevant_boundary = await self.get_collision_details("min")
         elif new_pos + self.size >= self.collision_boundary_max:
+            print(f"New position {new_pos} + size {self.size} is at or above the maximum collision boundary.")
             relevant_position, relevant_boundary = await self.get_collision_details("max")
 
-        # Check if there is a collision
+        # If a potentially colliding position is found
         if relevant_position is not None:
             other_key_map = get_player_key_map(relevant_position)
             other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
@@ -141,10 +147,11 @@ class Paddle:
                 return True
             else:
                 other_paddle_pos = int(other_paddle_pos_str)
-            
-            if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min or \
-            relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
-                print(f"Overlap detected with {relevant_position} paddle.")
+
+            # Checking collision based on boundaries
+            if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min:
+                return False
+            elif relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
                 return False
 
         return True
