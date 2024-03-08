@@ -8,24 +8,28 @@ def get_player_key_map(position):
     player_key_map = {
         PlayerPosition.LEFT: {
             "position": "left",
+            "username": "lp_u",
             "score": "lp_s",
             "paddle_y": "lp_y",
             "paddle_x": "lp_x"
         },
         PlayerPosition.RIGHT: {
             "position": "right",
+            "username": "rp_u",
             "score": "rp_s",
             "paddle_y": "rp_y",
             "paddle_x": "rp_x" 
         },
         PlayerPosition.BOTTOM: {
             "position": "bottom",
+            "username": "bp_u",
             "score": "bp_s",
             "paddle_y": "bp_y",
             "paddle_x": "bp_x"
         },
         PlayerPosition.UP: {
             "position": "up",
+            "username": "up_u",           
             "score": "up_s",
             "paddle_y": "up_y",
             "paddle_x": "up_x"

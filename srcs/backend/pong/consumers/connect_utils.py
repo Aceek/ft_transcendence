@@ -2,6 +2,10 @@ def get_user_id(scope):
     """Determine the user ID based on authentication status."""
     return str(scope["user"].id if scope["user"].is_authenticated else "anonymous")
 
+def get_username(scope):
+    """Determine the user ID based on authentication status."""
+    return str(scope["user"].username if scope["user"].is_authenticated else "anonymous")
+
 def get_game_mode(scope):
     """Retrieve the game mode from the URL path."""
     return scope["url_route"]["kwargs"]["mode"]

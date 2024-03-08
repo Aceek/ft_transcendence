@@ -6,6 +6,7 @@ class Player:
         self.position = position
         self.game = game
         self.user = user
+        self.username = user.username
         self.redis_ops = game.redis_ops
 
         if self.position == PlayerPosition.LEFT or self.position == PlayerPosition.RIGHT:
@@ -51,6 +52,10 @@ class Player:
     async def update_score(self):
         self.score += 1
         await self.set_score_to_redis(self.score)
+
+    async def set_username_to_redis(self, username):
+        key = self.key_map["username"]
+        await self.redis_ops.set_dynamic_value(key, username)
 
     async def set_score_to_redis(self, score):
         key = self.key_map["score"]
