@@ -7,7 +7,7 @@ from .config import *
 from .enum import GameStatus
 from .sync import GameSync
 from .channel_com import ChannelCom
-from .database_ops import DatabaseOps
+from ..database.database_ops import DatabaseOps
 from ..redis.redis_ops import RedisOps
 
 
