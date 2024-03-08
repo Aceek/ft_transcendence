@@ -110,7 +110,7 @@ async function matchRegex(path) {
   // pong routes
   const onlineStandardMatch = path.match(new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`));
   const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/?$`));
-  const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
+  // const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
 
 
   if (profileStatsMatch) {
@@ -127,7 +127,7 @@ async function matchRegex(path) {
     const tournamentID = tournamentMatch[1];
     await displayTournamentPage(tournamentID);
     return true;
-  } else if (onlineStandardMatch || onlineTournamentMatch || offlineStandardMatch) {
+  } else if (onlineStandardMatch || onlineTournamentMatch) {
     console.log("Loading pong game:");
     await getPongGamePage();
     return true;
