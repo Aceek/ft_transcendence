@@ -151,6 +151,8 @@ class GameLogic:
 
     async def get_and_send_compacted_dynamic_data(self):
         self.ball_compacted_data = self.ball.get_dynamic_compacted_ball_data()
+        
+        self.players_compacted_data = []
         for player in self.players:
             self.players_compacted_data.append(player.get_dynamic_compacted_player_data())
         await self.channel_com.send_compacted_dynamic_data(self.ball_compacted_data, self.players_compacted_data)

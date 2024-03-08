@@ -78,8 +78,10 @@ export class Game {
         this.ball.handleDynamicData(dynamicData, this.latency, this.status);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
     }
-
+    
     handleCompactedDynamicData(ball_data, players_data, time) {
+        console.log("Handling ball compacted dynamic data:", ball_data);
+        console.log("Handling players compacted dynamic data:", players_data);
         const serverTimestampMs = parseInt(time, 10);
         const currentTime = (new Date()).getTime();
         
@@ -87,14 +89,10 @@ export class Game {
         this.latency = currentTime - serverTimestampMs;
         this.lastServerUpdate = currentTime - this.latency;
         console.log("Network latency: ", this.latency, "ms");
-
+        
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
-        this.players.forEach((player, index) => {
-            if (index < players_data.length) {
-                player.handleCompactedDynamicData(players_data[index]);
-            } else {
-                console.warn(`Missing data for player at index ${index}`);
-            }
+        this.players.forEach((player) => {
+                player.handleCompactedDynamicData(players_data);
         });
     }
 
