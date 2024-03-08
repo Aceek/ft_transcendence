@@ -1,4 +1,5 @@
 from channels.db import database_sync_to_async
+from django.db import IntegrityError
 
 class DatabaseOps:
     @database_sync_to_async
@@ -25,6 +26,23 @@ class DatabaseOps:
         except Matches.DoesNotExist:
             print(f"Match with ID {match_id} does not exist.")
             return None, None
+
+    @database_sync_to_async
+    def set_user_status(self, user_id, status):
+        from CustomUser.models import CustomUser
+
+        try:
+            user = CustomUser.objects.get(pk=user_id)
+            user.status = status
+            user.save(update_fields=['status'])
+            print(f"User {user.username}'s status updated to {status}.")
+            return True
+        except CustomUser.DoesNotExist:
+            print(f"User with ID {user_id} does not exist.")
+            return False
+        except IntegrityError as e:
+            print(f"Error updating status for user {user_id}: {e}")
+            return False
 
     @database_sync_to_async
     def update_match_history(self, winner, players):
