@@ -86,7 +86,8 @@ class GameLogic:
         if self.type == "tournament":
             self.match, self.tournament = \
                 await self.database_ops.get_match_and_tournament(self.room_name)
-            self.tournament_id = str(self.tournament.uid)
+            if self.tournament is not None:
+                self.tournament_id = str(self.tournament.uid)
 
     async def init_static_data(self):
         """Initial game setup."""
