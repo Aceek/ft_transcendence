@@ -35,6 +35,7 @@ export class GameRenderer {
             this.drawTwoPartMessage("Room joined!", 
                 "Waiting for other players to start...");
         } else if (this.game.status === 3) {
+            this.drawPlayerNames();
             if (this.game.type === 'tournament') {
                 this.drawTwoPartMessage("Game Over!",
                     "Press Enter to go back to tournament page...");
@@ -149,7 +150,7 @@ export class GameRenderer {
 
     drawPlayerNames() {
         this.ctx.textAlign = "center";
-        const font = '20px "Geo", sans-serif'; // Adjust font size as needed
+        const font = '30px "Geo", sans-serif';
         this.ctx.font = font;
     
         this.game.players.forEach((player) => {
@@ -161,6 +162,7 @@ export class GameRenderer {
                     nameX = player.paddleX + 30;
                     nameY = player.paddleY + player.paddleHeight / 2;
                     this.ctx.textAlign = "left";
+                    break;
                 case 'right':
                     nameX = player.paddleX + player.paddleWidth - 30;
                     nameY = player.paddleY + player.paddleHeight / 2;
@@ -184,6 +186,4 @@ export class GameRenderer {
             this.ctx.fillText(player.username, nameX, nameY);
         });
     }
-    
-    
 }
