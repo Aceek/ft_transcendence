@@ -94,10 +94,28 @@ if [ x${ELASTIC_PASSWORD} == x ]; then
         
         sleep 5
         # import kibana objects
-        curl -k --cacert config/certs/ca/ca.crt \
-        -u elastic:${ELASTIC_PASSWORD} \
-        -X POST "https://kibana:5601/api/saved_objects/_import" \
-        -H 'kbn-xsrf: true' \
-        --form file=@"/saved_objects.ndjson"
+        # curl -k --cacert config/certs/ca/ca.crt \
+        # -u elastic:${ELASTIC_PASSWORD} \
+        # -X POST "https://kibana:5601/api/saved_objects/_import" \
+        # -H 'kbn-xsrf: true' \
+        # --form file=@"/saved_objects.ndjson"
+
+        while true; do
+          response=$(curl -k --cacert config/certs/ca/ca.crt \
+              -u elastic:${ELASTIC_PASSWORD} \
+              -X POST "https://kibana:5601/api/saved_objects/_import" \
+              -H 'kbn-xsrf: true' \
+              --form file=@"/saved_objects.ndjson" \
+              -w "%{http_code}" \
+              -o /dev/null)
+
+          if [ "$response" -eq 200 ]; then
+              echo "La requête a réussi."
+              break
+          else
+              echo "La requête a échoué avec le code de statut HTTP $response. Réessayer..."
+              sleep 5
+          fi
+        done
 
         echo "All done!";

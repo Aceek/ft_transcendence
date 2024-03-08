@@ -182,7 +182,6 @@ export function attashTwofaButtonListener(twofaButton, profile) {
   document.getElementById("profileDivButton").appendChild(twofaButton);
 
   // document.getElementById("profileDivButton").insertBefore(twofaButton, document.getElementById("profileDivButton").firstChild);
-
 }
 
 export function injectTwofaButton(profile) {

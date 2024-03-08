@@ -1,6 +1,8 @@
 import asyncio
 import uvicorn
 import aioredis
+from logging.config import dictConfig
+from logging_config import log_config 
 
 async def cleanup_redis():
     print("Nettoyage de Redis...")
@@ -12,4 +14,7 @@ async def cleanup_redis():
 if __name__ == "__main__":
     asyncio.run(cleanup_redis())
 
-    uvicorn.run("backend.asgi:application", host="0.0.0.0", port=8000, reload=True)
+    dictConfig(log_config)
+
+
+    uvicorn.run("backend.asgi:application", host="0.0.0.0", port=8000, reload=True, log_config=log_config)
