@@ -22,6 +22,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         
         # Retrieve game infos based on the connection's scope
         self.user_id = get_user_id(self.scope)
+        self.username = get_username(self.scope)
         self.game_mode = get_game_mode(self.scope)
         self.player_nb = get_number_of_players(self.scope)
         self.game_type = get_game_type(self.scope)

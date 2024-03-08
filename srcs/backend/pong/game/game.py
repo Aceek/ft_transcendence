@@ -119,6 +119,7 @@ class GameLogic:
                 position = await self.redis_ops.get_player_position(user_id)
                 if position is not None:
                     player = Player(position, self, custom_user)
+                    await player.set_username_to_redis(player.username)
                     await player.set_data_to_redis()
                     self.players.append(player)
                 else:
