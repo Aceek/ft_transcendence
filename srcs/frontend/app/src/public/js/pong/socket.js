@@ -45,6 +45,10 @@ export function messageHandler(socket, game) {
             case "game.dynamic_data":
                 game.handleDynamicData(data.data, data.timestamp); // Update to call method on game object
                 break;
+            case "game.compacted_dynamic_data":
+                // Handler for compacted dynamic data, passing ball data, player data, and timestamp
+                game.handleCompactedDynamicData(data.ball, data.players, data.time);
+                break;
             case "game.paddle_side":
                 game.handlePaddleSideAssignment(data.paddle_side); // Update to call method on game object
                 break;

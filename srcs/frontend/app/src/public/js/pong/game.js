@@ -64,7 +64,7 @@ export class Game {
     }
     
     handleDynamicData(dynamicData, serverTimestamp) {
-        console.log("Handling dynamic data:", dynamicData);
+        // console.log("Handling dynamic data:", dynamicData);
         // Convert server timestamp from seconds to milliseconds
         const serverTimestampMs = parseInt(serverTimestamp, 10);
         const currentTime = (new Date()).getTime();
@@ -72,11 +72,30 @@ export class Game {
         // Calculate the network latency
         this.latency = currentTime - serverTimestampMs;
         this.lastServerUpdate = currentTime - this.latency;
-        // console.log("Network latency: ", this.latency, "ms");
+        console.log("Network latency: ", this.latency, "ms");
         
         this.status = parseInt(dynamicData.gs, 10);
         this.ball.handleDynamicData(dynamicData, this.latency, this.status);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
+    }
+
+    handleCompactedDynamicData(ball_data, players_data, time) {
+        const serverTimestampMs = parseInt(time, 10);
+        const currentTime = (new Date()).getTime();
+        
+        // Calculate the network latency
+        this.latency = currentTime - serverTimestampMs;
+        this.lastServerUpdate = currentTime - this.latency;
+        console.log("Network latency: ", this.latency, "ms");
+
+        this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
+        this.players.forEach((player, index) => {
+            if (index < players_data.length) {
+                player.handleCompactedDynamicData(players_data[index]);
+            } else {
+                console.warn(`Missing data for player at index ${index}`);
+            }
+        });
     }
 
     handlePaddleSideAssignment(paddleSide) {

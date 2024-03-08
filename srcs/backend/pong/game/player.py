@@ -70,7 +70,14 @@ class Player:
             key = self.key_map["paddle_y"]
             paddle_position_str = await self.redis_ops.get_dynamic_value(key)
             self.paddle_y = int(paddle_position_str)
+            self.dynamic_pos = int(paddle_position_str)
         else:
             key = self.key_map["paddle_x"]
             paddle_position_str = await self.redis_ops.get_dynamic_value(key)
             self.paddle_x = int(paddle_position_str)
+            self.dynamic_pos = int(paddle_position_str)
+
+#------------------------------COMPACTED DATA-------------------------------------
+            
+    def get_dynamic_compacted_player_data(self):
+        return self.dynamic_pos

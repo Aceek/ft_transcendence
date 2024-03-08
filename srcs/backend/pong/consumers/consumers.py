@@ -115,6 +115,20 @@ class GameConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp 
         }))
 
+    async def game_compacted_dynamic_data(self, event):
+        # Handler for the compacted dynamic data event
+        ball_data = event['ball']
+        player_data = event['players']
+        time = event['time']  # Assuming 'time' will always be present in the event
+
+        # Send the compacted data structure to the client
+        await self.send(text_data=json.dumps({
+            'type': 'game.compacted_dynamic_data',
+            'ball': ball_data,
+            'players': player_data,
+            'time': time
+        }))
+
     async def game_countdown(self, event):
         seconds = event['seconds']
         await self.send(text_data=json.dumps({

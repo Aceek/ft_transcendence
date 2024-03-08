@@ -24,9 +24,35 @@ class ChannelCom:
         }
         await self.channel_layer.group_send(self.room_group_name, message)
 
+    async def send_compacted_dynamic_data(self, ball_data, player_data):
+        current_time_ms = int(datetime.now().timestamp() * 1000)
+
+        message = {
+            "type": "game.compacted_dynamic_data",
+            "ball": ball_data,
+            "players": player_data,
+            "time": current_time_ms,
+        }
+        await self.channel_layer.group_send(self.room_group_name, message)
+
     async def send_countdown(self, seconds_left):
         message = {
             "type": "game.countdown",
             "seconds": seconds_left
+        }
+        await self.channel_layer.group_send(self.room_group_name, message)
+
+
+    async def send_game_status(self, game_status):
+        message = {
+            "type": "game.status",
+            "status": game_status,
+        }
+        await self.channel_layer.group_send(self.room_group_name, message)
+
+    async def send_usernames(self, usernames):
+        message = {
+            "type": "game.usernames",
+            "usernames": usernames,
         }
         await self.channel_layer.group_send(self.room_group_name, message)

@@ -74,4 +74,21 @@ export class Player {
                 break;
         }
     }
+
+    handleCompactedDynamicData(pos) {
+        switch (this.side) {
+            case "left":
+                this.paddleY = parseInt(pos, 10);
+                break;
+            case "right":
+                this.paddleY = parseInt(pos, 10);
+                break;
+            case "bottom":
+                this.paddleX = parseInt(pos, 10);
+                break;
+            case "up":
+                this.paddleX = parseInt(pos, 10);
+                break;
+        }
+    }
 }
