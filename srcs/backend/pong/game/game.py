@@ -18,21 +18,6 @@ class GameLogic:
         self.mode = consumers.game_mode
         self.player_nb = consumers.player_nb
         self.type = consumers.game_type
-
-        # # Debug print
-        # print(f"Room Name: {self.room_name}")
-        # print(f"Room Group Name: {self.room_group_name}")
-        # print(f"Game Mode: {self.mode}")
-        # print(f"Number of Players: {self.player_nb}")
-        # print(f"Game Type: {self.type}")
-        # if hasattr(consumers, 'match_id') and self.match_id:
-        #     print(f"Match ID: {self.match_id}")
-        # else:
-        #     print("Tournament ID: Not applicable")
-        # if hasattr(consumers, 'tournament_id') and self.tournament_id:
-        #     print(f"Tournament ID: {self.tournament_id}")
-        # else:
-        #     print("Tournament ID: Not applicable")
         
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
@@ -184,7 +169,7 @@ class GameLogic:
         await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
         await self.game_sync.countdown()
 
-        # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
+        # If a client disconnect during the countdown, the launcher  restart to wait for a reconnection
         if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
             # Notify all the clients the game is suspendended
             await self.get_and_send_dynamic_data()

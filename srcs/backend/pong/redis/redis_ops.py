@@ -57,7 +57,6 @@ class RedisOps:
         return await self.connection.hgetall(key)
     
     async def get_dynamic_value(self, field_name):
-        """Retrieve a specific value from the dynamic data of a game room."""
         key = f"game:{self.room_name}:dynamic"
         value = await self.connection.hget(key, field_name)
         return value
@@ -92,7 +91,6 @@ class RedisOps:
             key_map = get_player_key_map(position)
             key = f"game:{self.room_name}:paddle:{key_map['position']}"
             
-            # Check if the user ID is a member of the set associated with the current position
             if await self.connection.sismember(key, user_id):
                 return position 
         

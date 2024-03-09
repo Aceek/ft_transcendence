@@ -79,7 +79,6 @@ class Player:
             self.paddle_x = paddle_position
         self.dynamic_pos = paddle_position
 
-
 #------------------------------COMPACTED DATA-------------------------------------
             
     def get_dynamic_compacted_player_data(self):
