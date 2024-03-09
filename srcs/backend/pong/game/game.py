@@ -50,8 +50,12 @@ class GameLogic:
         self.score_limit = SCORE_LIMIT
 
         self.players = []
+        self.players = []
         self.ball = None
         self.winner = None
+
+        self.ball_compacted_data = []
+        self.players_compacted_data = []
 
         self.match = None
         self.tournament = None
@@ -72,7 +76,6 @@ class GameLogic:
             "playerNb": self.player_nb,
             "gameMode": self.mode,
             "gameType": self.type,
-            "matchId": self.room_name,
             "tournamentId": self.tournament_id,
         }
         return static_data
@@ -95,7 +98,7 @@ class GameLogic:
         self.static_data = self.get_static_data() 
         await self.redis_ops.set_static_data(self.static_data)
 
-        await self.get_static_data_and_send()
+        await self.get_and_send_static_data()
 
     async def init_objects(self):
         """Initial game setup."""
@@ -108,7 +111,7 @@ class GameLogic:
         self.ball = Ball(self) 
         await self.ball.set_data_to_redis()
 
-        await self.get_dynamic_data_and_send()
+        await self.get_and_send_dynamic_data()
 
     async def init_players(self):
         """Initializes player objects with position and associated CustomUser."""
@@ -123,7 +126,11 @@ class GameLogic:
                     await player.set_data_to_redis()
                     self.players.append(player)
                 else:
-                    print(f"Unknown position received for user ID {user_id}: {position}")
+                    print(f"Unknown position for user with ID: {user_id}")
+
+        # Sort the players list based on position value
+        self.players.sort(key=lambda player: player.position.value)
+
 
     async def reset_players(self):
         for player in self.players:
@@ -145,12 +152,22 @@ class GameLogic:
 
     # ---------------------------DATA UPDATES-----------------------------------
 
-    async def get_static_data_and_send(self):
+    async def get_and_send_compacted_dynamic_data(self):
+        ball_compacted_data = []
+        players_compacted_data = []
+
+        ball_compacted_data = self.ball.get_dynamic_compacted_ball_data()
+        for player in self.players:
+            players_compacted_data.append(player.get_dynamic_compacted_player_data())
+
+        await self.channel_com.send_compacted_dynamic_data(ball_compacted_data, players_compacted_data)
+
+    async def get_and_send_static_data(self):
         """Centralized method to send dynamic data."""
         static_data = await self.redis_ops.get_static_data()
         await self.channel_com.send_static_data(static_data)
 
-    async def get_dynamic_data_and_send(self):
+    async def get_and_send_dynamic_data(self):
         """Centralized method to send dynamic data."""
         dynamic_data = await self.redis_ops.get_dynamic_data()
         await self.channel_com.send_dynamic_data(dynamic_data)
@@ -158,7 +175,7 @@ class GameLogic:
     async def update_game_status_and_notify(self, new_status):
         """Updates game status and sends dynamic data if necessary."""
         await self.redis_ops.set_game_status(new_status)
-        await self.get_dynamic_data_and_send()
+        await self.get_and_send_dynamic_data()
 
     # -------------------------------LAUNCHER-----------------------------------
 
@@ -170,7 +187,7 @@ class GameLogic:
         # If a client disconnect during the countdown, the launchher  restart to wait for a reconnection
         if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
             # Notify all the clients the game is suspendended
-            await self.get_dynamic_data_and_send()
+            await self.get_and_send_dynamic_data()
             if await self.is_game_resuming():
                 await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
         else:
@@ -186,7 +203,7 @@ class GameLogic:
             return False
         elif current_status == GameStatus.SUSPENDED:
             # Notify all the clients the game is suspendended
-            await self.get_dynamic_data_and_send()
+            await self.get_and_send_dynamic_data()
             return await self.is_game_resuming()
         return True
 
@@ -283,6 +300,7 @@ class GameLogic:
             self.ball.reset_value()
             if player is not None:
                 await player.update_score()
+                await self.get_and_send_dynamic_data()
                 if player.check_win():
                     self.winner = player
                     await self.update_game_status_and_notify(GameStatus.COMPLETED)
@@ -291,5 +309,8 @@ class GameLogic:
         await self.ball.set_data_to_redis()
 
         # Broadcast the current game data to all clients
-        await self.get_dynamic_data_and_send()
+        # await self.get_and_send_dynamic_data_and_send()
+
+        await self.get_and_send_compacted_dynamic_data()
+        
         

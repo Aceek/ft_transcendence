@@ -3,75 +3,67 @@ export class Player {
         this.id = id;
         this.side = side;
         this.isControlled = isControlled;
+        this.initPaddleProperties();
+        this.score = 0;
+        this.username = '';
+        this.color = this.assignColor(id);
+    }
+
+    initPaddleProperties() {
         this.paddleWidth = 0;
         this.paddleHeight = 0;
         this.paddleSpeed = 0;
         this.paddleX = 0;
         this.paddleY = 0;
-        this.score = 0;
-        this.username = "";
-        this.color = this.assignColor(id);
-      }
+    }
 
     assignColor(id) {
-        switch(id) {
-            case 1:
-                return '#008000'; // Green
-            case 2:
-                return '#FF0000'; // Red
-            case 3:
-                return '#0000FF'; // Blue
-            case 4:
-                return '#FFFF00'; // Yellow
-            default:
-                return '#FFF'; // Default color (White)
-        }
+        const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Green, Red, Blue, Yellow, Default White
+        return colors[id] || colors[4];
     }
 
     handleStaticData(staticData) {
-        switch (this.side) {
-            case "left":
-            case "right":
-                this.paddleWidth = parseInt(staticData.paddleWidth, 10);
-                this.paddleHeight = parseInt(staticData.paddleHeight, 10);
-                break;
-            case "bottom":
-            case "up":
-                this.paddleWidth = parseInt(staticData.paddleHeight, 10);
-                this.paddleHeight = parseInt(staticData.paddleWidth, 10);
-                break;
-        }
-    
+        // Handle paddle dimensions based on player's side
+        this.adjustPaddleDimensions(staticData);
         this.paddleSpeed = parseInt(staticData.paddleSpeed, 10);
     }
-    
+
+    adjustPaddleDimensions(staticData) {
+        const isVertical = this.side === "left" || this.side === "right";
+        this.paddleWidth = parseInt(staticData[isVertical ? "paddleWidth" : "paddleHeight"], 10);
+        this.paddleHeight = parseInt(staticData[isVertical ? "paddleHeight" : "paddleWidth"], 10);
+    }
+
     handleDynamicData(dynamicData) {
-        // The 'side' dictates which part of 'dynamicData' to use
-        switch (this.side) {
-            case "left":
-                this.paddleX = parseInt(dynamicData.lp_x, 10);
-                this.paddleY = parseInt(dynamicData.lp_y, 10);
-                this.score = parseInt(dynamicData.lp_s, 10);
-                this.username = dynamicData.lp_u;
-                break;
-            case "right":
-                this.paddleX = parseInt(dynamicData.rp_x, 10);
-                this.paddleY = parseInt(dynamicData.rp_y, 10);
-                this.score = parseInt(dynamicData.rp_s, 10);
-                this.username = dynamicData.rp_u;
-                break;
-            case "bottom":
-                this.paddleX = parseInt(dynamicData.bp_x, 10);
-                this.paddleY = parseInt(dynamicData.bp_y, 10);
-                this.score = parseInt(dynamicData.bp_s, 10);
-                this.username = dynamicData.bp_u;
-                break;
-            case "up":
-                this.paddleX = parseInt(dynamicData.up_x, 10);
-                this.paddleY = parseInt(dynamicData.up_y, 10);
-                this.score = parseInt(dynamicData.up_s, 10);
-                this.username = dynamicData.up_u;
-                break;
+        const sideData = this.getSideData(dynamicData);
+        this.paddleX = parseInt(sideData.x, 10);
+        this.paddleY = parseInt(sideData.y, 10);
+        this.score = parseInt(sideData.score, 10);
+        this.username = sideData.username;
+    }
+
+    getSideData(dynamicData) {
+        const fieldMap = {
+            left: { x: 'lp_x', y: 'lp_y', score: 'lp_s', username: 'lp_u' },
+            right: { x: 'rp_x', y: 'rp_y', score: 'rp_s', username: 'rp_u' },
+            bottom: { x: 'bp_x', y: 'bp_y', score: 'bp_s', username: 'bp_u' },
+            up: { x: 'up_x', y: 'up_y', score: 'up_s', username: 'up_u' },
+        };
+        const fields = fieldMap[this.side];
+        return {
+            x: dynamicData[fields.x],
+            y: dynamicData[fields.y],
+            score: dynamicData[fields.score],
+            username: dynamicData[fields.username],
+        };
+    }
+
+    handleCompactedDynamicData(pos) {
+        const isVertical = this.side === "left" || this.side === "right";
+        if (isVertical) {
+            this.paddleY = parseInt(pos[this.id], 10);
+        } else {
+            this.paddleX = parseInt(pos[this.id], 10);
         }
     }
 }

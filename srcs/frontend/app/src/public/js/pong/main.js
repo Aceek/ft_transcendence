@@ -1,6 +1,6 @@
 import { initializeSocket, messageHandler } from './socket.js';
 import { KeyEventController } from './keyEventController.js';
-import { GameRenderer } from './gameRenderer.js';
+import { Renderer } from './renderer/renderer.js';
 import { Game } from './game.js';
 
 export let pongSocket;
@@ -17,7 +17,7 @@ export async function setupGame() {
     const ctx = canvas.getContext('2d');
 
     game = new Game();
-    renderer = new GameRenderer(ctx, game);
+    renderer = new Renderer(ctx, game);
 
     try {
         pongSocket = await initializeSocket();
@@ -51,25 +51,24 @@ function waitForInitialization() {
 
 function interpolatePosition(lastPosition, speed, deltaTime) {
     // Calculate and return the new position based on the speed and the delta time
-    return lastPosition + speed * (deltaTime / 1000); // Convert deltaTime from ms to seconds
+    return lastPosition + speed * (deltaTime / 1000);
 }
 
 function mainLoop() {
-    let delta = Date.now() - lastUpdate;
-
     if (game && game.status === 1) {
-        game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, delta);
-        game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, delta);
-    
-        // reset this value if the game if the game is restart
-        if (game.restartRequest == true) {
+        let now = Date.now();
+        let deltaTime = now - game.ball.lastServerUpdate;
+
+        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, deltaTime);
+        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, deltaTime);
+
+        // Reset this value if the game is restart
+        if (game.restartRequest) {
             game.restartRequest = false;
         }
     }
 
-    lastUpdate = Date.now();
     renderer && renderer.draw();
     requestAnimationFrame(mainLoop);
 }
 
-let lastUpdate = Date.now()

@@ -8,34 +8,40 @@ export class Ball {
     }
   
     handleStaticData(staticData) {
-        // console.log("Handling ball static data");
         this.size = parseInt(staticData.ballSize, 10);
     }
 
+    handleDynamicData(dynamicData) {
+      this.x = parseFloat(dynamicData.b_x);
+      this.y = parseFloat(dynamicData.b_y);
+      this.vx = parseFloat(dynamicData.b_vx);
+      this.vy = parseFloat(dynamicData.b_vy);
+  }
 
-    handleDynamicData(dynamicData, latency, gameStatus) {
-      const serverX = parseFloat(dynamicData.b_x);
-      const serverY = parseFloat(dynamicData.b_y);
-      const vx = parseFloat(dynamicData.b_vx);
-      const vy = parseFloat(dynamicData.b_vy);
-  
-      if (latency == null || gameStatus !== 1) {
-          this.x = serverX;
-          this.y = serverY;
-      } else {
-          const latencyInSeconds = latency / 1000;
-          // Calculate adjusted position based on latency
-          const adjustedX = serverX + vx * latencyInSeconds;
-          const adjustedY = serverY + vy * latencyInSeconds;
-  
-          this.x = adjustedX;
-          this.y = adjustedY;
-      }
-  
-      this.vx = vx;
-      this.vy = vy;
-  
-    //   console.log(`Ball position - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
+  handleCompactedDynamicData(ball_data, latency, gameStatus) {
+    const serverX = parseFloat(ball_data[0]);
+    const serverY = parseFloat(ball_data[1]);
+    const vx = parseFloat(ball_data[2]);
+    const vy = parseFloat(ball_data[3]);
+    
+    if (latency == null || gameStatus !== 1) {
+        this.x = serverX;
+        this.y = serverY;
+    } else {
+        const latencyInSeconds = latency / 1000;
+        const adjustedX = serverX + vx * latencyInSeconds;
+        const adjustedY = serverY + vy * latencyInSeconds;
+        
+        this.lastServerX = adjustedX;
+        this.lastServerY = adjustedY;
+        this.x = adjustedX;
+        this.y = adjustedY;
+    }
+    
+    this.vx = vx;
+    this.vy = vy;
+    
+    this.lastServerUpdate = Date.now()
   }
 }
   

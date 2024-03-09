@@ -145,3 +145,11 @@ class Ball:
             'b_vy': round(self.vy, 2)
         }
         await self.redis_ops.set_dynamic_data(ball_attributes)
+
+#------------------------------COMPACTED DATA-------------------------------------
+
+    def get_dynamic_compacted_ball_data(self):
+        return [round(self.x, 2),\
+                round(self.y, 2),\
+                round(self.vx, 2),\
+                round(self.vy, 2)]

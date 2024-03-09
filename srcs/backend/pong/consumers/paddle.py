@@ -118,9 +118,11 @@ class Paddle:
             return False
 
         # Check movement speed limit
+        # If the player move more than 2 times the speed of the paddle
+        # within the tick rate a potential cheat is suspected
         movement_distance = abs(new_pos - current_pos)
-        if movement_distance > self.speed:
-            print(f"Attempted to move the paddle more than the speed limit ({self.speed}). Movement Distance: {movement_distance}")
+        if movement_distance > self.speed * 2:
+            print(f"Abnormal paddle position based on paddle speed ans server tick rate ({self.speed}). Movement Distance: {movement_distance}")
             return False
 
         # Early exit if only 2 players

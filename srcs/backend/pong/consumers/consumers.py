@@ -85,17 +85,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
 
         # Handle "paddle_position_update" message
-        if "type" in data and data["type"] == "paddle_position_update":
-            paddle_pos = data.get('paddle_pos')
-            if paddle_pos is not None and self.paddle.side is not None:
-                if await self.paddle.check_movement(paddle_pos):
-                    await self.paddle.set_data_to_redis(paddle_pos)
+        if "type" in data and data["type"] == "update":
+            pos = data.get('pos')
+            if pos is not None and self.paddle.side is not None:
+                if await self.paddle.check_movement(pos):
+                    await self.paddle.set_data_to_redis(pos)
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)
         else:
             print("Received unknown message type or missing key.")
-
     
     # ----------------------------SEND-------------------------------------
 
@@ -113,6 +112,20 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'game.dynamic_data',
             'data': data,
             'timestamp': timestamp 
+        }))
+
+    async def game_compacted_dynamic_data(self, event):
+        # Handler for the compacted dynamic data event
+        ball_data = event['ball']
+        player_data = event['players']
+        time = event['time']  # Assuming 'time' will always be present in the event
+
+        # Send the compacted data structure to the client
+        await self.send(text_data=json.dumps({
+            'type': 'game.compacted_dynamic_data',
+            'ball': ball_data,
+            'players': player_data,
+            'time': time
         }))
 
     async def game_countdown(self, event):
