@@ -173,13 +173,15 @@ class GameLogic:
             if self.type == "standard":
                 # Feature currenlty not working for 2+ players
                 if self.player_nb < 3:
-                    await self.database_ops.update_match_history(self.winner, self.players)
+                    if self.winner is not None:
+                        await self.database_ops.update_match_history(self.winner, self.players)
                 if await self.game_sync.wait_for_players_to_restart():
                     await self.redis_ops.del_all_restart_requests()
                     await self.reset_players()
                     await self.game_loop()
             elif self.type == "tournament":
-                await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
+                if self.winner is not None:
+                    await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
 
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")
