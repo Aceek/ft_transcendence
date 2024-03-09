@@ -67,18 +67,18 @@ class Player:
         await self.redis_ops.set_dynamic_value(key, new_position)
 
     async def get_paddle_from_redis(self):
-        if self.position in [PlayerPosition.LEFT, PlayerPosition.RIGHT]:
-            key = self.key_map["paddle_y"]
-            paddle_position_str = await self.redis_ops.get_dynamic_value(key)
-            self.paddle_y = int(paddle_position_str)
-            self.dynamic_pos = int(paddle_position_str)
-            # print( self.paddle_y,  self.dynamic_pos)
+        position_key = "paddle_y" if self.position in [PlayerPosition.LEFT, PlayerPosition.RIGHT] else "paddle_x"
+        key = self.key_map[position_key]
+        
+        paddle_position_str = await self.redis_ops.get_dynamic_value(key)
+        paddle_position = int(paddle_position_str)
+        
+        if position_key == "paddle_y":
+            self.paddle_y = paddle_position
         else:
-            key = self.key_map["paddle_x"]
-            paddle_position_str = await self.redis_ops.get_dynamic_value(key)
-            self.paddle_x = int(paddle_position_str)
-            self.dynamic_pos = int(paddle_position_str)
-            # print(self.paddle_x,  self.dynamic_pos)
+            self.paddle_x = paddle_position
+        self.dynamic_pos = paddle_position
+
 
 #------------------------------COMPACTED DATA-------------------------------------
             

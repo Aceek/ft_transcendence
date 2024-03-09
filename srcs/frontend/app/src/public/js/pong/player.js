@@ -76,19 +76,14 @@ export class Player {
     }
 
     handleCompactedDynamicData(pos) {
-        // console.log("Received positions:", pos); // Print the received positions array
-        // console.log("Player side:", this.side); // Print the side of the current instance
-        
         switch (this.side) {
             case "left":
             case "right":
                 this.paddleY = parseInt(pos[this.id], 10);
-                console.log("Player side:", this.side, this.paddleY); // Print the side of the current instance
                 break;
             case "bottom":
             case "up":
                 this.paddleX = parseInt(pos[this.id], 10);
-                console.log("Player side:", this.side, this.paddleX); // Print the side of the current instance
                 break;
         }
     }

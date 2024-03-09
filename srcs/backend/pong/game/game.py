@@ -127,7 +127,11 @@ class GameLogic:
                     await player.set_data_to_redis()
                     self.players.append(player)
                 else:
-                    print(f"Unknown position received for user ID {user_id}: {position}")
+                    print(f"Unknown position for user with ID: {user_id}")
+
+        # Sort the players list based on position value
+        self.players.sort(key=lambda player: player.position.value)
+
 
     async def reset_players(self):
         for player in self.players:
@@ -154,21 +158,9 @@ class GameLogic:
         players_compacted_data = []
 
         ball_compacted_data = self.ball.get_dynamic_compacted_ball_data()
-
-        players_data_dict = {}  # Dictionary to hold player data with IDs as keys
-
-        # Populate the dictionary with player IDs as keys and player data as values
         for player in self.players:
-            players_data_dict[player.id] = player.get_dynamic_compacted_player_data()
+            players_compacted_data.append(player.get_dynamic_compacted_player_data())
 
-        # Sort the dictionary based on player IDs
-        sorted_players_data = sorted(players_data_dict.items())
-
-        # Append player data to players_compacted_data in the sorted order
-        for _, player_data in sorted_players_data:
-            players_compacted_data.append(player_data)
-
-        print(players_compacted_data)
         await self.channel_com.send_compacted_dynamic_data(ball_compacted_data, players_compacted_data)
 
     async def get_and_send_static_data(self):

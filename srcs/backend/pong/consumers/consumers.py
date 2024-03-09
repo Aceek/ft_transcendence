@@ -88,16 +88,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         if "type" in data and data["type"] == "update":
             pos = data.get('pos')
             if pos is not None and self.paddle.side is not None:
-                print("will check move.")
                 if await self.paddle.check_movement(pos):
-                    print("will set redis")
                     await self.paddle.set_data_to_redis(pos)
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)
         else:
             print("Received unknown message type or missing key.")
-
     
     # ----------------------------SEND-------------------------------------
 
