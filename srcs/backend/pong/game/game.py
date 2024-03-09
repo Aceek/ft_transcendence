@@ -76,7 +76,6 @@ class GameLogic:
             "playerNb": self.player_nb,
             "gameMode": self.mode,
             "gameType": self.type,
-            "matchId": self.room_name,
             "tournamentId": self.tournament_id,
         }
         return static_data
