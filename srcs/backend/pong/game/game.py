@@ -1,15 +1,16 @@
 import asyncio
 import time
 
-from .ball import Ball
-from .player import Player
 from .config import *
 from .enum import GameStatus
+from .init import GameInitializer
+
+from .ball import Ball
+from .player import Player
 from .sync import GameSync
 from .channel_com import ChannelCom
 from ..database.database_ops import DatabaseOps
 from ..redis.redis_ops import RedisOps
-
 
 class GameLogic:
     def __init__(self, consumers):
@@ -48,74 +49,9 @@ class GameLogic:
 
         self.target_loop_duration = 1 / TICK_RATE
 
+        self.initializer = GameInitializer(self)
+
     # -------------------------------INIT-----------------------------------
-
-    def get_static_data(self):
-        static_data = {
-            "ballSize": self.ball_size,
-            "paddleWidth": self.paddle_width,
-            "paddleHeight": self.paddle_height,
-            "paddleSpeed": self.paddle_speed,
-            "canvasHeight": self.screen_height,
-            "canvasWidth": self.screen_width,
-            "playerNb": self.player_nb,
-            "gameMode": self.mode,
-            "gameType": self.type,
-            "tournamentId": self.tournament_id,
-        }
-        return static_data
-    
-    async def init_env(self):
-        """Initial env setup."""
-        self.redis_ops = await RedisOps.create(self.room_name)
-        self.channel_com = ChannelCom(self.room_group_name)
-        self.game_sync = GameSync(self)
-        self.database_ops = DatabaseOps()
-        if self.type == "tournament":
-            self.match, self.tournament = \
-                await self.database_ops.get_match_and_tournament(self.room_name)
-            if self.tournament is not None:
-                self.tournament_id = str(self.tournament.uid)
-
-    async def init_static_data(self):
-        """Initial game setup."""
-        # Init static data
-        self.static_data = self.get_static_data() 
-        await self.redis_ops.set_static_data(self.static_data)
-
-        await self.get_and_send_static_data()
-
-    async def init_objects(self):
-        """Initial game setup."""
-        
-        # Init players
-        await self.init_players()
-        self.winner = None
-
-        # Init ball
-        self.ball = Ball(self) 
-        await self.ball.set_data_to_redis()
-
-        await self.get_and_send_dynamic_data()
-
-    async def init_players(self):
-        """Initializes player objects with position and associated CustomUser."""
-        users_id = await self.redis_ops.get_connected_users_ids()
-        for user_id in users_id:
-            custom_user = await self.database_ops.get_custom_user(user_id)
-            if custom_user is not None:
-                position = await self.redis_ops.get_player_position(user_id)
-                if position is not None:
-                    player = Player(position, self, custom_user)
-                    await player.set_username_to_redis(player.username)
-                    await player.set_data_to_redis()
-                    self.players.append(player)
-                else:
-                    print(f"Unknown position for user with ID: {user_id}")
-
-        # Sort the players list based on position value
-        self.players.sort(key=lambda player: player.position.value)
-
 
     async def reset_players(self):
         for player in self.players:
@@ -123,7 +59,6 @@ class GameLogic:
             await player.set_data_to_redis()
 
     async def get_winner_by_forfeit(self):
-        """Determine the winner by forfeit based on the remaining connected player."""
         connected_users_ids = await self.redis_ops.get_connected_users_ids()
         if connected_users_ids:
             winner_id = connected_users_ids[0]
@@ -148,36 +83,16 @@ class GameLogic:
         await self.channel_com.send_compacted_dynamic_data(ball_compacted_data, players_compacted_data)
 
     async def get_and_send_static_data(self):
-        """Centralized method to send dynamic data."""
         static_data = await self.redis_ops.get_static_data()
         await self.channel_com.send_static_data(static_data)
 
     async def get_and_send_dynamic_data(self):
-        """Centralized method to send dynamic data."""
         dynamic_data = await self.redis_ops.get_dynamic_data()
         await self.channel_com.send_dynamic_data(dynamic_data)
 
     async def update_game_status_and_notify(self, new_status):
-        """Updates game status and sends dynamic data if necessary."""
         await self.redis_ops.set_game_status(new_status)
         await self.get_and_send_dynamic_data()
-
-    # -------------------------------LAUNCHER-----------------------------------
-
-    async def launch_game(self):
-        """Launch game."""
-        await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
-        await self.game_sync.countdown()
-
-        # If a client disconnect during the countdown, the launcher  restart to wait for a reconnection
-        if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
-            # Notify all the clients the game is suspendended
-            await self.get_and_send_dynamic_data()
-            if await self.is_game_resuming():
-                await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
-        else:
-            await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
-        self.last_update_time = time.time()
 
     # -------------------------CHECK GAME STATE-----------------------------------
 
@@ -200,25 +115,39 @@ class GameLogic:
 
         await self.update_game_status_and_notify(GameStatus.COMPLETED)
         return False
+    
+    # -------------------------------LAUNCHER-----------------------------------
+
+    async def launch_game(self):
+        """Launch game."""
+        await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
+        await self.game_sync.countdown()
+
+        # If a client disconnect during the countdown, the launcher  restart to wait for a reconnection
+        if await self.redis_ops.get_game_status() == GameStatus.SUSPENDED:
+            # Notify all the clients the game is suspendended
+            await self.get_and_send_dynamic_data()
+            if await self.is_game_resuming():
+                await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
+        else:
+            await self.update_game_status_and_notify(GameStatus.IN_PROGRESS)
+        self.last_update_time = time.time()
 
     # -------------------------------LOOP-----------------------------------
 
     async def run(self):
-        """Running the task"""
-        await self.init_env()
-        await self.init_static_data()
+        await self.initializer.init_env()
+        await self.initializer.init_static_data()
         await self.update_game_status_and_notify(GameStatus.UNSTARTED)
 
         if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
-            await self.init_objects()
+            await self.initializer.init_objects()
             await self.game_loop()
 
     async def game_loop(self):
-        """The main game loop."""
         await self.launch_game()
 
         try:
-            print("Game loop started.")
             while True:
                 loop_start_time = time.time()
                 current_time = time.time()
@@ -262,7 +191,6 @@ class GameLogic:
 
 
     async def game_tick(self, delta_time):
-        """Perform a single tick of the game lop."""
         # Update the ball position in fucntion on vellocity and delta time
         self.ball.update_position(delta_time)
 
@@ -292,9 +220,6 @@ class GameLogic:
 
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()
-
-        # Broadcast the current game data to all clients
-        # await self.get_and_send_dynamic_data_and_send()
 
         await self.get_and_send_compacted_dynamic_data()
         

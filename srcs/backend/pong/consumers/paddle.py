@@ -73,39 +73,26 @@ class Paddle:
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
 
     async def assignment(self):
-        print(f"Starting paddle assignment for user: {self.user_id} in room: {self.redis_ops.room_name}")
-        
         # Attempt to acquire a lock for the paddle assignment process
         lock_key = f"game:{self.redis_ops.room_name}:lock:assignment"
         lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
-        print(f"Lock acquired {lock_key} for user {self.user_id}.")
 
         try:
             for position in PlayerPosition:
                 self.key_map = get_player_key_map(position)
                 key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
-                print(f"Checking position {position} for user {self.user_id}")
 
                 if await self.redis_ops.connection.sismember(key, self.user_id):
                     self.side = position
-                    print(f"User {self.user_id} already assigned to {position}")
                     return
                 elif not await self.redis_ops.connection.scard(key):
                     await self.redis_ops.connection.sadd(key, self.user_id)
                     self.side = position
-                    print(f"Assigned user {self.user_id} to new position {position}")
                     return
         finally:
             # Ensure the lock is released after the operation
             await lock.release()
-            print(f"Released lock {lock_key} and completed assignment for user {self.user_id}.")
-
-        # This prints the side to which the user was assigned, if any
-        if self.side is not None:
-            print(f"User {self.user_id} assigned to {self.side.name} paddle")
-        else:
-            print(f"No available position for user {self.user_id}.")
 
     async def check_movement(self, new_pos):
         # Determine the axis and boundary based on the player's side
@@ -114,7 +101,6 @@ class Paddle:
 
         # Check game boundaries
         if new_pos < self.boundary_min or new_pos + self.size > self.boundary_max:
-            print(f"Requested position: {new_pos} is outside the game boundaries.")
             return False
 
         # Check movement speed limit
@@ -129,8 +115,6 @@ class Paddle:
         if self.player_nb < 3:
             return True
 
-        print(f"Checking potential collision for new position: {new_pos}")
-        
         # Check if the paddle is in potential range of others
         relevant_position = None
         if new_pos <= self.collision_boundary_min:
