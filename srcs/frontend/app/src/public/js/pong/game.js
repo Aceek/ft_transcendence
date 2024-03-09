@@ -72,7 +72,7 @@ export class Game {
         
         // Calculate the network latency
         this.latency = currentTime - serverTimestampMs;
-        this.lastServerUpdate = currentTime - this.latency;
+        this.lastServerUpdate = currentTime;
         console.log("Network latency: ", this.latency, "ms");
         
         this.status = parseInt(dynamicData.gs, 10);
@@ -81,15 +81,15 @@ export class Game {
     }
     
     handleCompactedDynamicData(ball_data, players_data, time) {
-        console.log("Handling ball compacted dynamic data:", ball_data);
-        console.log("Handling players compacted dynamic data:", players_data);
+        // console.log("Handling ball compacted dynamic data:", ball_data);
+        // console.log("Handling players compacted dynamic data:", players_data);
         const serverTimestampMs = parseInt(time, 10);
         const currentTime = (new Date()).getTime();
         
         // Calculate the network latency
         this.latency = currentTime - serverTimestampMs;
-        this.lastServerUpdate = currentTime - this.latency;
-        console.log("Network latency: ", this.latency, "ms");
+        this.lastServerUpdate = currentTime;
+        // console.log("Network latency: ", this.latency, "ms");
         
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
         this.players.forEach((player) => {

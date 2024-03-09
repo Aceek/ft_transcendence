@@ -55,24 +55,23 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
 }
 
 function mainLoop() {
-    let delta = Date.now() - lastUpdate;
-
     if (game && game.status === 1) {
-        game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, delta);
-        game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, delta);
-    
-        // Print the current ball position for debugging
-        // console.log(`Ball position - X: ${game.ball.x}, Y: ${game.ball.y}`);
+        let now = Date.now();
+        let deltaTime = now - game.ball.lastServerUpdate;
 
-        // reset this value if the game if the game is restart
-        if (game.restartRequest == true) {
+        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, deltaTime);
+        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, deltaTime);
+
+        // Print the current ball position for debugging
+        // console.log(`CLIENT - X: ${game.ball.x}, Y: ${game.ball.y}`);
+
+        // Reset this value if the game is restart
+        if (game.restartRequest) {
             game.restartRequest = false;
         }
     }
 
-    lastUpdate = Date.now();
     renderer && renderer.draw();
     requestAnimationFrame(mainLoop);
 }
 
-let lastUpdate = Date.now()

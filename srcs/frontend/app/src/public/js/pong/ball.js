@@ -35,7 +35,7 @@ export class Ball {
       this.vx = vx;
       this.vy = vy;
   
-    //   console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
+      console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
   }
 
   handleCompactedDynamicData(ball_data, latency, gameStatus) {
@@ -44,6 +44,7 @@ export class Ball {
     const vx = parseFloat(ball_data[2]);
     const vy = parseFloat(ball_data[3]);
 
+    
     if (latency == null || gameStatus !== 1) {
         this.x = serverX;
         this.y = serverY;
@@ -52,17 +53,18 @@ export class Ball {
         // Calculate adjusted position based on latency
         const adjustedX = serverX + vx * latencyInSeconds;
         const adjustedY = serverY + vy * latencyInSeconds;
-
+        
+        this.lastServerX = adjustedX;
+        this.lastServerY = adjustedY;
         this.x = adjustedX;
         this.y = adjustedY;
     }
-
+    
     this.vx = vx;
     this.vy = vy;
-
+    
+    this.lastServerUpdate = Date.now()
     // console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
-}
-
-
+  }
 }
   
