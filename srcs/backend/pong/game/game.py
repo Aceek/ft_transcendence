@@ -51,24 +51,6 @@ class GameLogic:
 
         self.initializer = GameInitializer(self)
 
-    # -------------------------------INIT-----------------------------------
-
-    async def reset_players(self):
-        for player in self.players:
-            player.reset_value()
-            await player.set_data_to_redis()
-
-    async def get_winner_by_forfeit(self):
-        connected_users_ids = await self.redis_ops.get_connected_users_ids()
-        if connected_users_ids:
-            winner_id = connected_users_ids[0]
-            print(f"Assigning winner by default due to disconnection: {winner_id}")
-            for player in self.players:
-                if str(player.user.id) == str(winner_id):  # Ensure matching ID types (both as strings)
-                    self.winner = player
-                    return player
-        else:
-            return None
 
     # ---------------------------DATA UPDATES-----------------------------------
 
@@ -118,6 +100,15 @@ class GameLogic:
     
     # -------------------------------LAUNCHER-----------------------------------
 
+    async def run(self):
+        await self.initializer.init_env()
+        await self.initializer.init_static_data()
+        await self.update_game_status_and_notify(GameStatus.UNSTARTED)
+
+        if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
+            await self.initializer.init_objects()
+            await self.game_loop()
+
     async def launch_game(self):
         """Launch game."""
         await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
@@ -134,15 +125,6 @@ class GameLogic:
         self.last_update_time = time.time()
 
     # -------------------------------LOOP-----------------------------------
-
-    async def run(self):
-        await self.initializer.init_env()
-        await self.initializer.init_static_data()
-        await self.update_game_status_and_notify(GameStatus.UNSTARTED)
-
-        if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
-            await self.initializer.init_objects()
-            await self.game_loop()
 
     async def game_loop(self):
         await self.launch_game()
@@ -169,7 +151,7 @@ class GameLogic:
             if self.winner is None:
                 self.winner = await self.get_winner_by_forfeit()
 
-            # Only try to restart the match for standard games
+            # Only try to restart the game for standard games
             if self.type == "standard":
                 # Feature currenlty not working for 2+ players
                 if self.player_nb < 3:
@@ -223,6 +205,25 @@ class GameLogic:
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()
 
+        # Broadcast the game data to all clients
         await self.get_and_send_compacted_dynamic_data()
+
+    # -------------------------------END GAME-----------------------------------
+
+    async def reset_players(self):
+        for player in self.players:
+            player.reset_value()
+            await player.set_data_to_redis()
+
+    async def get_winner_by_forfeit(self):
+        connected_users_ids = await self.redis_ops.get_connected_users_ids()
+        if connected_users_ids:
+            winner_id = connected_users_ids[0]
+            for player in self.players:
+                if str(player.user.id) == str(winner_id):  # Ensure matching ID types (both as strings)
+                    self.winner = player
+                    return player
+        else:
+            return None
         
         

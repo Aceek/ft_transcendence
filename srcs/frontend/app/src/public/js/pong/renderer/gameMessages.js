@@ -66,9 +66,12 @@ export class GameMessages extends BaseDrawing {
         this.setFont(100);
         this.game.players.forEach(player => {
             const { x, y } = this.calculateScorePosition(player);
-            this.drawText(player.score.toString(), x, y, player.color);
+            if (player.score !== undefined && !isNaN(player.score)) {
+                this.drawText(player.score.toString(), x, y, player.color);
+            }
         });
     }
+    
 
     calculateScorePosition(player) {
         let x, y;
