@@ -46,7 +46,7 @@ export class Game {
         
         const sides = ['left', 'right', 'bottom', 'up'];
         for (let i = 0; i < this.playerNb; i++) {
-            const playerId = i + 1;
+            const playerId = i; 
             const playerSide = sides[i % sides.length];
             const isControlled = playerSide === this.receivedSide;
             
@@ -56,6 +56,7 @@ export class Game {
                 this.controlledPlayer = newPlayer;
             }
         }
+        
 
         this.players.forEach(player => player.handleStaticData(staticData));
         this.ball.handleStaticData(staticData);
@@ -80,24 +81,25 @@ export class Game {
     }
     
     handleCompactedDynamicData(ball_data, players_data, time) {
-        console.log("Handling ball compacted dynamic data:", ball_data);
-        console.log("Handling players compacted dynamic data:", players_data);
+        // console.log("Handling ball compacted dynamic data:", ball_data);
+        // console.log("Handling players compacted dynamic data:", players_data);
         const serverTimestampMs = parseInt(time, 10);
         const currentTime = (new Date()).getTime();
         
         // Calculate the network latency
         this.latency = currentTime - serverTimestampMs;
         this.lastServerUpdate = currentTime - this.latency;
-        console.log("Network latency: ", this.latency, "ms");
+        // console.log("Network latency: ", this.latency, "ms");
         
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
         this.players.forEach((player) => {
-                player.handleCompactedDynamicData(players_data);
+            player.handleCompactedDynamicData(players_data);
         });
     }
 
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();
+        console.log("Received side:", this.receivedSide);
     }
     
     handleCountdown(seconds) {

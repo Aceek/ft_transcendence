@@ -15,13 +15,13 @@ export class Player {
 
     assignColor(id) {
         switch(id) {
-            case 1:
+            case 0:
                 return '#008000'; // Green
-            case 2:
+            case 1:
                 return '#FF0000'; // Red
-            case 3:
+            case 2:
                 return '#0000FF'; // Blue
-            case 4:
+            case 3:
                 return '#FFFF00'; // Yellow
             default:
                 return '#FFF'; // Default color (White)
@@ -76,25 +76,19 @@ export class Player {
     }
 
     handleCompactedDynamicData(pos) {
-        console.log("Received positions:", pos); // Print the received positions array
-        console.log("Player side:", this.side); // Print the side of the current instance
+        // console.log("Received positions:", pos); // Print the received positions array
+        // console.log("Player side:", this.side); // Print the side of the current instance
         
         switch (this.side) {
             case "left":
-                this.paddleY = parseInt(pos[0], 10);
-                console.log(`Updated paddleY for left: ${this.paddleY}`); // Print the updated paddleY position
-                break;
             case "right":
-                this.paddleY = parseInt(pos[1], 10);
-                console.log(`Updated paddleY for right: ${this.paddleY}`); // Print the updated paddleY position
+                this.paddleY = parseInt(pos[this.id], 10);
+                console.log("Player side:", this.side, this.paddleY); // Print the side of the current instance
                 break;
             case "bottom":
-                this.paddleX = parseInt(pos[2], 10);
-                console.log(`Updated paddleX for bottom: ${this.paddleX}`); // Print the updated paddleX position
-                break;
             case "up":
-                this.paddleX = parseInt(pos[3], 10);
-                console.log(`Updated paddleX for up: ${this.paddleX}`); // Print the updated paddleX position
+                this.paddleX = parseInt(pos[this.id], 10);
+                console.log("Player side:", this.side, this.paddleX); // Print the side of the current instance
                 break;
         }
     }

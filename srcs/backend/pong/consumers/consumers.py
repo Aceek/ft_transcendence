@@ -85,11 +85,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
 
         # Handle "paddle_position_update" message
-        if "type" in data and data["type"] == "paddle_position_update":
-            paddle_pos = data.get('paddle_pos')
-            if paddle_pos is not None and self.paddle.side is not None:
-                if await self.paddle.check_movement(paddle_pos):
-                    await self.paddle.set_data_to_redis(paddle_pos)
+        if "type" in data and data["type"] == "update":
+            pos = data.get('pos')
+            if pos is not None and self.paddle.side is not None:
+                print("will check move.")
+                if await self.paddle.check_movement(pos):
+                    print("will set redis")
+                    await self.paddle.set_data_to_redis(pos)
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)

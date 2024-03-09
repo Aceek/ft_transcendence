@@ -150,12 +150,26 @@ class GameLogic:
     # ---------------------------DATA UPDATES-----------------------------------
 
     async def get_and_send_compacted_dynamic_data(self):
-        self.ball_compacted_data = self.ball.get_dynamic_compacted_ball_data()
-        
-        self.players_compacted_data = []
+        ball_compacted_data = []
+        players_compacted_data = []
+
+        ball_compacted_data = self.ball.get_dynamic_compacted_ball_data()
+
+        players_data_dict = {}  # Dictionary to hold player data with IDs as keys
+
+        # Populate the dictionary with player IDs as keys and player data as values
         for player in self.players:
-            self.players_compacted_data.append(player.get_dynamic_compacted_player_data())
-        await self.channel_com.send_compacted_dynamic_data(self.ball_compacted_data, self.players_compacted_data)
+            players_data_dict[player.id] = player.get_dynamic_compacted_player_data()
+
+        # Sort the dictionary based on player IDs
+        sorted_players_data = sorted(players_data_dict.items())
+
+        # Append player data to players_compacted_data in the sorted order
+        for _, player_data in sorted_players_data:
+            players_compacted_data.append(player_data)
+
+        print(players_compacted_data)
+        await self.channel_com.send_compacted_dynamic_data(ball_compacted_data, players_compacted_data)
 
     async def get_and_send_static_data(self):
         """Centralized method to send dynamic data."""

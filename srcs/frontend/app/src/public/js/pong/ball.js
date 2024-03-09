@@ -35,7 +35,7 @@ export class Ball {
       this.vx = vx;
       this.vy = vy;
   
-      console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
+    //   console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
   }
 
   handleCompactedDynamicData(ball_data, latency, gameStatus) {
@@ -60,7 +60,7 @@ export class Ball {
     this.vx = vx;
     this.vy = vy;
 
-    console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
+    // console.log(`SERVER - X: ${this.x}, Y: ${this.y}, Latency: ${latency}ms`);
 }
 
 

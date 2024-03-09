@@ -4,6 +4,7 @@ from .utils import get_player_key_map
 class Player:
     def __init__(self, position, game, user):
         self.position = position
+        self.id = position.value
         self.game = game
         self.user = user
         self.username = user.username
@@ -71,11 +72,13 @@ class Player:
             paddle_position_str = await self.redis_ops.get_dynamic_value(key)
             self.paddle_y = int(paddle_position_str)
             self.dynamic_pos = int(paddle_position_str)
+            # print( self.paddle_y,  self.dynamic_pos)
         else:
             key = self.key_map["paddle_x"]
             paddle_position_str = await self.redis_ops.get_dynamic_value(key)
             self.paddle_x = int(paddle_position_str)
             self.dynamic_pos = int(paddle_position_str)
+            # print(self.paddle_x,  self.dynamic_pos)
 
 #------------------------------COMPACTED DATA-------------------------------------
             

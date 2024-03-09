@@ -62,7 +62,7 @@ function mainLoop() {
         game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, delta);
     
         // Print the current ball position for debugging
-        console.log(`Ball position - X: ${game.ball.x}, Y: ${game.ball.y}`);
+        // console.log(`Ball position - X: ${game.ball.x}, Y: ${game.ball.y}`);
 
         // reset this value if the game if the game is restart
         if (game.restartRequest == true) {

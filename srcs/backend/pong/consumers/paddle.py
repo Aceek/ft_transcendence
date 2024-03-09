@@ -160,3 +160,4 @@ class Paddle:
         # Choose the correct axis key based on the player's side
         key = self.key_map['paddle_x'] if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else self.key_map['paddle_y']
         await self.redis_ops.set_dynamic_value(key, new_position)
+        print (key, new_position)

@@ -2,7 +2,7 @@ export class KeyEventController {
     constructor(socket, game) {
         this.socket = socket;
         this.game = game;
-        this.lastSentPaddleY = null;
+        this.lastSentPaddlePos = null;
         this.initEventListeners();
     }
 
@@ -91,8 +91,8 @@ export class KeyEventController {
         if (this.lastSentPaddlePos !== currentPos) {
             console.log(`Sending paddle position update for ${player.side}: ${currentPos}`);
             this.socket.send(JSON.stringify({
-                type: "paddle_position_update",
-                paddle_pos: currentPos,
+                type: "update",
+                pos: currentPos,
             }));
             this.lastSentPaddlePos = currentPos;
         } else {
