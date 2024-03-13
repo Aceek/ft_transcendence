@@ -14,5 +14,5 @@
             "tls_key_file": "/vault-key/vault.key"
         }
     },
-    "ui": true
+    "ui": false
 }

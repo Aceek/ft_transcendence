@@ -91,8 +91,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     networks:
       - transcendence
     volumes:
@@ -311,8 +311,6 @@ services:
   vault:
     image: hashicorp/vault:latest
     container_name: vault
-    ports:
-      - "8200:8200"
     volumes:
       # Vault persistence
       - vaultdata:/vault/file
@@ -345,5 +343,7 @@ services:
     entrypoint: sh /tools/entrypoint.sh
     depends_on:
       - certs-generator
+    expose:
+      - "8200"
     networks:
       - transcendence
