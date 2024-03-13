@@ -18,7 +18,6 @@ class RedisOps:
         return instance
 
     async def connect(self):
-        """Establish a connection to Redis and return the connection object."""
         try:
             return aioredis.from_url(self.redis_url, db=0, encoding="utf-8", decode_responses=True)
         except Exception as e:
@@ -26,7 +25,6 @@ class RedisOps:
             return None
 
     async def clear_all_data(self):
-        """Clear all Redis data associated with the game room."""
         room_key_pattern = f"game:{self.room_name}:*"
         async for key in self.connection.scan_iter(match=room_key_pattern):
             await self.connection.delete(key)
@@ -39,7 +37,6 @@ class RedisOps:
         await self.connection.hset(key, mapping=data)
 
     async def set_dynamic_value(self, field_name, value):
-        """Set a specific value from the dynamic data of a game room."""
         key = f"game:{self.room_name}:dynamic"
         await self.connection.hset(key, field_name, value)
 
@@ -83,7 +80,6 @@ class RedisOps:
         key = f"game:{self.room_name}:connected_users"
         users_ids = await self.connection.smembers(key)
         users_ids_list = list(users_ids)
-        print(f"Connected users in room {self.room_name}: {users_ids_list}")
         return users_ids_list
     
     async def get_player_position(self, user_id):
@@ -99,7 +95,6 @@ class RedisOps:
 # -------------------------------ADD-----------------------------------
 
     async def add_game_logic_flag(self):
-        """Set the game logic flag, indicating that the game logic can proceed."""
         flag_key = f"game:{self.room_name}:logic_flag"
         flag_set = await self.connection.setnx(flag_key, "true")
         if flag_set:

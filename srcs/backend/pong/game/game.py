@@ -36,7 +36,6 @@ class GameLogic:
         self.score_limit = SCORE_LIMIT
 
         self.players = []
-        self.players = []
         self.ball = None
         self.winner = None
 
@@ -90,7 +89,6 @@ class GameLogic:
         return True
 
     async def is_game_resuming(self):
-        print("Checking if the game is resuming...")
         if await self.game_sync.wait_for_players_to_start(GameStatus.SUSPENDED):
             await self.launch_game()
             return True
@@ -110,7 +108,6 @@ class GameLogic:
             await self.game_loop()
 
     async def launch_game(self):
-        """Launch game."""
         await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
         await self.game_sync.countdown()
 

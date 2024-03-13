@@ -137,7 +137,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'type': 'game.paddle_side',
                 'paddle_side': self.paddle.side.name,
             }))
-            print(f"paddle side {self.paddle.side.name} assigned for user: {self.user_id}")
+            # print(f"paddle side {self.paddle.side.name} assigned for user: {self.user_id}")
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
 

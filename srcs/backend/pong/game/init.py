@@ -10,7 +10,6 @@ class GameInitializer:
         self.game = game
 
     async def init_env(self):
-        """Initial environment setup."""
         self.game.redis_ops = await RedisOps.create(self.game.room_name)
         self.game.channel_com = ChannelCom(self.game.room_group_name)
         self.game.game_sync = GameSync(self.game)
@@ -37,13 +36,11 @@ class GameInitializer:
         return static_data
 
     async def init_static_data(self):
-        """Initial game setup."""
         self.game.static_data = self.get_static_data() 
         await self.game.redis_ops.set_static_data(self.game.static_data)
         await self.game.get_and_send_static_data()
 
     async def init_objects(self):
-        """Initial game objects setup."""
         await self.init_players()
         self.game.winner = None
         self.game.ball = Ball(self.game) 
@@ -51,7 +48,6 @@ class GameInitializer:
         await self.game.get_and_send_dynamic_data()
 
     async def init_players(self):
-        """Initializes player objects."""
         users_id = await self.game.redis_ops.get_connected_users_ids()
         for user_id in users_id:
             custom_user = await self.game.database_ops.get_custom_user(user_id)

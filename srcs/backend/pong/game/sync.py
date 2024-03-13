@@ -12,7 +12,6 @@ class GameSync:
         self.channel_com = game.channel_com
 
     async def countdown(self, duration=3):
-        """Handles the countdown logic."""
         print(f"Countdown starting for {duration} seconds.")
         for i in range(duration, 0, -1):
             await self.channel_com.send_countdown(i)
@@ -34,7 +33,6 @@ class GameSync:
             await asyncio.sleep(1)
 
     async def wait_for_players_to_start(self, current_status):
-        """Check if players are ready to start the game."""
         if self.game_type == "tournament" and current_status == GameStatus.SUSPENDED:
             return await self.wait_for_tournament_to_resume()
         
@@ -44,7 +42,6 @@ class GameSync:
         )
 
     async def wait_for_players_to_restart(self):
-        """Wait for other players to restart the game."""
         if await self.wait_for_players(
             self.check_for_restart_conditions, 
             "Checking if players are ready to restart"
@@ -54,7 +51,6 @@ class GameSync:
         return False
     
     async def wait_for_tournament_to_resume(self):
-        """Wait for players to start with a countdown for tournament games."""
         start_time = time.time()
         duration = 5
 
@@ -83,7 +79,6 @@ class GameSync:
         return None, "Waiting for players to start the game..."
 
     async def check_for_restart_conditions(self):
-        """Check condition for game restart waiting."""
         connected_users_count = await self.redis_ops.get_connected_users_nb()
         restart_requests_count = await self.redis_ops.get_restart_requests()
         if restart_requests_count == connected_users_count == self.player_nb:

@@ -35,7 +35,6 @@ class DatabaseOps:
             user = CustomUser.objects.get(pk=user_id)
             user.status = status
             user.save(update_fields=['status'])
-            print(f"User {user.username}'s status updated to {status}.")
             return True
         except CustomUser.DoesNotExist:
             print(f"User with ID {user_id} does not exist.")
