@@ -20,6 +20,10 @@ export POSTGRES_PORT=$(echo $DB_CONF | jq -r .port)
 
 export DEBUG_VAR=$(echo $API_CONF | jq -r .debug)
 
+export HOST=$(echo $API_CONF | jq -r .host_machine)
+
+export PORT=$(echo $API_CONF | jq -r .port_machine)
+
 export DJANGO_SECRET=$(echo $API_CONF | jq -r .secret)
 
 export DOMAIN=$(echo $API_CONF | jq -r .domain)
