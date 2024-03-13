@@ -1,0 +1,18 @@
+{
+    "log_level": "debug",
+    "log_file": "/vault/logs/vault.log",
+    "api_addr": "https://0.0.0.0:8200",
+    "backend": {
+        "file": {
+            "path": "/vault/file"
+        }
+    },
+    "listener": {
+        "tcp":{
+            "address": "0.0.0.0:8200",
+            "tls_cert_file": "/vault-cert/vault.crt",
+            "tls_key_file": "/vault-key/vault.key"
+        }
+    },
+    "ui": true
+}

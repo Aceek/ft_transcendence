@@ -12,6 +12,13 @@ volumes:
   metricbeatdata01:
   filebeatdata01:
   logstashdata01:
+  vaultdata:
+  vault-secret:
+  vault-key:
+  vault-cert:
+  db-secret:
+  api-secret:
+  nginx-certs:
 
 services:
   db:
@@ -19,17 +26,22 @@ services:
     image: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    env_file:
-      - .env
+      - db-secret:/root/db
+      - vault-cert:/vault-cert
+      - ./vault/services/db.sh:/root/db.sh:ro,Z
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} "
+          "pg_isready"
         ]
       interval: 10s
       timeout: 5s
       retries: 5
+    entrypoint: sh /root/db.sh
+    depends_on:
+      vault:
+        condition: service_healthy
     expose:
       - "5432"
     networks:
@@ -40,17 +52,31 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    # command: tail -f /dev/null
-    command: python start_server.py
     volumes:
       - ./backend:/app
-    env_file:
-      - .env
-    ports:
-      - "8000:8000"
+      - api-secret:/home/user/api
+      - vault-cert:/vault-cert
+      - ./vault/services/api.sh:/home/user/api.sh:ro,Z
+    healthcheck:
+      test: [
+        "CMD", 
+        "curl",
+        "http://localhost:8000"
+      ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    entrypoint: sh /home/user/api.sh
     depends_on:
-      - db
-      - redis
+      vault:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - "8000"
     networks:
       - transcendence
 
@@ -85,24 +111,31 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./frontend/app/src:/usr/share/nginx/html
-      - ./nginx/certs:/usr/share/nginx/certs
+      - nginx-certs:/usr/share/nginx/certs
       - ./backend/media:/usr/share/nginx/media
     depends_on:
-      - backend
-      - frontend
-      - certs-generator
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
     networks:
       - transcendence
 
   certs-generator:
     image: alpine
     volumes:
-      - ./nginx/certs:/certs
+      - nginx-certs:/certs
+      - vault-key:/vault-key
+      - vault-cert:/vault-cert
+      - ./vault/config/openssl.cnf:/openssl.cnf
     command: >
       /bin/sh -c "
       apk add --no-cache openssl &&
       if [ ! -f /certs/nginx.crt ]; then
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /certs/nginx.key -out /certs/nginx.crt -subj '/CN=localhost';
+      fi;
+      if [ ! -f /vault-cert/vault.crt ]; then
+        openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 -keyout /vault-key/vault.key -out /vault-cert/vault.crt -config /openssl.cnf -extensions 'v3_req';
       fi;
       "
   # Elasticsearch + Kibana + Logstash + filebeat  (Secure cert)
@@ -274,3 +307,43 @@ services:
   #     - ELASTIC_USER=elastic
   #     - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
   #     - ELASTIC_HOSTS=https://es01:9200
+
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    ports:
+      - "8200:8200"
+    volumes:
+      # Vault persistence
+      - vaultdata:/vault/file
+      - vault-secret:/vault/secrets
+      # Vault configuration
+      - ./vault/config:/vault/config
+      - ./vault/policies:/vault/policies
+      - ./vault/tools:/vault/tools
+      # Vault entrypoints
+      - ./vault/tools/init.sh:/tools/init.sh:ro,Z
+      - ./vault/tools/entrypoint.sh:/tools/entrypoint.sh:ro,Z
+      - ./vault/tools/wait-certs.sh:/tools/wait-certs.sh:ro,Z
+      # Vault certificates
+      - vault-key:/vault-key
+      - vault-cert:/vault-cert
+      # Services tokens
+      - db-secret:/vault/secrets/db
+      - api-secret:/vault/secrets/api
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=https://vault:8200/
+      - VAULT_SKIP_VERIFY=true
+    # entrypoint: sh /tools/init.sh
+    entrypoint: sh /tools/entrypoint.sh
+    depends_on:
+      - certs-generator
+    networks:
+      - transcendence

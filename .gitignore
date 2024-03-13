@@ -6,3 +6,4 @@ schema.yml
 node_modules/
 cert/
 certs/
+srcs/vault/tools/init.sh
