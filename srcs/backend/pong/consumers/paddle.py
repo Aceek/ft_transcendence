@@ -120,7 +120,6 @@ class Paddle:
         if new_pos <= self.collision_boundary_min:
             relevant_position, relevant_boundary = await self.get_collision_details("min")
         elif new_pos + self.size >= self.collision_boundary_max:
-            print(f"New position {new_pos} + size {self.size} is at or above the maximum collision boundary.")
             relevant_position, relevant_boundary = await self.get_collision_details("max")
 
         # If a potentially colliding position is found

@@ -71,10 +71,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.redis_ops.del_restart_request(self.user_id)
         # Potentially not online anymore -> to be tested
         await self.database_ops.set_user_status(self.user_id, "online")
-
-        # If no users are connected anymore, clear all data related to this room
-        if await self.redis_ops.get_connected_users_nb() == 0:
-            await self.redis_ops.clear_all_data()
         
         # Remove this channel from the group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)

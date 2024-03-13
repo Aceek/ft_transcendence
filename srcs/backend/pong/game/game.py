@@ -168,8 +168,6 @@ class GameLogic:
               print(f"An unexpected error occurred: {e}")
         finally:
             await self.redis_ops.clear_all_data()
-            print("All Redis room data cleared successfully.")
-
 
     async def game_tick(self, delta_time):
         # Update the ball position in fucntion on vellocity and delta time
