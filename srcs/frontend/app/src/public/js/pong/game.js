@@ -89,7 +89,9 @@ export class Game {
 
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();
+        console.log(`Paddle side assigned: ${this.receivedSide}`);
     }
+    
     
     handleCountdown(seconds) {
         this.countdown = seconds;

@@ -19,6 +19,10 @@ export class Renderer {
         }
         
         this.handleGameStatusMessages();
+
+        if (this.game.receivedSide === "spectator") {
+            this.messages.drawSpectatorModeMessage();
+        }
     }
 
     clearCanvas() {

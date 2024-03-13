@@ -4,6 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 from .paddle import Paddle
 from .connect_utils import *
+from ..game.utils import get_player_key_map
 from ..game.channel_com import ChannelCom
 from ..game.game import GameLogic
 from ..game.enum import GameStatus
@@ -13,6 +14,8 @@ from ..database.database_ops import DatabaseOps
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.assigned = False
 
     # -------------------------------CONNECT-----------------------------------
 
@@ -38,19 +41,23 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
         self.paddle = Paddle(self.user_id, self.redis_ops, self.player_nb)
-        await self.paddle.assignment()
-        await self.paddle.set_boundaries()
-        await self.paddle.set_axis_keys()
+        self.assigned = await self.paddle.assignment(self.player_nb)
+        if self.assigned == True:
+            await self.paddle.set_boundaries()
+            await self.paddle.set_axis_keys()
         await self.send_paddle_assignement()
 
         # Once paddle has been assigned, notify the server that the player is assigned and ready to play
-        await self.redis_ops.add_connected_users(self.user_id)
-        await self.database_ops.set_user_status(self.user_id, "in-game")
+        if self.assigned == True:
+            await self.redis_ops.add_connected_users(self.user_id)
+            await self.database_ops.set_user_status(self.user_id, "in-game")
+        else:
+            await self.database_ops.set_user_status(self.user_id, "spectacting")
 
         # Check if the client is the first to connect to the room; 
         # if so, client acquire the game logic flag and start game logic in a new task
         current_status = await self.redis_ops.get_game_status()
-        if current_status is None:
+        if current_status is None and self.assigned == True:
             if await self.redis_ops.add_game_logic_flag():
                 asyncio.create_task(GameLogic(self).run())
         else:
@@ -61,19 +68,20 @@ class GameConsumer(AsyncWebsocketConsumer):
                 
     async def disconnect(self, close_code):
         
-        # If the game is in progress, set its status to suspended
-        current_status = await self.redis_ops.get_game_status()
-        if current_status != GameStatus.COMPLETED:
-            await self.redis_ops.set_game_status(GameStatus.SUSPENDED)
+        if self.assigned:
+            # If the game is in progress, set its status to suspended
+            current_status = await self.redis_ops.get_game_status()
+            if current_status != GameStatus.COMPLETED:
+                await self.redis_ops.set_game_status(GameStatus.SUSPENDED)
 
-        # Remove this user from the list of connected users and delete any restart request from them
-        await self.redis_ops.del_connected_user(self.user_id)
-        await self.redis_ops.del_restart_request(self.user_id)
-        # Potentially not online anymore -> to be tested
+            # Remove this user from the list of connected users and delete any restart request from them
+            await self.redis_ops.del_connected_user(self.user_id)
+            await self.redis_ops.del_restart_request(self.user_id)
+            # Potentially not online anymore -> to be tested
         await self.database_ops.set_user_status(self.user_id, "online")
         
-        # Remove this channel from the group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        # # Remove this channel from the group
+        # await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     # -------------------------------RECEIVE-----------------------------------
         
@@ -129,11 +137,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def send_paddle_assignement(self):
         if self.paddle.side is not None:
+
+            key_map = get_player_key_map(self.paddle.side)
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',
-                'paddle_side': self.paddle.side.name,
+                'paddle_side': key_map['position'],
             }))
-            # print(f"paddle side {self.paddle.side.name} assigned for user: {self.user_id}")
+            print(f"paddle side {key_map['position']} assigned for user: {self.user_id}")
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
 

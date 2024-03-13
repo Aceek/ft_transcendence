@@ -12,3 +12,4 @@ class PlayerPosition(Enum):
     RIGHT = 1
     BOTTOM = 2
     UP = 3
+    SPEC = 4

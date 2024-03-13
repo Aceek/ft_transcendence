@@ -33,6 +33,9 @@ def get_player_key_map(position):
             "score": "up_s",
             "paddle_y": "up_y",
             "paddle_x": "up_x"
+        },
+        PlayerPosition.SPEC: {
+            "position": "spectator",
         }
     }
 

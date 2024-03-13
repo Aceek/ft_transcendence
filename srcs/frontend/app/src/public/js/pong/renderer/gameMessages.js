@@ -35,7 +35,9 @@ export class GameMessages extends BaseDrawing {
 
     drawGameOverMessages() {
         this.drawPlayerNames();
-        if (this.game.type === "tournament") {
+        if (this.game.receivedSide === "spectator") {
+            this.drawTwoPartMessage("Game Over!", "");
+        } else if (this.game.type === "tournament") {
             this.drawTwoPartMessage("Game Over!",
                 "Press Enter to go back to tournament page...");
         } else if (this.game.type === "standard") {
@@ -46,6 +48,7 @@ export class GameMessages extends BaseDrawing {
             this.drawTwoPartMessage("Game Over!", restartMessage);
         }
     }
+    
     
     drawTwoPartMessage(mainText, subText) {
         const gap = 50;
@@ -129,5 +132,16 @@ export class GameMessages extends BaseDrawing {
                 break;
         }
         return { nameX, nameY };
+    }
+    
+    drawSpectatorModeMessage() {
+        const message = "Spectator Mode";
+        this.setTextProperties();
+        this.setFont(30);
+        
+        const x = this.game.canvasWidth / 2;
+        const y = this.game.canvasHeight - 30;
+        
+        this.drawText(message, x, y, "#fff", "center");
     }
 }
