@@ -20,6 +20,8 @@ class GameLogic:
         self.player_nb = consumers.player_nb
         self.type = consumers.game_type
         
+        print("-----TYPE :", self.type)
+
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
         if self.player_nb > 2:

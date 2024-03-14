@@ -70,6 +70,7 @@ export class Game {
         this.mode = staticData.gameMode;
         this.type = staticData.gameType;
         this.tournamentId = staticData.tournamentId;
+        console.log(`type: ${this.type}`);
     }
     
     handleDynamicData(dynamicData) {
