@@ -2,6 +2,7 @@ import asyncio
 import time
 
 from .enum import GameStatus
+from .config import READY_TIMER, FORFEIT_TIMER, WAIT_START_TIMER
 
 class GameSync:
     def __init__(self, game):
@@ -11,7 +12,7 @@ class GameSync:
         self.game_type = game.type
         self.channel_com = game.channel_com
 
-    async def countdown(self, duration=3):
+    async def countdown(self, duration=READY_TIMER):
         print(f"Countdown starting for {duration} seconds.")
         for i in range(duration, 0, -1):
             await self.channel_com.send_countdown(i)
@@ -55,7 +56,7 @@ class GameSync:
 
     async def wait_for_tournament_to_start(self):
         start_time = time.time()
-        duration = 15
+        duration = WAIT_START_TIMER
 
         while time.time() - start_time < duration:
             connected_users_count = await self.redis_ops.get_connected_users_nb()
@@ -70,7 +71,7 @@ class GameSync:
 
     async def wait_for_tournament_to_resume(self):
         start_time = time.time()
-        duration = 15
+        duration = FORFEIT_TIMER
 
         while time.time() - start_time < duration:
             connected_users_count = await self.redis_ops.get_connected_users_nb()
