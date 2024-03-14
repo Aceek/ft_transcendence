@@ -163,6 +163,8 @@ class GameLogic:
             elif self.type == "tournament":
                 if self.winner is not None:
                     await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
+                await self.game_sync.wait_for_tournament_to_exit(GameStatus.COMPLETED)
+
 
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")

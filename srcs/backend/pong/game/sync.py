@@ -2,7 +2,7 @@ import asyncio
 import time
 
 from .enum import GameStatus
-from .config import READY_TIMER, FORFEIT_TIMER, WAIT_START_TIMER
+from .config import READY_TIMER, FORFEIT_TIMER, EXIT_GAME_LOGIC_TIMER
 
 class GameSync:
     def __init__(self, game):
@@ -38,7 +38,7 @@ class GameSync:
             if current_status == GameStatus.SUSPENDED:
                 return await self.wait_for_tournament_to_resume()
             elif current_status == GameStatus.UNSTARTED:
-                return await self.wait_for_tournament_to_start()
+                return not await self.wait_for_tournament_to_exit(current_status)
 
         return await self.wait_for_players(
             self.check_for_players_ready,
@@ -54,20 +54,25 @@ class GameSync:
             return True
         return False
 
-    async def wait_for_tournament_to_start(self):
+    async def wait_for_tournament_to_exit(self, current_status):
         start_time = time.time()
-        duration = WAIT_START_TIMER
+        last_connected_time = start_time
 
-        while time.time() - start_time < duration:
+        while True:
             connected_users_count = await self.redis_ops.get_connected_users_nb()
-            if connected_users_count == self.player_nb:
-                print("All players connected. Tournament game can start.")
-                return True
-            
-            await asyncio.sleep(1)
 
-        print("Not all players were ready for the tournament to start.")
-        return False
+            if current_status != GameStatus.COMPLETED and \
+                connected_users_count == self.player_nb:
+                print("All players connected. Tournament game can start.")
+                return False
+            elif connected_users_count > 0:
+                last_connected_time = time.time()
+            
+            if time.time() - last_connected_time > EXIT_GAME_LOGIC_TIMER:
+                print("No connected users anymore, game loop can exit.")
+                return True
+
+            await asyncio.sleep(1)
 
     async def wait_for_tournament_to_resume(self):
         start_time = time.time()
