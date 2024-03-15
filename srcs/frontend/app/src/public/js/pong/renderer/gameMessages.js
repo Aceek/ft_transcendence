@@ -144,4 +144,27 @@ export class GameMessages extends BaseDrawing {
         
         this.drawText(message, x, y, "#fff", "center");
     }
+    
+    drawPerformanceMetrics() {
+        this.setTextProperties();
+        this.setFont(20);
+        
+        const rightPadding = 10;
+        const metricsX = this.game.canvasWidth - rightPadding;
+        let metricsY = 30;
+        
+        this.ctx.textAlign = 'right';
+        
+        if (typeof this.game.fps === 'number') {
+            const fpsText = `${Math.round(this.game.fps)} fps`;
+            this.drawText(fpsText, metricsX, metricsY, "#fff");
+        }
+        
+        metricsY += 30;
+        
+        if (typeof this.game.movingAverageLatency === 'number') {
+            const latencyText = `${Math.round(this.game.movingAverageLatency)} ms`;
+            this.drawText(latencyText, metricsX, metricsY, "#fff");
+        }
+    }
 }

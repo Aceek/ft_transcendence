@@ -16,6 +16,7 @@ export class Renderer {
 
         if (this.game.status !== -1) {
             this.drawGameActiveElements();
+            this.messages.drawPerformanceMetrics();
         }
         
         this.handleGameStatusMessages();
