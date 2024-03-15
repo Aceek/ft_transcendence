@@ -16,8 +16,7 @@ export class Game {
         this.isInitialized = false;
         this.countdown = null;
         this.latency = null;
-        this.movingAverageLatency = 0;
-        this.fps = 0;
+        this.fps = 60;
 
         // Game configuration properties
         this.canvasWidth = 0;
