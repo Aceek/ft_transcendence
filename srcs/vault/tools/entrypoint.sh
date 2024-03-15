@@ -33,6 +33,9 @@ export VAULT_TOKEN=$(cat /vault/secrets/vault_token.cfg)
 # Generate the tokens for each services
 vault token create -policy=db-policy -period=1h -orphan > /vault/secrets/db/token.cfg
 vault token create -policy=api-policy -period=1h -orphan > /vault/secrets/api/token.cfg
+vault token create -policy=elk-setup-policy -period=1h -orphan > /vault/secrets/elk-setup/token.cfg
+vault token create -policy=elk-es01-policy -period=1h -orphan > /vault/secrets/elk-es01/token.cfg
+vault token create -policy=elk-kibana-policy -period=1h -orphan > /vault/secrets/elk-kibana/token.cfg
 
 # Unset the root token
 unset VAULT_TOKEN

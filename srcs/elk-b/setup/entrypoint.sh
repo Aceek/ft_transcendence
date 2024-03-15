@@ -1,5 +1,15 @@
 #!/bin/bash
 
+apt-get update && apt-get install -y curl jq
+
+export VAULT_TOKEN=$(grep 'token ' /secret/token.cfg | awk '{print $2}')
+
+export ELASTIC_PASSWORD=$(curl --cacert /vault-cert/vault.crt -X 'GET' 'https://vault:8200/v1/secret/elastic_passwd' -H 'accept */*' -H "X-Vault-Token: $VAULT_TOKEN" | jq -r .data.password)
+
+export KIBANA_PASSWORD=$(curl --cacert /vault-cert/vault.crt -X 'GET' 'https://vault:8200/v1/secret/kibana_passwd' -H 'accept */*' -H "X-Vault-Token: $VAULT_TOKEN" | jq -r .data.password)
+
+export LOGSTASH_INTERNAL_PASSWORD=$(curl --cacert /vault-cert/vault.crt -X 'GET' 'https://vault:8200/v1/secret/logstash_internal' -H 'accept */*' -H "X-Vault-Token: $VAULT_TOKEN" | jq -r .data.password)
+
 if [ x${ELASTIC_PASSWORD} == x ]; then
           echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
           exit 1;

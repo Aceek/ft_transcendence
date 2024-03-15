@@ -19,6 +19,9 @@ volumes:
   db-secret:
   api-secret:
   nginx-certs:
+  elk-setup-secret:
+  elk-es01-secret:
+  elk-kibana-secret:
 
 services:
   db:
@@ -100,26 +103,26 @@ services:
       - /app/node_modules
     command: npm start
 
-  nginx:
-    container_name: nginx
-    build: 
-      context: nginx/
-      dockerfile: Dockerfile
-    ports:
-      - "443:443"
-      - "80:80"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./frontend/app/src:/usr/share/nginx/html
-      - nginx-certs:/usr/share/nginx/certs
-      - ./backend/media:/usr/share/nginx/media
-    depends_on:
-      backend:
-        condition: service_healthy
-      frontend:
-        condition: service_started
-    networks:
-      - transcendence
+  # nginx:
+  #   container_name: nginx
+  #   build: 
+  #     context: nginx/
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "443:443"
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/conf.d:/etc/nginx/conf.d
+  #     - ./frontend/app/src:/usr/share/nginx/html
+  #     - nginx-certs:/usr/share/nginx/certs
+  #     - ./backend/media:/usr/share/nginx/media
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
+  #     frontend:
+  #       condition: service_started
+  #   networks:
+  #     - transcendence
 
   certs-generator:
     image: alpine
@@ -138,106 +141,106 @@ services:
         openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 -keyout /vault-key/vault.key -out /vault-cert/vault.crt -config /openssl.cnf -extensions 'v3_req';
       fi;
       "
+
   # Elasticsearch + Kibana + Logstash + filebeat  (Secure cert)
-  # setup:
-  #   build:
-  #     context: ./elk-b/setup
-  #     args:
-  #       ELASTIC_VERSION: ${STACK_VERSION}
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./elk-b/setup/entrypoint.sh:/entrypoint.sh:ro,Z
-  #     - certs:/usr/share/elasticsearch/config/certs
-  #     - ./elk-b/setup/saved_objects.ndjson:/saved_objects.ndjson:ro,Z
-  #   user: "0"
-  #   healthcheck:
-  #     test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
-  #     interval: 1s
-  #     timeout: 5s
-  #     retries: 120
+  setup:
+    build:
+      context: ./elk-b/setup
+      args:
+        ELASTIC_VERSION: ${STACK_VERSION}
+    env_file:
+      - .env
+    volumes:
+      - ./elk-b/setup/entrypoint.sh:/entrypoint.sh:ro,Z
+      - certs:/usr/share/elasticsearch/config/certs
+      - ./elk-b/setup/saved_objects.ndjson:/saved_objects.ndjson:ro,Z
+      - elk-setup-secret:/secret/
+      - vault-cert:/vault-cert
+    user: "0"
+    depends_on:
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
+      interval: 1s
+      timeout: 5s
+      retries: 120
+    networks:
+      - transcendence
 
-  # es01:
-  #   container_name: es01
-  #   depends_on:
-  #     setup:
-  #       condition: service_healthy
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
-  #   labels:
-  #     co.elastic.logs/module: elasticsearch
-  #   volumes:
-  #     - certs:/usr/share/elasticsearch/config/certs
-  #     - esdata01:/usr/share/elasticsearch/data
-  #   ports:
-  #     - ${ES_PORT}:9200
-  #   environment:
-  #     - node.name=es01
-  #     - cluster.name=${CLUSTER_NAME}
-  #     - discovery.type=single-node
-  #     - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-  #     - bootstrap.memory_lock=true
-  #     - xpack.security.enabled=true
-  #     - xpack.security.http.ssl.enabled=true
-  #     - xpack.security.http.ssl.key=certs/es01/es01.key
-  #     - xpack.security.http.ssl.certificate=certs/es01/es01.crt
-  #     - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
-  #     - xpack.security.transport.ssl.enabled=true
-  #     - xpack.security.transport.ssl.key=certs/es01/es01.key
-  #     - xpack.security.transport.ssl.certificate=certs/es01/es01.crt
-  #     - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
-  #     - xpack.security.transport.ssl.verification_mode=certificate
-  #     - xpack.license.self_generated.type=${LICENSE}
-  #   mem_limit: ${ES_MEM_LIMIT}
-  #   ulimits:
-  #     memlock:
-  #       soft: -1
-  #       hard: -1
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD-SHELL",
-  #         "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'"
-  #       ]
-  #     interval: 10s
-  #     timeout: 10s
-  #     retries: 120
+  es01:
+    container_name: es01
+    depends_on:
+      vault:
+        condition: service_healthy
+      setup:
+        condition: service_healthy
+    build:
+      context: ./elk-b/es01
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    labels:
+      co.elastic.logs/module: elasticsearch
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - esdata01:/usr/share/elasticsearch/data
+      - elk-es01-secret:/secret
+      - vault-cert:/vault-cert
+      - ./vault/services/es01.sh:/es01.sh:ro,Z
+    ports:
+      - ${ES_PORT}:9200
+    entrypoint: sh /es01.sh
+    mem_limit: ${ES_MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    networks:
+      - transcendence
 
 
-  # kibana:
-  #   container_name: kibana
-  #   depends_on:
-  #     es01:
-  #       condition: service_healthy
-  #   image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
-  #   labels:
-  #     co.elastic.logs/module: kibana
-  #   volumes:
-  #     - certs:/usr/share/kibana/config/certs
-  #     - kibanadata:/usr/share/kibana/data
-  #   ports:
-  #     - ${KIBANA_PORT}:5601
-  #   environment:
-  #     - SERVERNAME=kibana
-  #     - ELASTICSEARCH_HOSTS=https://es01:9200
-  #     - ELASTICSEARCH_USERNAME=kibana_system
-  #     - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
-  #     - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
-  #     - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
-  #     - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
-  #     - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
-  #     - SERVER_SSL_ENABLED=true
-  #     - SERVER_SSL_KEY=config/certs/kibana/kibana.key
-  #     - SERVER_SSL_CERTIFICATE=config/certs/kibana/kibana.crt
-  #   mem_limit: ${KB_MEM_LIMIT}
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD-SHELL",
-  #         "curl -f --cacert config/certs/kibana/kibana.crt https://localhost:5601"
-  #       ]
-  #     interval: 10s
-  #     timeout: 10s
-  #     retries: 120
+  kibana:
+    container_name: kibana
+    build:
+      context: ./elk-b/kibana
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    depends_on:
+      es01:
+        condition: service_healthy
+    labels:
+      co.elastic.logs/module: kibana
+    volumes:
+      - certs:/usr/share/kibana/config/certs
+      - kibanadata:/usr/share/kibana/data
+      - elk-kibana-secret:/secret
+      - vault-cert:/vault-cert
+      - ./vault/services/kibana.sh:/kibana.sh:ro,Z
+    # entrypoint: tail -f /dev/null
+    entrypoint: sh /kibana.sh
+    ports:
+      - ${KIBANA_PORT}:5601
+    mem_limit: ${KB_MEM_LIMIT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f --cacert config/certs/kibana/kibana.crt https://localhost:5601"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    networks:
+      - transcendence
 
 
   # metricbeat01:
@@ -329,6 +332,9 @@ services:
       # Services tokens
       - db-secret:/vault/secrets/db
       - api-secret:/vault/secrets/api
+      - elk-setup-secret:/vault/secrets/elk-setup
+      - elk-es01-secret:/vault/secrets/elk-es01
+      - elk-kibana-secret:/vault/secrets/elk-kibana
     healthcheck:
       test: ["CMD", "vault", "status"]
       interval: 30s
