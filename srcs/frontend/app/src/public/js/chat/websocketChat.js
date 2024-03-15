@@ -46,13 +46,16 @@ function handleWebSocketError(error, reject) {
   reject(error);
 }
 
+
 export function etablishConnectionWebSocket(friendsListIds) {
   return new Promise((resolve, reject) => {
     if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
       resolve();
       return;
     }
-    const newChatSocket = new WebSocket("wss://localhost/ws/chat");
+    const { hostname, port } = window.location;
+    const newChatSocket = new WebSocket(`wss://${hostname}${port ? `:${port}` : ''}/ws/chat`);
+    console.log(newChatSocket);
     setWebSocket(newChatSocket);
 
     chatSocket.onopen = () => handleWebSocketOpen(friendsListIds, resolve);

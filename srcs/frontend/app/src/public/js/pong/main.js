@@ -57,7 +57,10 @@ let lastFrameTime = Date.now();
 let displayedFps = 0;
 const alpha = 0.1;
 
-function updateDisplayedFps(fps) {
+function updateDisplayedFps(game, fps) {
+    if(!game) {
+        return;
+    }
     displayedFps = alpha * fps + (1 - alpha) * displayedFps;
     game.fps = Math.round(displayedFps);
 }
@@ -68,14 +71,14 @@ function mainLoop() {
 
     if (deltaTime > 0) {
         const instantFps = 1000 / deltaTime;
-        updateDisplayedFps(instantFps);
+        updateDisplayedFps(game, instantFps);
     }
     
-    if (game && game.status === 1) {
-        const gameDeltaTime = now - game.ball.lastServerUpdate;
-        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
-        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
-    }
+    // if (game && game.status === 1) {
+    //     const gameDeltaTime = now - game.ball.lastServerUpdate;
+    //     game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, deltaTime);
+    //     game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, deltaTime);
+    // }
 
     renderer && renderer.draw();
 

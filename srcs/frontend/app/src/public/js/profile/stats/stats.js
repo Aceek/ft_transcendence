@@ -84,7 +84,6 @@ async function displaySummary(data) {
       <div class="summary-stat"><i class="fas fa-thumbs-down icon"></i>Défaites : ${data.lose}</div>
       <div class="summary-stat"><i class="fas fa-chart-line icon"></i>ELO : ${data.elo}</div>
       <div class="summary-stat"><i class="fas fa-fire icon"></i>Série de victoires : ${data.win_streak}</div>
-      <div class="summary-stat"><i class="fas fa-snowflake icon"></i>Série de défaites : ${data.lose_streak}</div>
       <div class="summary-stat"><i class="fas fa-crown icon"></i>Plus grande série de victoires : ${data.biggest_win_streak}</div>
     `;
   } catch (error) {

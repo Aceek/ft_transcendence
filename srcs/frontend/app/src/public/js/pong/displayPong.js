@@ -9,8 +9,8 @@ export async function getPongGamePage() {
     document.getElementById("main").innerHTML = pongHtml;
     loadProfileCss("/public/css/pong.css");
   
-    await loadScript("/public/js/pong/main.js").then(() => {
-        setupGame();
+    await loadScript("/public/js/pong/main.js").then(async() => {
+        await setupGame();
     });
   
   } catch (error) {
