@@ -69,11 +69,26 @@ export class GameMessages extends BaseDrawing {
         this.setFont(100);
         this.game.players.forEach(player => {
             const { x, y } = this.calculateScorePosition(player);
+            let align = this.getScoreAlignment(player);
+            this.ctx.textAlign = align;
             if (player.score !== undefined && !isNaN(player.score)) {
                 this.drawText(player.score.toString(), x, y, player.color);
             }
         });
+        this.ctx.textAlign = 'left';
     }
+    
+    getScoreAlignment(player) {
+        switch(player.side) {
+            case 'left':
+                return 'left';
+            case 'right':
+                return 'right';
+            default:
+                return 'center';
+        }
+    }
+    
     
 
     calculateScorePosition(player) {
