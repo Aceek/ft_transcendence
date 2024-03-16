@@ -22,6 +22,9 @@ volumes:
   elk-setup-secret:
   elk-es01-secret:
   elk-kibana-secret:
+  elk-metricbeat01-secret:
+  elk-logstash01-secret:
+  elk-filebeat01-secret:
 
 services:
   db:
@@ -103,26 +106,26 @@ services:
       - /app/node_modules
     command: npm start
 
-  # nginx:
-  #   container_name: nginx
-  #   build: 
-  #     context: nginx/
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "443:443"
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx/conf.d:/etc/nginx/conf.d
-  #     - ./frontend/app/src:/usr/share/nginx/html
-  #     - nginx-certs:/usr/share/nginx/certs
-  #     - ./backend/media:/usr/share/nginx/media
-  #   depends_on:
-  #     backend:
-  #       condition: service_healthy
-  #     frontend:
-  #       condition: service_started
-  #   networks:
-  #     - transcendence
+  nginx:
+    container_name: nginx
+    build: 
+      context: nginx/
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./frontend/app/src:/usr/share/nginx/html
+      - nginx-certs:/usr/share/nginx/certs
+      - ./backend/media:/usr/share/nginx/media
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - transcendence
 
   certs-generator:
     image: alpine
@@ -225,8 +228,7 @@ services:
       - elk-kibana-secret:/secret
       - vault-cert:/vault-cert
       - ./vault/services/kibana.sh:/kibana.sh:ro,Z
-    # entrypoint: tail -f /dev/null
-    entrypoint: sh /kibana.sh
+    entrypoint: bash /kibana.sh
     ports:
       - ${KIBANA_PORT}:5601
     mem_limit: ${KB_MEM_LIMIT}
@@ -243,73 +245,81 @@ services:
       - transcendence
 
 
-  # metricbeat01:
-  #   container_name: metricbeat01
-  #   build:
-  #     context: ./elk-b/metricbeat
-  #     args:
-  #       METRICBEAT_VERSION: ${STACK_VERSION}
-  #   depends_on:
-  #     es01:
-  #       condition: service_healthy
-  #     kibana:
-  #       condition: service_healthy
-  #   user: root
-  #   volumes:
-  #     - certs:/usr/share/metricbeat/certs
-  #     - metricbeatdata01:/usr/share/metricbeat/data
-  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
-  #     - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
-  #     - "/proc:/hostfs/proc:ro"
-  #     - "/:/hostfs:ro"
-  #   environment:
-  #     - ELASTIC_USER=elastic
-  #     - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-  #     - ELASTIC_HOSTS=https://es01:9200
-  #     - KIBANA_HOSTS=https://kibana:5601
-  #     - LOGSTASH_HOSTS=http://logstash01:9600
+  metricbeat01:
+    container_name: metricbeat01
+    build:
+      context: ./elk-b/metricbeat
+      args:
+        METRICBEAT_VERSION: ${STACK_VERSION}
+    depends_on:
+      es01:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    user: root
+    volumes:
+      - certs:/usr/share/metricbeat/certs
+      - metricbeatdata01:/usr/share/metricbeat/data
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+      - "/proc:/hostfs/proc:ro"
+      - "/:/hostfs:ro"
+      - vault-cert:/vault-cert
+      - elk-metricbeat01-secret:/secret
+      - ./vault/services/metricbeat01.sh:/metricbeat01.sh:ro,Z
+    networks:
+      - transcendence
+    entrypoint: bash /metricbeat01.sh
 
-  # filebeat01:
-  #   container_name: filebeat01
-  #   build:
-  #     context: ./elk-b/filebeat
-  #     args:
-  #       FILEBEAT_VERSION: ${STACK_VERSION}
-  #   depends_on:
-  #     es01:
-  #       condition: service_healthy
-  #     kibana:
-  #       condition: service_healthy
-  #   user: root
-  #   volumes:
-  #     - certs:/usr/share/filebeat/certs
-  #     - filebeatdata01:/usr/share/filebeat/data
-  #     - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
-  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
-  #   environment:
-  #     - LOGSTASH_HOSTS=logstash01:5044
+  filebeat01:
+    container_name: filebeat01
+    build:
+      context: ./elk-b/filebeat
+      args:
+        FILEBEAT_VERSION: ${STACK_VERSION}
+    depends_on:
+      es01:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    user: root
+    volumes:
+      - certs:/usr/share/filebeat/certs
+      - filebeatdata01:/usr/share/filebeat/data
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - elk-filebeat01-secret:/secret
+      - vault-cert:/vault-cert
+      - ./vault/services/filebeat01.sh:/filebeat01.sh:ro,Z
+    networks:
+      - transcendence
+    entrypoint: bash /filebeat01.sh
 
-  # logstash01:
-  #   container_name: logstash01
-  #   depends_on:
-  #     es01:
-  #       condition: service_healthy
-  #     kibana:
-  #       condition: service_healthy
-  #   image: docker.elastic.co/logstash/logstash:${STACK_VERSION}
-  #   labels:
-  #     co.elastic.logs/module: logstash
-  #   user: root
-  #   volumes:
-  #     - certs:/usr/share/logstash/certs
-  #     - logstashdata01:/usr/share/logstash/data
-  #     - ./elk-b/logstash/pipeline:/usr/share/logstash/pipeline
-  #     - ./elk-b/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
-  #   environment:
-  #     - xpack.monitoring.enabled=false
-  #     - ELASTIC_USER=elastic
-  #     - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-  #     - ELASTIC_HOSTS=https://es01:9200
+  logstash01:
+    container_name: logstash01
+    build:
+      context: ./elk-b/logstash
+      args:
+        STACK_VERSION: ${STACK_VERSION}
+    depends_on:
+      es01:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    labels:
+      co.elastic.logs/module: logstash
+    user: root
+    volumes:
+      - certs:/usr/share/logstash/certs
+      - logstashdata01:/usr/share/logstash/data
+      - ./elk-b/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./elk-b/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - elk-logstash01-secret:/secret
+      - vault-cert:/vault-cert
+      - ./vault/services/logstash01.sh:/logstash01.sh:ro,Z
+    networks:
+      - transcendence
+    entrypoint: bash /logstash01.sh
 
   vault:
     image: hashicorp/vault:latest
@@ -335,6 +345,9 @@ services:
       - elk-setup-secret:/vault/secrets/elk-setup
       - elk-es01-secret:/vault/secrets/elk-es01
       - elk-kibana-secret:/vault/secrets/elk-kibana
+      - elk-metricbeat01-secret:/vault/secrets/elk-metricbeat01
+      - elk-logstash01-secret:/vault/secrets/elk-logstash01
+      - elk-filebeat01-secret:/vault/secrets/elk-filebeat01
     healthcheck:
       test: ["CMD", "vault", "status"]
       interval: 30s

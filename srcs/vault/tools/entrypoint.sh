@@ -36,6 +36,9 @@ vault token create -policy=api-policy -period=1h -orphan > /vault/secrets/api/to
 vault token create -policy=elk-setup-policy -period=1h -orphan > /vault/secrets/elk-setup/token.cfg
 vault token create -policy=elk-es01-policy -period=1h -orphan > /vault/secrets/elk-es01/token.cfg
 vault token create -policy=elk-kibana-policy -period=1h -orphan > /vault/secrets/elk-kibana/token.cfg
+vault token create -policy=elk-metricbeat01-policy -period=1h -orphan > /vault/secrets/elk-metricbeat01/token.cfg
+vault token create -policy=elk-logstash01-policy -period=1h -orphan > /vault/secrets/elk-logstash01/token.cfg
+vault token create -policy=elk-filebeat01-policy -period=1h -orphan > /vault/secrets/elk-filebeat01/token.cfg
 
 # Unset the root token
 unset VAULT_TOKEN

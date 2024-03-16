@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export VAULT_TOKEN=$(grep 'token ' /secret/token.cfg | awk '{print $2}')
 
@@ -26,6 +26,6 @@ export SERVER_SSL_KEY=$(echo $KIBANA | jq -r .server_ssl_key)
 
 export SERVER_SSL_CERTIFICATE=$(echo $KIBANA | jq -r .server_ssl_certificate)
 
-# exec /bin/tini -- /usr/local/bin/kibana-docker
+exec /bin/tini -- /usr/local/bin/kibana-docker
 
-exec /usr/local/bin/kibana-docker
+# exec /usr/local/bin/kibana-docker

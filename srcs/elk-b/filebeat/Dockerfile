@@ -7,5 +7,8 @@ FROM docker.elastic.co/beats/filebeat:${FILEBEAT_VERSION}
 COPY --chown=root:filebeat ./filebeat.yml /usr/share/filebeat/filebeat.yml
 
 USER root
+
+RUN apt-get update && apt-get install -y curl jq
+
 RUN chmod go-w /usr/share/filebeat/filebeat.yml
 # USER filebeat
