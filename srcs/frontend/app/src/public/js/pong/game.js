@@ -85,10 +85,7 @@ export class Game {
     }
 
     
-    handleCompactedDynamicData(ball_data, players_data, serverTimestamp) {
-        const serverTimestampMs = parseInt(serverTimestamp, 10);
-        this.latency = Date.now() - serverTimestampMs;
-        updateMovingAverageLatency(this);
+    handleCompactedDynamicData(ball_data, players_data) {
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
         this.players.forEach((player) => {
             player.handleCompactedDynamicData(players_data);

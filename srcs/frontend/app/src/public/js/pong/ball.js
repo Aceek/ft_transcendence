@@ -24,23 +24,23 @@ export class Ball {
     const vx = parseFloat(ball_data[2]);
     const vy = parseFloat(ball_data[3]);
     
-    // if (latency == null || gameStatus !== 1) {
-    //     this.x = serverX;
-    //     this.y = serverY;
-    // } else {
-    //     const latencyInSeconds = latency / 1000;
-    //     const adjustedX = serverX + vx * latencyInSeconds;
-    //     const adjustedY = serverY + vy * latencyInSeconds;
+    if (latency == null || gameStatus !== 1) {
+        this.x = serverX;
+        this.y = serverY;
+    } else {
+        const latencyInSeconds = latency / 1000;
+        const adjustedX = serverX + vx * latencyInSeconds;
+        const adjustedY = serverY + vy * latencyInSeconds;
         
-    //     this.lastServerX = adjustedX;
-    //     this.lastServerY = adjustedY;
-    //     this.x = adjustedX;
-    //     this.y = adjustedY;
-    // }
+        this.lastServerX = adjustedX;
+        this.lastServerY = adjustedY;
+        this.x = adjustedX;
+        this.y = adjustedY;
+    }
     
-    //test purpose
-    this.x = serverX;
-    this.y = serverY;
+    // //test purpose
+    // this.x = serverX;
+    // this.y = serverY;
 
     this.vx = vx;
     this.vy = vy;
