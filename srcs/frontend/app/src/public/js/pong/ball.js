@@ -37,17 +37,13 @@ export class Ball {
         this.x = adjustedX;
         this.y = adjustedY;
     }
-    
-    // //test purpose
-    // this.x = serverX;
-    // this.y = serverY;
 
     this.vx = vx;
     this.vy = vy;
 
-    // // Print statements for server ball
+    // Print statements for server ball
     // console.log("Server Ball:");
-    // console.log("X:", serverX, "Y:", serverY);
+    // console.log("X:", this.lastServerX, "Y:", this.lastServerY);
     
     this.lastServerUpdate = Date.now()
   }

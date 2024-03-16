@@ -52,7 +52,6 @@ export function messageHandler(socket, game) {
         const data = JSON.parse(event.data);
         if (data.type == "pong") {
             game.latency = (Date.now() - data.timestamp) / 2;
-            console.log("Latency: ", game.latency, "ms");
         } else {
             handleWebSocketMessage(data, game);
         }
