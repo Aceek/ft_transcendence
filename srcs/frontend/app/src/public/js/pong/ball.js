@@ -44,6 +44,10 @@ export class Ball {
 
     this.vx = vx;
     this.vy = vy;
+
+    // // Print statements for server ball
+    // console.log("Server Ball:");
+    // console.log("X:", serverX, "Y:", serverY);
     
     this.lastServerUpdate = Date.now()
   }

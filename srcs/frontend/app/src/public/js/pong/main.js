@@ -22,6 +22,7 @@ export async function setupGame() {
     try {
         pongSocket = await initializeSocket();
         messageHandler(pongSocket, game);
+        startSendingPing();
 
         new KeyEventController(pongSocket, game);
 
@@ -32,6 +33,17 @@ export async function setupGame() {
     } catch (error) {
         console.error("Failed to initialize WebSocket:", error);
     }
+}
+
+function startSendingPing() {
+    setInterval(() => {
+        if (pongSocket.readyState === WebSocket.OPEN) {
+            pongSocket.send(JSON.stringify({
+                type: "ping",
+                timestamp: Date.now()
+            }));
+        }
+    }, 1000);
 }
 
 function waitForInitialization() {
@@ -76,8 +88,12 @@ function mainLoop() {
     
     // if (game && game.status === 1) {
     //     const gameDeltaTime = now - game.ball.lastServerUpdate;
-    //     game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, deltaTime);
-    //     game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, deltaTime);
+    //     // game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
+    //     // game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
+    //     game.ball.x = interpolatePosition(game.ball.x, game.ball.vx, gameDeltaTime);
+    //     game.ball.y = interpolatePosition(game.ball.y, game.ball.vy, gameDeltaTime);
+    //     console.log("Interpolation Ball:");
+    //     console.log("X:", game.ball.x, "Y:", game.ball.y);
     // }
 
     renderer && renderer.draw();
