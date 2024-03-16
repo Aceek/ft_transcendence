@@ -65,40 +65,32 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
     return lastPosition + speed * (deltaTime / 1000);
 }
 
-let lastFrameTime = Date.now();
-let displayedFps = 0;
-const alpha = 0.005;
+let frameCount = 0;
+let lastFpsTime = Date.now();
 
-function updateDisplayedFps(fps) {
-    if(!game) {
-        return;
+function updateFps(now) {
+    frameCount++;
+    const delta = now - lastFpsTime;
+    if (game && delta >= 1000) {
+        game.fps = Math.round((frameCount / delta) * 1000);
+        frameCount = 0;
+        lastFpsTime = now;
     }
-    displayedFps = alpha * fps + (1 - alpha) * displayedFps;
-    game.fps = Math.round(displayedFps);
 }
 
 function mainLoop() {
-    const deltaTime = Date.now() - lastFrameTime;
     
-    if (deltaTime > 0) {
-        const instantFps = 1000 / deltaTime;
-        updateDisplayedFps(instantFps);
-    }
+    updateFps(Date.now());
     
     if (game && game.status === 1) {
         const gameDeltaTime = Date.now() - game.ball.lastServerUpdate;
         game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
         game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
-        // console.log("Interpolation Ball:");
-        // console.log("X:", game.ball.x, "Y:", game.ball.y);
     }
 
     renderer && renderer.draw();
-    
-    lastFrameTime = Date.now();
 
     requestAnimationFrame(mainLoop);
 }
 
 requestAnimationFrame(mainLoop);
-

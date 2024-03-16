@@ -37,14 +37,8 @@ export class Ball {
         this.x = adjustedX;
         this.y = adjustedY;
     }
-
     this.vx = vx;
     this.vy = vy;
-
-    // Print statements for server ball
-    // console.log("Server Ball:");
-    // console.log("X:", this.lastServerX, "Y:", this.lastServerY);
-    
     this.lastServerUpdate = Date.now()
   }
 }
