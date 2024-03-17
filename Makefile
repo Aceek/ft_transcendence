@@ -12,7 +12,7 @@ clean:
 	@docker-compose -f $(COMPOSE) down --remove-orphans
 
 fclean : clean
-	docker rmi $$(docker images -q)
+	docker rmi -f $$(docker images -q)
 
 logs:
 ifdef s
