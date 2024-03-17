@@ -6,6 +6,8 @@ import { Game } from './game.js';
 export let pongSocket;
 let game;
 let renderer;
+let animationFrameId = null;
+let pingIntervalId = null;
 
 export async function setupGame() {
     console.log("Pong.js is executed!");
@@ -22,12 +24,22 @@ export async function setupGame() {
     try {
         pongSocket = await initializeSocket();
         messageHandler(pongSocket, game);
-        startSendingPing();
-
+        
         new KeyEventController(pongSocket, game);
 
         waitForInitialization().then(() => {
             canvas.style.display = 'block'; // Make the canvas visible after initialization
+            
+            if (pingIntervalId) {
+                clearInterval(pingIntervalId);
+                pingIntervalId = null;
+            }
+            startSendingPing();
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
             requestAnimationFrame(mainLoop);
         });
     } catch (error) {
@@ -36,7 +48,7 @@ export async function setupGame() {
 }
 
 function startSendingPing() {
-    setInterval(() => {
+    pingIntervalId = setInterval(() => {
         if (pongSocket.readyState === WebSocket.OPEN) {
             pongSocket.send(JSON.stringify({
                 type: "ping",
@@ -61,17 +73,20 @@ function waitForInitialization() {
 
 //-----------------------------MAIN LOOP------------------------------------
 
+let frameCount = 0;
+let lastFpsTime = Date.now();
+
 function interpolatePosition(lastPosition, speed, deltaTime) {
     return lastPosition + speed * (deltaTime / 1000);
 }
 
-let frameCount = 0;
-let lastFpsTime = Date.now();
-
 function updateFps(now) {
-    frameCount++;
+    if (!game) {
+        return;
+    }
+    frameCount += 1;
     const delta = now - lastFpsTime;
-    if (game && delta >= 1000) {
+    if (delta >= 1000) {
         game.fps = Math.round((frameCount / delta) * 1000);
         frameCount = 0;
         lastFpsTime = now;
@@ -90,7 +105,5 @@ function mainLoop() {
 
     renderer && renderer.draw();
 
-    requestAnimationFrame(mainLoop);
+    animationFrameId = requestAnimationFrame(mainLoop);
 }
-
-requestAnimationFrame(mainLoop);
