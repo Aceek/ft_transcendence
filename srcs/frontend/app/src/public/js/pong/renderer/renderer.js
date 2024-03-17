@@ -13,8 +13,8 @@ export class Renderer {
         this.clearCanvas();
         this.elements.drawWhiteDashLine();
         this.messages.drawScores();
-		this.messages.drawPerformanceMetrics();
-
+        this.messages.drawPerformanceMetrics();
+        
         if (this.game.status !== -1) {
             this.drawGameActiveElements();
         }

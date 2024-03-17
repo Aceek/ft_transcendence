@@ -97,6 +97,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Handle "restart_game" message
         elif "type" in data and data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)
+        # Handling different types of messages
+        elif "type" in data and data["type"] == "ping":
+            await self.send_pong(data)
         else:
             print("Received unknown message type or missing key.")
     
@@ -119,13 +122,11 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_compacted_dynamic_data(self, event):
         ball_data = event['ball']
         player_data = event['players']
-        time = event['time']
         
         await self.send(text_data=json.dumps({
             'type': 'game.compacted_dynamic_data',
             'ball': ball_data,
             'players': player_data,
-            'time': time
         }))
 
     async def game_countdown(self, event):
@@ -157,3 +158,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             dynamic_data = await self.redis_ops.get_dynamic_data()
             dynamic_event = {'data': dynamic_data}
             await self.game_dynamic_data(dynamic_event)
+
+    async def send_pong(self, data):
+        await self.send(text_data=json.dumps({
+            'type': 'pong',
+            'timestamp': data['timestamp']
+        }))

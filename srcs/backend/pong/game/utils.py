@@ -11,28 +11,32 @@ def get_player_key_map(position):
             "username": "lp_u",
             "score": "lp_s",
             "paddle_y": "lp_y",
-            "paddle_x": "lp_x"
+            "paddle_x": "lp_x",
+            "ping": "lp_p"
         },
         PlayerPosition.RIGHT: {
             "position": "right",
             "username": "rp_u",
             "score": "rp_s",
             "paddle_y": "rp_y",
-            "paddle_x": "rp_x" 
+            "paddle_x": "rp_x",
+            "ping": "rp_p"
         },
         PlayerPosition.BOTTOM: {
             "position": "bottom",
             "username": "bp_u",
             "score": "bp_s",
             "paddle_y": "bp_y",
-            "paddle_x": "bp_x"
+            "paddle_x": "bp_x",
+            "ping": "bp_p"
         },
         PlayerPosition.UP: {
             "position": "up",
             "username": "up_u",           
             "score": "up_s",
             "paddle_y": "up_y",
-            "paddle_x": "up_x"
+            "paddle_x": "up_x",
+            "ping": "up_p"
         },
         PlayerPosition.SPEC: {
             "position": "spectator",

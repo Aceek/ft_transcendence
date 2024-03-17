@@ -111,8 +111,6 @@ class Paddle:
         finally:
             await lock.release()
 
-
-
     async def check_movement(self, new_pos):
         # Determine the axis and boundary based on the player's side
         current_pos_str = await self.redis_ops.get_dynamic_value(self.key_map[self.axis_key])

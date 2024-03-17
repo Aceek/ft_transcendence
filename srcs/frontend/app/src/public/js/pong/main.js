@@ -22,6 +22,7 @@ export async function setupGame() {
     try {
         pongSocket = await initializeSocket();
         messageHandler(pongSocket, game);
+        startSendingPing();
 
         new KeyEventController(pongSocket, game);
 
@@ -32,6 +33,17 @@ export async function setupGame() {
     } catch (error) {
         console.error("Failed to initialize WebSocket:", error);
     }
+}
+
+function startSendingPing() {
+    setInterval(() => {
+        if (pongSocket.readyState === WebSocket.OPEN) {
+            pongSocket.send(JSON.stringify({
+                type: "ping",
+                timestamp: Date.now()
+            }));
+        }
+    }, 200);
 }
 
 function waitForInitialization() {
@@ -53,36 +65,32 @@ function interpolatePosition(lastPosition, speed, deltaTime) {
     return lastPosition + speed * (deltaTime / 1000);
 }
 
-let lastFrameTime = Date.now();
-let displayedFps = 0;
-const alpha = 0.1;
+let frameCount = 0;
+let lastFpsTime = Date.now();
 
-function updateDisplayedFps(fps) {
-    displayedFps = alpha * fps + (1 - alpha) * displayedFps;
-    game.fps = Math.round(displayedFps);
+function updateFps(now) {
+    frameCount++;
+    const delta = now - lastFpsTime;
+    if (game && delta >= 1000) {
+        game.fps = Math.round((frameCount / delta) * 1000);
+        frameCount = 0;
+        lastFpsTime = now;
+    }
 }
 
 function mainLoop() {
-    const now = Date.now();
-    const deltaTime = now - lastFrameTime;
-
-    if (deltaTime > 0) {
-        const instantFps = 1000 / deltaTime;
-        updateDisplayedFps(instantFps);
-    }
+    
+    updateFps(Date.now());
     
     if (game && game.status === 1) {
-        const gameDeltaTime = now - game.ball.lastServerUpdate;
+        const gameDeltaTime = Date.now() - game.ball.lastServerUpdate;
         game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
         game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
     }
 
     renderer && renderer.draw();
 
-    lastFrameTime = Date.now();
-
     requestAnimationFrame(mainLoop);
 }
 
 requestAnimationFrame(mainLoop);
-

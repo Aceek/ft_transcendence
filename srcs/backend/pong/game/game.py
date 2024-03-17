@@ -106,6 +106,9 @@ class GameLogic:
         if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
             await self.initializer.init_objects()
             await self.game_loop()
+        else:
+            # Clear Redis data to reset the room in tournament case
+            await self.redis_ops.clear_all_data()
 
     async def launch_game(self):
         await self.update_game_status_and_notify(GameStatus.LAUNCHING)    

@@ -177,8 +177,8 @@ export class GameMessages extends BaseDrawing {
         
         metricsY += 30;
         
-        if (typeof this.game.movingAverageLatency === 'number') {
-            const latencyText = `${Math.round(this.game.movingAverageLatency)} ms`;
+        if (typeof this.game.latency === 'number') {
+            const latencyText = `${Math.round(this.game.latency)} ms`;
             this.drawText(latencyText, metricsX, metricsY, "#fff");
         }
     }

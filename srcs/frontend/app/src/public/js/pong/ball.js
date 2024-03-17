@@ -37,10 +37,8 @@ export class Ball {
         this.x = adjustedX;
         this.y = adjustedY;
     }
-    
     this.vx = vx;
     this.vy = vy;
-    
     this.lastServerUpdate = Date.now()
   }
 }
