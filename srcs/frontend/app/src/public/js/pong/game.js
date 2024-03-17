@@ -16,7 +16,7 @@ export class Game {
         this.isInitialized = false;
         this.countdown = null;
         this.latency = null;
-        this.fps = 60;
+        this.fps = null;
 
         // Game configuration properties
         this.canvasWidth = 0;
@@ -101,15 +101,3 @@ export class Game {
         this.countdown = seconds;
     }
 }
-
-const latencyAlpha = 0.1;
-
-function updateMovingAverageLatency(game) {
-    // Ensure movingAverageLatency is initialized
-    if (typeof game.movingAverageLatency === 'undefined') {
-        game.movingAverageLatency = game.latency; // Use the initial latency value
-    } else {
-        game.movingAverageLatency = Math.round(latencyAlpha * game.latency + (1 - latencyAlpha) * game.movingAverageLatency);
-    }
-}
-
