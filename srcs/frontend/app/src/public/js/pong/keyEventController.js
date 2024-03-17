@@ -74,8 +74,6 @@ export class KeyEventController {
         if (newPos >= 0 && newPos + this.game.controlledPlayer[dimensionProp] <= canvasDimension) {
             this.game.controlledPlayer[paddleProp] = newPos;
             this.sendPaddlePositionUpdate();
-        } else {
-            console.log(`${axis} Out of bounds: ${newPos}`);
         }
     }
 
@@ -87,8 +85,6 @@ export class KeyEventController {
         if (this.lastSentPaddlePos !== currentPos) {
             this.socket.send(JSON.stringify({ type: "update", pos: currentPos }));
             this.lastSentPaddlePos = currentPos;
-        } else {
-            console.log("No significant change in paddle position. Not sending update.");
         }
     }
 }

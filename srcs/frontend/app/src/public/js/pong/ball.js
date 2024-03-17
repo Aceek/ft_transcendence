@@ -44,4 +44,3 @@ export class Ball {
     this.lastServerUpdate = Date.now()
   }
 }
-  

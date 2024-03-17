@@ -19,7 +19,7 @@ class GameLogic:
         self.mode = consumers.game_mode
         self.player_nb = consumers.player_nb
         self.type = consumers.game_type
-        
+
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
         if self.player_nb > 2:
@@ -161,6 +161,8 @@ class GameLogic:
             elif self.type == "tournament":
                 if self.winner is not None:
                     await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
+                await self.game_sync.wait_for_tournament_to_exit(GameStatus.COMPLETED)
+
 
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")

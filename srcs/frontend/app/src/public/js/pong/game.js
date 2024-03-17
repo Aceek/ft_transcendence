@@ -16,6 +16,7 @@ export class Game {
         this.isInitialized = false;
         this.countdown = null;
         this.latency = null;
+        this.fps = 60;
 
         // Game configuration properties
         this.canvasWidth = 0;
@@ -60,7 +61,9 @@ export class Game {
         this.createPlayers();
         this.players.forEach(player => player.handleStaticData(staticData));
         this.ball.handleStaticData(staticData);
-        this.isInitialized = true;
+        if (!this.isInitialized) {
+            this.isInitialized = true;
+        }
     }
 
     parseStaticData(staticData) {
@@ -74,13 +77,18 @@ export class Game {
     
     handleDynamicData(dynamicData) {
         this.status = parseInt(dynamicData.gs, 10);
+        if (this.status === 1) {
+            this.restartRequest = false;
+        }
         this.ball.handleDynamicData(dynamicData);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
     }
+
     
     handleCompactedDynamicData(ball_data, players_data, serverTimestamp) {
         const serverTimestampMs = parseInt(serverTimestamp, 10);
         this.latency = Date.now() - serverTimestampMs;
+        updateMovingAverageLatency(this);
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
         this.players.forEach((player) => {
             player.handleCompactedDynamicData(players_data);
@@ -89,7 +97,6 @@ export class Game {
 
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();
-        console.log(`Paddle side assigned: ${this.receivedSide}`);
     }
     
     
@@ -97,3 +104,15 @@ export class Game {
         this.countdown = seconds;
     }
 }
+
+const latencyAlpha = 0.1;
+
+function updateMovingAverageLatency(game) {
+    // Ensure movingAverageLatency is initialized
+    if (typeof game.movingAverageLatency === 'undefined') {
+        game.movingAverageLatency = game.latency; // Use the initial latency value
+    } else {
+        game.movingAverageLatency = Math.round(latencyAlpha * game.latency + (1 - latencyAlpha) * game.movingAverageLatency);
+    }
+}
+

@@ -50,25 +50,39 @@ function waitForInitialization() {
 //-----------------------------MAIN LOOP------------------------------------
 
 function interpolatePosition(lastPosition, speed, deltaTime) {
-    // Calculate and return the new position based on the speed and the delta time
     return lastPosition + speed * (deltaTime / 1000);
 }
 
+let lastFrameTime = Date.now();
+let displayedFps = 0;
+const alpha = 0.1;
+
+function updateDisplayedFps(fps) {
+    displayedFps = alpha * fps + (1 - alpha) * displayedFps;
+    game.fps = Math.round(displayedFps);
+}
+
 function mainLoop() {
+    const now = Date.now();
+    const deltaTime = now - lastFrameTime;
+
+    if (deltaTime > 0) {
+        const instantFps = 1000 / deltaTime;
+        updateDisplayedFps(instantFps);
+    }
+    
     if (game && game.status === 1) {
-        let now = Date.now();
-        let deltaTime = now - game.ball.lastServerUpdate;
-
-        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, deltaTime);
-        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, deltaTime);
-
-        // Reset this value if the game is restart
-        if (game.restartRequest) {
-            game.restartRequest = false;
-        }
+        const gameDeltaTime = now - game.ball.lastServerUpdate;
+        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
+        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
     }
 
     renderer && renderer.draw();
+
+    lastFrameTime = Date.now();
+
     requestAnimationFrame(mainLoop);
 }
+
+requestAnimationFrame(mainLoop);
 

@@ -69,11 +69,26 @@ export class GameMessages extends BaseDrawing {
         this.setFont(100);
         this.game.players.forEach(player => {
             const { x, y } = this.calculateScorePosition(player);
+            let align = this.getScoreAlignment(player);
+            this.ctx.textAlign = align;
             if (player.score !== undefined && !isNaN(player.score)) {
                 this.drawText(player.score.toString(), x, y, player.color);
             }
         });
+        this.ctx.textAlign = 'left';
     }
+    
+    getScoreAlignment(player) {
+        switch(player.side) {
+            case 'left':
+                return 'left';
+            case 'right':
+                return 'right';
+            default:
+                return 'center';
+        }
+    }
+    
     
 
     calculateScorePosition(player) {
@@ -143,5 +158,28 @@ export class GameMessages extends BaseDrawing {
         const y = this.game.canvasHeight - 30;
         
         this.drawText(message, x, y, "#fff", "center");
+    }
+    
+    drawPerformanceMetrics() {
+        this.setTextProperties();
+        this.setFont(20);
+        
+        const rightPadding = 10;
+        const metricsX = this.game.canvasWidth - rightPadding;
+        let metricsY = 30;
+        
+        this.ctx.textAlign = 'right';
+        
+        if (typeof this.game.fps === 'number') {
+            const fpsText = `${Math.round(this.game.fps)} fps`;
+            this.drawText(fpsText, metricsX, metricsY, "#fff");
+        }
+        
+        metricsY += 30;
+        
+        if (typeof this.game.movingAverageLatency === 'number') {
+            const latencyText = `${Math.round(this.game.movingAverageLatency)} ms`;
+            this.drawText(latencyText, metricsX, metricsY, "#fff");
+        }
     }
 }
