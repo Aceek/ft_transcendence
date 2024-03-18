@@ -59,20 +59,22 @@ async function buttonValidate(inputs, button) {
 			"token": sessionStorage.getItem("2fa_token"),
 			"code": combinedValue,
 		}
+		let errmsg = document.getElementById("2fa-err")
 		const response = await postData(api_url + "mail/2fa/", data)
 		if (response.ok) {
+			errmsg.textContent = "";
 			sessionStorage.removeItem("2fa_token");
 			removeEnterValidate();
 			setTimeout(() => {
 				router("/home");
 			}, 1000);
 		} else {
-			handle2FAValidationErrors(response);
+			handle2FAValidationErrors(response, errmsg);
 		}
 	});
 }
 
-async function handle2FAValidationErrors(response) {
+async function handle2FAValidationErrors(response, errmsg) {
 	let data = null;
 	try {
 		data = await response.json();
@@ -87,6 +89,7 @@ async function handle2FAValidationErrors(response) {
 			router("/login");
 		} else if (data['non_field_errors'][0] === "Invalid 2FA code.") {
 			console.log("Invalid 2FA code.");
+			errmsg.textContent = "Invalid 2FA code. Try again...";
 		} else if (data['non_field_errors'][0] === "Invalid 2FA token.") {
 			console.log("Invalid token.");
 			sessionStorage.removeItem("2fa_token");
