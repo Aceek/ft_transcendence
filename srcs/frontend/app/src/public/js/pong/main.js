@@ -22,7 +22,7 @@ export async function setupGame() {
     renderer = new Renderer(ctx, game);
 
     try {
-        pongSocket = await initializeSocket();
+        pongSocket = await initializeSocket(game);
         messageHandler(pongSocket, game);
         
         new KeyEventController(pongSocket, game);

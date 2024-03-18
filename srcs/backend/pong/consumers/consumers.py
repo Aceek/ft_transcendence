@@ -59,7 +59,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         current_status = await self.redis_ops.get_game_status()
         if current_status is None and self.assigned == True:
             if await self.redis_ops.add_game_logic_flag():
-                asyncio.create_task(GameLogic(self).run())
+                self.task = asyncio.create_task(GameLogic(self).run())
         else:
             # Retrieve and send data from the existing game
             await self.send_game_data(current_status)

@@ -6,7 +6,7 @@ function constructSocketUrl() {
     return `wss://${hostname}${port ? `:${port}` : ''}/ws/pong/${mode}/${playerNb}/${type}/${roomId}/`;
 }
 
-export function initializeSocket() {
+export function initializeSocket(game) {
     return new Promise((resolve, reject) => {
         const socketUrl = constructSocketUrl();
         console.log(socketUrl);
@@ -22,8 +22,20 @@ export function initializeSocket() {
             console.error("WebSocket error observed:", error);
             reject(error);
         });
+
+        socket.addEventListener('close', (event) => {
+            const reason = event.reason ? ` Reason: ${event.reason}` : '';
+            console.log(`WebSocket connection closed with code: ${event.code}.${reason}`);
+        
+            if (event.code === 1006) {
+                game.status = 4;
+            } else if (event.code === 1012) {
+                game.status = 5;
+            }
+        });
     });
 }
+
 
 function handleWebSocketMessage(data, game) {
     switch (data.type) {

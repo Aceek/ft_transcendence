@@ -14,6 +14,7 @@ from ..redis.redis_ops import RedisOps
 
 class GameLogic:
     def __init__(self, consumers):
+        self.consumers = consumers
         self.room_name = consumers.room_name
         self.room_group_name = consumers.room_group_name
         self.mode = consumers.game_mode
@@ -48,8 +49,10 @@ class GameLogic:
 
         self.target_loop_duration = 1 / TICK_RATE
 
+        self.redis_ops = None
         self.initializer = GameInitializer(self)
-
+        self.task = None
+        self.cleanup_done = False
 
     # ---------------------------DATA UPDATES-----------------------------------
 
@@ -99,16 +102,21 @@ class GameLogic:
     # -------------------------------LAUNCHER-----------------------------------
 
     async def run(self):
-        await self.initializer.init_env()
-        await self.initializer.init_static_data()
-        await self.update_game_status_and_notify(GameStatus.UNSTARTED)
+        try:
+            await self.initializer.init_env()
+            await self.initializer.init_static_data()
+            await self.update_game_status_and_notify(GameStatus.UNSTARTED)
 
-        if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
-            await self.initializer.init_objects()
-            await self.game_loop()
-        else:
-            # Clear Redis data to reset the room in tournament case
-            await self.redis_ops.clear_all_data()
+            if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
+                await self.initializer.init_objects()
+                await self.game_loop()
+            else:
+                # Clear data to reset the room in tournament case
+                self.perform_cleanup()
+        
+        except Exception as e:
+            print(f"An unexpected error occurred during run: {e}")
+            await self.perform_cleanup()
 
     async def launch_game(self):
         await self.update_game_status_and_notify(GameStatus.LAUNCHING)    
@@ -166,13 +174,12 @@ class GameLogic:
                     await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
                 await self.game_sync.wait_for_tournament_to_exit(GameStatus.COMPLETED)
 
-
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")
         except Exception as e:
-              print(f"An unexpected error occurred: {e}")
+              print(f"An unexpected error occurred during game loop: {e}")
         finally:
-            await self.redis_ops.clear_all_data()
+            await self.perform_cleanup()
 
     async def game_tick(self, delta_time):
         # Update the ball position in fucntion on vellocity and delta time
@@ -226,4 +233,19 @@ class GameLogic:
         else:
             return None
         
-        
+    # -------------------------------CLEAN-----------------------------------
+
+    async def perform_cleanup(self):
+        if not self.cleanup_done:
+            if self.redis_ops is not None:
+                await self.redis_ops.clear_all_data()
+            await self.cleanup_task()
+            self.cleanup_done = True
+
+    async def cleanup_task(self):
+        if hasattr(self, 'task') and self.task:
+            self.task.cancel()
+            try:
+                await self.task
+            except asyncio.CancelledError:
+                print("Task cancelled successfully.")

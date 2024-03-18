@@ -14,6 +14,7 @@ class GameInitializer:
         self.game.channel_com = ChannelCom(self.game.room_group_name)
         self.game.game_sync = GameSync(self.game)
         self.game.database_ops = DatabaseOps()
+        self.game.task = self.game.consumers.task
         if self.game.type == "tournament":
             self.game.match, self.game.tournament = \
                 await self.game.database_ops.get_match_and_tournament(self.game.room_name)
