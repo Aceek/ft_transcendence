@@ -146,10 +146,11 @@ services:
 
   # Elasticsearch + Kibana + Logstash + filebeat  (Secure cert)
   setup:
-    build:
-      context: ./elk-b/setup
-      args:
-        ELASTIC_VERSION: ${STACK_VERSION}
+    # build:
+    #   context: ./elk-b/setup
+    #   args:
+    #     ELASTIC_VERSION: ${STACK_VERSION}
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     env_file:
       - .env
     volumes:
@@ -162,6 +163,7 @@ services:
     depends_on:
       vault:
         condition: service_healthy
+    entrypoint: bash /entrypoint.sh
     healthcheck:
       test: [ "CMD-SHELL", "[ -f config/certs/es01/es01.crt ]" ]
       interval: 1s
