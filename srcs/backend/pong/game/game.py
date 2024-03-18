@@ -112,7 +112,7 @@ class GameLogic:
                 await self.game_loop()
             else:
                 # Clear data to reset the room in tournament case
-                self.perform_cleanup()
+                await self.perform_cleanup()
         
         except Exception as e:
             print(f"An unexpected error occurred during run: {e}")

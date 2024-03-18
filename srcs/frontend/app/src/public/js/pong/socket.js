@@ -3,14 +3,25 @@ function constructSocketUrl() {
     const pathSegments = pathname.split('/').filter(Boolean);
     const [mode, playerNb, type, roomId] = pathSegments.slice(1);
 
+    if (!mode || !playerNb || !type || !roomId) {
+        console.error("Invalid WebSocket URL: Missing parameters");
+        return null;
+    }
+
     return `wss://${hostname}${port ? `:${port}` : ''}/ws/pong/${mode}/${playerNb}/${type}/${roomId}/`;
 }
+
 
 export function initializeSocket(game) {
     return new Promise((resolve, reject) => {
         const socketUrl = constructSocketUrl();
-        console.log(socketUrl);
-
+        
+        // Early reject if the URL is invalid
+        if (!socketUrl) {
+            reject(new Error("Failed to initialize WebSocket: Invalid URL"));
+            return;
+        }
+        
         const socket = new WebSocket(socketUrl);
 
         socket.addEventListener('open', () => {

@@ -144,7 +144,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'type': 'game.paddle_side',
                 'paddle_side': key_map['position'],
             }))
-            print(f"paddle side {key_map['position']} assigned for user: {self.user_id}")
+            print(f"Paddle side {key_map['position']} assigned for user: {self.user_id}")
         else:
             print(f"No paddle side assigned for user: {self.user_id}")
 
