@@ -102,28 +102,61 @@ export function scrollToBottom() {
 export function createMessageElement(message, conversation) {
   const messageElement = document.createElement("div");
   const isSender = message.sender === senderId;
-  messageElement.classList.add(
-    isSender ? "chat-message-right" : "chat-message-left"
-  );
+  messageElement.classList.add(isSender ? "chat-message-right" : "chat-message-left");
   messageElement.classList.add("pb-4");
 
-  const senderName = isSender
-    ? conversation.client_name
-    : conversation.friend_name;
-  const avatar = isSender
-    ? conversation.client_avatar
-    : conversation.friend_avatar;
+  const senderName = isSender ? conversation.client_name : conversation.friend_name;
+  const avatar = isSender ? conversation.client_avatar : conversation.friend_avatar;
 
-  messageElement.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; ${isSender ? "margin-left: 5px;" : "margin-right: 5px;"}">
-          <img src="${avatar}" class="rounded-circle me-1" alt="${senderName}" width="40" height="40">
-          <div class="text-muted small text-nowrap mt-2">${message.time || "2:34 am"}</div>
-      </div>
-      <div id=${isSender ? "right-background" : "left-background"} class="flex-shrink-1 bg-light rounded py-2 px-3 ${isSender ? "ml-3" : "mr-3"}">
-          <div class="font-weight-bold mb-1">${senderName}</div>
-          <div class="message-content">${message.text}</div>
-      </div>
-  `;
+  // Create elements for the message
+  const avatarElement = document.createElement("img");
+  avatarElement.src = avatar;
+  avatarElement.alt = senderName;
+  avatarElement.classList.add("rounded-circle", "me-1");
+  avatarElement.width = 40;
+  avatarElement.height = 40;
+
+  const timeElement = document.createElement("div");
+  timeElement.classList.add("text-muted", "small", "text-nowrap", "mt-2");
+  timeElement.textContent = message.time || "2:34 am";
+
+  const nameElement = document.createElement("div");
+  nameElement.classList.add("font-weight-bold", "mb-1");
+  nameElement.textContent = senderName;
+
+  const messageContent = document.createElement("div");
+  messageContent.classList.add("message-content");
+  messageContent.textContent = message.text;
+
+  // Construct the message element
+  const flexContainer = document.createElement("div");
+  flexContainer.style.display = "flex";
+  flexContainer.style.flexDirection = "column";
+  flexContainer.style.alignItems = "center";
+  if (isSender) {
+    flexContainer.style.marginLeft = "5px";
+  } else {
+    flexContainer.style.marginRight = "5px";
+  }
+
+  flexContainer.appendChild(avatarElement);
+  flexContainer.appendChild(timeElement);
+
+  const backgroundDiv = document.createElement("div");
+  backgroundDiv.id = isSender ? "right-background" : "left-background";
+  backgroundDiv.classList.add("flex-shrink-1", "bg-light", "rounded", "py-2", "px-3");
+  if (isSender) {
+    backgroundDiv.classList.add("ml-3");
+  } else {
+    backgroundDiv.classList.add("mr-3");
+  }
+
+  backgroundDiv.appendChild(nameElement);
+  backgroundDiv.appendChild(messageContent);
+
+  messageElement.appendChild(flexContainer);
+  messageElement.appendChild(backgroundDiv);
+
   return messageElement;
 }
 
