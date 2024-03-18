@@ -334,7 +334,7 @@ services:
       - ./vault/policies:/vault/policies
       - ./vault/tools:/vault/tools
       # Vault entrypoints
-      - ./vault/tools/init.sh:/tools/init.sh:ro,Z
+      # - ./vault/tools/init.sh:/tools/init.sh:ro,Z
       - ./vault/tools/entrypoint.sh:/tools/entrypoint.sh:ro,Z
       - ./vault/tools/wait-certs.sh:/tools/wait-certs.sh:ro,Z
       # Vault certificates
