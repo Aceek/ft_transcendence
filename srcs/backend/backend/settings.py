@@ -79,7 +79,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 MEDIA_ROOT = BASE_DIR / "media"
 
 # URL publique pour accéder aux fichiers médias
-MEDIA_URL = "https://localhost/media/"
+MEDIA_URL = f"https://{HOST}:{PORT}/media/"
 
 # Application definition
 
