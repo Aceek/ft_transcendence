@@ -30,6 +30,12 @@ export class GameMessages extends BaseDrawing {
             case 3:
                 this.drawGameOverMessages();
                 break;
+            case 4:
+                this.drawNetworkIssuenMessages();
+                break;
+            case 5:
+                this.drawServerDownMessages();
+                break;
         }
     }
 
@@ -48,8 +54,20 @@ export class GameMessages extends BaseDrawing {
             this.drawTwoPartMessage("Game Over!", restartMessage);
         }
     }
+
+    drawNetworkIssueMessages() {
+        this.setTextProperties();
+        const mainMessage = "Network Issue";
+        const subMessage = "Technical difficulties detected. Try refreshing or quit the page.";
+        this.drawTwoPartMessage(mainMessage, subMessage);
+    }
     
-    
+    drawServerDownMessages() {
+        this.setTextProperties();
+        const mainMessage = "Server Down";
+        const subMessage = "Technical difficulties detected. Try refreshing or quit the page.";
+        this.drawTwoPartMessage(mainMessage, subMessage);
+    }
     drawTwoPartMessage(mainText, subText) {
         const gap = 50;
         this.setTextProperties();

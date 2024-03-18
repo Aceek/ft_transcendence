@@ -140,6 +140,7 @@ async function handleAuthenticatedRoutes(path) {
   if (await matchRegex(path)) {
   } else {
     switch (path) {
+      case "/":
       case "/home":
         await getHomePage();
         break;
