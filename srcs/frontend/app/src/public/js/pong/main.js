@@ -55,7 +55,7 @@ function startSendingPing() {
                 timestamp: Date.now()
             }));
         }
-    }, 200);
+    }, 16);
 }
 
 function waitForInitialization() {
