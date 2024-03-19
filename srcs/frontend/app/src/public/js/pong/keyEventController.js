@@ -7,7 +7,6 @@ export class KeyEventController {
 
     initEventListeners() {
         document.addEventListener("keydown", (event) => this.handleKeyDown(event.key));
-        // document.addEventListener("keyup", (event) => this.handleKeyUp(event.key));
     }
 
     handleKeyDown(key) {
@@ -30,9 +29,6 @@ export class KeyEventController {
         }
     }
 
-    // handleKeyUp(key) {
-    //     console.log("Key released:", key);
-    // }
     
     handleEnterKey() {
         if (this.game.status !== 3) return;

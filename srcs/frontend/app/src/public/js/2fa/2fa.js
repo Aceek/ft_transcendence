@@ -96,8 +96,6 @@ async function handle2FAValidationErrors(response, errmsg) {
 			removeEnterValidate();
 			router("/login");
 		}
-	} else if (data) {
-		console.log(data);
 	}
 }
 

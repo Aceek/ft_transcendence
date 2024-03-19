@@ -146,10 +146,6 @@ services:
 
   # Elasticsearch + Kibana + Logstash + filebeat  (Secure cert)
   setup:
-    # build:
-    #   context: ./elk-b/setup
-    #   args:
-    #     ELASTIC_VERSION: ${STACK_VERSION}
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     env_file:
       - .env

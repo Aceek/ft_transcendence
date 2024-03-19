@@ -55,7 +55,6 @@ export function etablishConnectionWebSocket(friendsListIds) {
     }
     const { hostname, port } = window.location;
     const newChatSocket = new WebSocket(`wss://${hostname}${port ? `:${port}` : ''}/ws/chat`);
-    console.log(newChatSocket);
     setWebSocket(newChatSocket);
 
     chatSocket.onopen = () => handleWebSocketOpen(friendsListIds, resolve);
