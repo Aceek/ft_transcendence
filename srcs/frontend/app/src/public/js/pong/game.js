@@ -86,11 +86,10 @@ export class Game {
     }
 
     
-    handleCompactedDynamicData(ball_data, players_data, process_time, controlledPlayer) {
+    handleCompactedDynamicData(ball_data, players_data, process_time) {
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.processTime, this.status);
         this.players.forEach((player) => {
-            // Check if the current player is not the controlledPlayer
-            if (player !== this.controlledPlayer) {
+            if (!player.isControlled) {
                 player.handleCompactedDynamicData(players_data);
             }
         });

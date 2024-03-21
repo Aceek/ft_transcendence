@@ -13,7 +13,8 @@ websocket_urlpatterns = [
     # pong paths
     re_path(fr"ws/pong/(?P<mode>online)/(?P<players>[2-4])/(?P<type>standard)/(?P<room_id>{uuid_pattern})/$", GameConsumer.as_asgi(), name='online_standard_game'),
     re_path(fr"ws/pong/(?P<mode>online)/(?P<players>2)/(?P<type>tournament)/(?P<room_id>{uuid_pattern})/$", GameConsumer.as_asgi(), name='online_tournament_game'),
-    # re_path(fr"ws/pong/(?P<mode>offline)/(?P<players>2)/(?P<type>standard)/(?P<room_id>{uuid_pattern})/$", GameConsumer.as_asgi(), name='offline_standard_game'),
+    re_path(fr"ws/pong/(?P<mode>offline)/(?P<players>2)/(?P<type>standard)/(?P<room_id>{uuid_pattern})/$", GameConsumer.as_asgi(), name='offline_standard_game'),
+    re_path(fr"ws/pong/(?P<mode>offline)/(?P<players>2)/(?P<type>tournament)/(?P<room_id>{uuid_pattern})/$", GameConsumer.as_asgi(), name='offline_tournament_game'),
 
     # chat path
     re_path(r'ws/chat/?$', ChatConsumer.as_asgi()),
