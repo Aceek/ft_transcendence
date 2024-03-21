@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . /app/
 
-RUN apt-get update && apt-get install -y zsh
+RUN apt-get update && apt-get install -y zsh curl jq
 
 RUN pip install -r requirements.txt
 

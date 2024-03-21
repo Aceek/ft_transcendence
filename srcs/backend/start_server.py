@@ -1,6 +1,7 @@
 import asyncio
 import uvicorn
 import aioredis
+import subprocess
 from logging.config import dictConfig
 from logging_config import log_config 
 
@@ -11,10 +12,16 @@ async def cleanup_redis():
     await redis.close()
     print("Nettoyage de Redis terminé.")
 
+def run_migrations():
+    print("Applying database migrations...")
+    subprocess.run(["python3", "manage.py", "migrate"], check=True)
+    print("Database migrations applied.")
+
 if __name__ == "__main__":
     asyncio.run(cleanup_redis())
 
-    dictConfig(log_config)
+    run_migrations()
 
+    dictConfig(log_config)
 
     uvicorn.run("backend.asgi:application", host="0.0.0.0", port=8000, reload=True, log_config=log_config)

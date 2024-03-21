@@ -1,0 +1,68 @@
+<div id="main_container_tournament" class="container">
+  <div class="main-body">
+    <div id="Tournament_profile_row" class="row gutters-sm">
+      <div class="col-md">
+        <div class="card">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12">
+                <h3 id="tournament_name">mon tournoi</h3>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                <button style="margin-right: 10px;" class="btn btn-primary" id="refresh_tournament_button"
+                  type="button">Reffresh Tournament info</button>
+              </div>
+            </div>
+            <div class="row">
+              <!-- Première colonne pour les informations -->
+              <div class="col-md-6 info-text-align-left tournament-info">
+                <p id="tournament_is_finished">Terminé :</p>
+              </div>
+              <!-- Deuxième colonne pour les informations -->
+              <div class="col-md-6 info-text-align-left tournament-info">
+                <p id="tournament_round">Round :</p>
+              </div>
+              <hr>
+              <div class="row">
+                <div id="functional_button_div" class="col-12 d-flex justify-content-end">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div id="tournament_users_matches_row" class="row gutters-sm">
+      <div id="matches_tournament_div" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3>Matches</h3>
+            <ul id="matches_tournament" class="list-group list-group-flush">
+              <!-- Inject matches_tournament here -->
+            </ul>
+            <div class="row">
+              <div id="tournament_match_round_button_col" class="col-12">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div id="tournament_users_col" class="col-md-12 col-lg-6">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h3 id="tournament_title">Users in tournament</h3>
+            <ul id="tournament_users_list" class="list-group list-group-flush">
+              <!-- Inject tournament_users_list in tournament here -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

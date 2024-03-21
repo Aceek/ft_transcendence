@@ -77,7 +77,6 @@ async function handleLogout(event) {
       credentials: credentialsOption,
     });
     const response_status = response.status;
-    console.log("Logout response status:", response_status);
     router("/login");
   } catch (error) {
     console.error("Error during logout:", error);

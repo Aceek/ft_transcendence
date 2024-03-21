@@ -1,4 +1,4 @@
-from .models import Tournament, Matches
+from .models import Tournament, Matches, LocalTournament
 from rest_framework import serializers
 
 
@@ -50,10 +50,31 @@ class TournamentSerializer(serializers.ModelSerializer):
             representation["is_joined"] = True
         else:
             representation["is_joined"] = False
-            
+
         # if user is the owner of the tournament
         if request and instance.ownerUser == request.user:
             representation["is_owner"] = True
         else:
             representation["is_owner"] = False
         return representation
+
+
+
+
+class LocalTournamentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LocalTournament
+        fields = "__all__"
+
+    def create(self, validated_data):
+        request = self.context["request"]
+        if request and hasattr(request, "user"):
+            validated_data["localOwnerUser"] = request.user
+
+        participants = validated_data.get("participants", [])
+        if not participants:
+            raise serializers.ValidationError(
+                {"participants": "La liste des participants ne peut pas être vide."}
+            )
+        tournament = LocalTournament.objects.create(**validated_data)
+        return tournament

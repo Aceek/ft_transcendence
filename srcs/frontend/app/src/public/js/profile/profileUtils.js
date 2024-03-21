@@ -161,8 +161,9 @@ export function injectUserInfo(profile) {
 export function attashTwofaButtonListener(twofaButton, profile) {
   twofaButton.addEventListener("click", async (e) => {
     e.preventDefault();
-    const dataToUpdate = {};
-    dataToUpdate["is_2fa_enabled"] = !profile.is_2fa_enabled;
+    const dataToUpdate = {
+      "is_2fa_enabled": !profile.is_2fa_enabled
+    };
     const updateSuccess = await sendUpdateRequest(
       api_url + "users/profile/update",
       dataToUpdate
@@ -175,7 +176,6 @@ export function attashTwofaButtonListener(twofaButton, profile) {
         profile.is_2fa_enabled = true;
       }
       injectUserInfo(profile);
-    } else {
     }
   });
 
@@ -186,22 +186,18 @@ export function attashTwofaButtonListener(twofaButton, profile) {
 
 export function injectTwofaButton(profile) {
   let twofaButton = document.getElementById("twofaButton");
-  if (twofaButton) {
-    twofaButton.remove();
+  if (!twofaButton) {
+    twofaButton = document.createElement("button");
+    twofaButton.id = "twofaButton";
+    twofaButton.classList.add("btn", "btn-primary");
+    attashTwofaButtonListener(twofaButton, profile);
   }
-  twofaButton = document.createElement("button");
-  twofaButton.id = "twofaButton";
-  twofaButton.classList.add("btn", "btn-primary");
-
   if (profile.is_2fa_enabled) {
-    twofaButton.textContent = "2FA:OFF";
+    twofaButton.textContent = "Disable 2FA";
   } else {
-    twofaButton.textContent = "2FA:ON";
+    twofaButton.textContent = "Enable 2FA";
   }
-
   twofaButton.classList.add("btn", "btn-primary");
-
-  attashTwofaButtonListener(twofaButton, profile);
 }
 
 export function prepareUpdateData(profile, fields) {

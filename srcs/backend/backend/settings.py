@@ -79,7 +79,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 MEDIA_ROOT = BASE_DIR / "media"
 
 # URL publique pour accéder aux fichiers médias
-MEDIA_URL = "https://localhost/media/"
+MEDIA_URL = f"https://{HOST}:{PORT}/media/"
 
 # Application definition
 
@@ -153,10 +153,21 @@ WSGI_APPLICATION = "backend.wsgi.application"
 ASGI_APPLICATION = 'pong.routing.application'
 
 # dev database
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": environ.get("POSTGRES_DB"),
+        "USER": environ.get("POSTGRES_USER"),
+        "PASSWORD": environ.get("POSTGRES_PASSWORD"),
+        "HOST": environ.get("POSTGRES_HOST"),
+        "PORT": environ.get("POSTGRES_PORT"),
     }
 }
 

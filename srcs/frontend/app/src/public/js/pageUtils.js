@@ -44,7 +44,6 @@ export async function requestDataWithToken(url = "", data, method = "GET") {
   } else if (data instanceof FormData) {
     headers.delete("Content-Type");
     requestOptions.body = data;
-    console.log("requestOptions", requestOptions);
   }
 
   try {

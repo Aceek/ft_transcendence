@@ -10,7 +10,6 @@ let animationFrameId = null;
 let pingIntervalId = null;
 
 export async function setupGame() {
-    console.log("Pong.js is executed!");
     const canvas = document.getElementById('pongCanvas');
     if (!canvas) {
         console.error("Canvas element not found");
