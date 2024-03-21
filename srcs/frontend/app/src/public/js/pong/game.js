@@ -96,11 +96,10 @@ export class Game {
         this.processTime = process_time;
     }
     
-
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();
+		console.log(this.receivedSide);
     }
-    
     
     handleCountdown(seconds) {
         this.countdown = seconds;

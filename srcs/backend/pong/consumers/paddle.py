@@ -72,20 +72,21 @@ class Paddle:
         self.axis_key = 'paddle_x' if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
 
-    async def assignment(self, player_nb):
+    async def assignment(self, game_mode, player_nb):
         # Attempt to acquire a lock for the paddle assignment process
         lock_key = f"game:{self.redis_ops.room_name}:lock:assignment"
         lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
 
         try:
-            # Check if the user is already assigned a position
-            for position in PlayerPosition:
-                self.key_map = get_player_key_map(position)
-                key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
-                if await self.redis_ops.connection.sismember(key, self.user_id):
-                    self.side = position
-                    return True
+            if game_mode == "online":
+                # Check if the user is already assigned a position
+                for position in PlayerPosition:
+                    self.key_map = get_player_key_map(position)
+                    key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
+                    if await self.redis_ops.connection.sismember(key, self.user_id):
+                        self.side = position
+                        return True
 
             # If not already assigned, attempt to assign a new position based on order
             assigned_positions = 0

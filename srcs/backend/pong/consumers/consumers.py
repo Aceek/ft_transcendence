@@ -40,12 +40,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.database_ops = DatabaseOps()
 
         # Create a Paddle object for the user, assign it, and notify the client of their paddle side
-        self.paddle = Paddle(self.user_id, self.redis_ops, self.player_nb)
-        self.assigned = await self.paddle.assignment(self.player_nb)
-        if self.assigned == True:
-            await self.paddle.set_boundaries()
-            await self.paddle.set_axis_keys()
-        await self.send_paddle_assignement()
+        if self.game_mode == "offline":
+            self.paddle_left = await self.init_paddle()
+            self.paddle_right = await self.init_paddle()
+        else :
+           self.paddle = await self.init_paddle()
 
         # Once paddle has been assigned, notify the server that the player is assigned and ready to play
         if self.assigned == True:
@@ -64,10 +63,20 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Retrieve and send data from the existing game
             await self.send_game_data(current_status)
 
+    # -------------------------------PADDLE-----------------------------------
+
+    async def init_paddle(self):
+        paddle = Paddle(self.user_id, self.redis_ops, self.player_nb)
+        self.assigned = await paddle.assignment(self.game_mode, self.player_nb)
+        if self.assigned == True:
+            await paddle.set_boundaries()
+            await paddle.set_axis_keys()
+        await self.send_paddle_assignement(paddle)
+        return paddle
+
     # -------------------------------DISCONNECT-----------------------------------
                 
     async def disconnect(self, close_code):
-        
         if self.assigned:
             # If the game is in progress, set its status to suspended
             current_status = await self.redis_ops.get_game_status()
@@ -138,10 +147,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             'seconds': seconds
         }))
 
-    async def send_paddle_assignement(self):
-        if self.paddle.side is not None:
+    async def send_paddle_assignement(self, paddle):
+        if paddle.side is not None:
 
-            key_map = get_player_key_map(self.paddle.side)
+            key_map = get_player_key_map(paddle.side)
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',
                 'paddle_side': key_map['position'],
