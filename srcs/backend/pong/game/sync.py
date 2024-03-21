@@ -8,7 +8,7 @@ class GameSync:
     def __init__(self, game):
         self.redis_ops = game.redis_ops
         self.room_name = game.room_name
-        self.player_nb = game.player_nb
+        self.player_nb = game.player_nb if game.mode == "online" else 1
         self.game_type = game.type
         self.channel_com = game.channel_com
 

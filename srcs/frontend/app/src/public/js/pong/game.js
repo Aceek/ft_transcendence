@@ -26,7 +26,7 @@ export class Game {
         this.mode = '';
         this.type = '';
         this.tournamentId = '';
-        this.receivedSide = '';
+        this.receivedSides = [];
     }
 
     initCanvas() {
@@ -45,12 +45,12 @@ export class Game {
         const sides = ['left', 'right', 'bottom', 'up'];
         for (let i = 0; i < this.playerNb; i++) {
             const playerSide = sides[i % sides.length];
-            const isControlled = playerSide === this.receivedSide;
+            const isControlled = this.receivedSides.includes(playerSide);
             const newPlayer = new Player(i, playerSide, isControlled);
             this.addPlayer(newPlayer);
         }
     }
-
+    
     updateCanvasSize() {
         this.canvas.width = this.canvasWidth;
         this.canvas.height = this.canvasHeight;
@@ -97,8 +97,10 @@ export class Game {
     }
     
     handlePaddleSideAssignment(paddleSide) {
-        this.receivedSide = paddleSide.toLowerCase();
-		console.log(this.receivedSide);
+        const side = paddleSide.toLowerCase();
+        if (!this.receivedSides.includes(side)) {
+            this.receivedSides.push(side);
+        }
     }
     
     handleCountdown(seconds) {

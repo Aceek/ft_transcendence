@@ -1,6 +1,7 @@
 from .ball import Ball
 from .player import Player
 from .sync import GameSync
+from .enum import PlayerPosition
 from .channel_com import ChannelCom
 from ..database.database_ops import DatabaseOps
 from ..redis.redis_ops import RedisOps
@@ -50,15 +51,27 @@ class GameInitializer:
 
     async def init_players(self):
         users_id = await self.game.redis_ops.get_connected_users_ids()
-        for user_id in users_id:
-            custom_user = await self.game.database_ops.get_custom_user(user_id)
-            if custom_user is not None:
-                position = await self.game.redis_ops.get_player_position(user_id)
-                if position is not None:
-                    player = Player(position, self.game, custom_user)
-                    await player.set_username_to_redis(player.username)
-                    await player.set_data_to_redis()
-                    self.game.players.append(player)
-                else:
-                    print(f"Unknown position for user with ID: {user_id}")
+        
+        if self.game.mode == "online":
+            for user_id in users_id:
+                custom_user = await self.game.database_ops.get_custom_user(user_id)
+                if custom_user is not None:
+                    position = await self.game.redis_ops.get_player_position(user_id)
+                    if position is not None:
+                        player = Player(position, self.game, custom_user)
+                        await player.set_username_to_redis(player.username)
+                        await player.set_data_to_redis()
+                        self.game.players.append(player)
+                    else:
+                        print(f"Unknown position for user with ID: {user_id}")
+        else:
+            custom_user = await self.game.database_ops.get_custom_user(users_id[0])
+            positions = [PlayerPosition.LEFT, PlayerPosition.RIGHT]
+            for position in positions:
+                player = Player(position, self.game, custom_user)
+                await player.set_data_to_redis()
+                username = f"{player.username} ({str(player.id + 1)})"
+                await player.set_username_to_redis(username)
+                self.game.players.append(player)
+        
         self.game.players.sort(key=lambda player: player.position.value)
