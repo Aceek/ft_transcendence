@@ -1,4 +1,4 @@
-from .models import Tournament, Matches
+from .models import Tournament, Matches, LocalTournament
 from rest_framework import serializers
 
 
@@ -57,3 +57,9 @@ class TournamentSerializer(serializers.ModelSerializer):
         else:
             representation["is_owner"] = False
         return representation
+
+
+class LocalTournamentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LocalTournament
+        fields = "__all__"

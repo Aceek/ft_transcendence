@@ -25,6 +25,7 @@ import {
   resetCurrentFriendId,
 } from "./chat/chat.js";
 import { pongSocket } from "./pong/main.js";
+import { displayLocalPage } from "./local/displayLocal.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url =
@@ -47,10 +48,7 @@ export function closeChatWebSocket(path) {
 }
 
 export function closePongWebSocket() {
-  if (
-    pongSocket &&
-    pongSocket.readyState === WebSocket.OPEN
-  ) {
+  if (pongSocket && pongSocket.readyState === WebSocket.OPEN) {
     pongSocket.close();
   }
 }
@@ -100,18 +98,21 @@ export async function router(path, updateHistory = true) {
 }
 
 async function matchRegex(path) {
-
-  const uuidPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+  const uuidPattern =
+    "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
-  
-  // pong routes
-  const onlineStandardMatch = path.match(new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`));
-  const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/?$`));
-  // const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
 
+  // pong routes
+  const onlineStandardMatch = path.match(
+    new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`)
+  );
+  const onlineTournamentMatch = path.match(
+    new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/?$`)
+  );
+  // const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/([2-4])/standard/(${uuidPattern})/?$`));
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
@@ -159,6 +160,10 @@ async function handleAuthenticatedRoutes(path) {
       case "/chat":
         await displayChatPage();
         console.log("Loading chat page");
+        break;
+      case "/local":
+        await displayLocalPage();
+        console.log("Loading local play page");
         break;
       default:
         console.log("Path not found, loading default page");

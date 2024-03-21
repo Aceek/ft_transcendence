@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from .models import Tournament
-from .serializers import TournamentSerializer
+from .serializers import TournamentSerializer, LocalTournamentSerializer
 from CustomUser.models import CustomUser
 from rest_framework.pagination import PageNumberPagination
 from stats.views import CustomPageNumberPagination
@@ -231,3 +231,14 @@ class TournamentHistoryView(generics.ListAPIView):
         return Tournament.objects.filter(
             user=self.request.user, is_finished=True
         ).order_by("-created_at")
+    
+
+# LocalTournament
+    
+class CreateLocalTournament(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = LocalTournamentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
