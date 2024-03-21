@@ -21,11 +21,12 @@ class ChannelCom:
         }
         await self.channel_layer.group_send(self.room_group_name, message)
 
-    async def send_compacted_dynamic_data(self, ball_data, player_data):
+    async def send_compacted_dynamic_data(self, ball_data, player_data, process_time):
         message = {
             "type": "game.compacted_dynamic_data",
             "ball": ball_data,
             "players": player_data,
+            "processTime": process_time,
         }
         await self.channel_layer.group_send(self.room_group_name, message)
 

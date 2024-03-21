@@ -54,7 +54,7 @@ function startSendingPing() {
                 timestamp: Date.now()
             }));
         }
-    }, 16);
+    }, 167);
 }
 
 function waitForInitialization() {
@@ -73,10 +73,10 @@ function waitForInitialization() {
 //-----------------------------MAIN LOOP------------------------------------
 
 let frameCount = 0;
-let lastFpsTime = Date.now();
+let lastFpsTime = 0; // Initialize with 0 to handle the first frame's timestamp
 
 function interpolatePosition(lastPosition, speed, deltaTime) {
-    return lastPosition + speed * (deltaTime / 1000);
+    return lastPosition + speed * (deltaTime / 1000); // deltaTime is in milliseconds
 }
 
 function updateFps(now) {
@@ -93,16 +93,24 @@ function updateFps(now) {
 }
 
 function mainLoop() {
+    const now = Date.now();
+	
+	if (!lastFpsTime) {
+        lastFpsTime = now;
+    }
     
-    updateFps(Date.now());
+    updateFps(now);
     
+    const gameDeltaTime = now - game.ball.lastServerUpdate;
     if (game && game.status === 1) {
-        const gameDeltaTime = Date.now() - game.ball.lastServerUpdate;
         game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
         game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
+        // console.log(`INTER - X: ${game.ball.x}, Y: ${game.ball.y}`);
     }
-
-    renderer && renderer.draw();
-
+    
+    if (renderer) {
+        renderer.draw();
+    }
+    
     animationFrameId = requestAnimationFrame(mainLoop);
 }

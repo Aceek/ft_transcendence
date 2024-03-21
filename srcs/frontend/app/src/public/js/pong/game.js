@@ -17,6 +17,7 @@ export class Game {
         this.countdown = null;
         this.latency = null;
         this.fps = null;
+        this.processTime = null;
 
         // Game configuration properties
         this.canvasWidth = 0;
@@ -85,11 +86,13 @@ export class Game {
     }
 
     
-    handleCompactedDynamicData(ball_data, players_data) {
-        this.ball.handleCompactedDynamicData(ball_data, this.latency, this.status);
+    handleCompactedDynamicData(ball_data, players_data, process_time) {
+        this.ball.handleCompactedDynamicData(ball_data, this.latency, this.processTime, this.status);
         this.players.forEach((player) => {
             player.handleCompactedDynamicData(players_data);
         });
+        this.processTime = process_time;
+        // console.log(this.processTime);
     }
 
     handlePaddleSideAssignment(paddleSide) {

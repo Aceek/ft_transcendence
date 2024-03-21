@@ -8,6 +8,7 @@ export class GameElements extends BaseDrawing {
 
     drawBall(x, y) {
         this.drawFilledRect(x - this.game.ball.size / 2, y - this.game.ball.size / 2, this.game.ball.size, this.game.ball.size, "#fff");
+        // console.log(`DRAW - X: ${x}, Y: ${y}`);
     }
 
     drawPaddle(player) {

@@ -57,7 +57,7 @@ function handleWebSocketMessage(data, game) {
             game.handleDynamicData(data.data, data.timestamp);
             break;
         case "game.compacted_dynamic_data":
-            game.handleCompactedDynamicData(data.ball, data.players, data.time);
+            game.handleCompactedDynamicData(data.ball, data.players, data.processTime);
             break;
         case "game.paddle_side":
             game.handlePaddleSideAssignment(data.paddle_side);

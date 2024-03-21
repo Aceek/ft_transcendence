@@ -189,14 +189,21 @@ export class GameMessages extends BaseDrawing {
         this.ctx.textAlign = 'right';
         
         if (typeof this.game.fps === 'number') {
-            const fpsText = `${Math.round(this.game.fps)} fps`;
+            const fpsText = `${Math.round(this.game.fps)} FPS`;
             this.drawText(fpsText, metricsX, metricsY, "#fff");
         }
         
         metricsY += 30;
         
         if (typeof this.game.latency === 'number') {
-            const latencyText = `${Math.round(this.game.latency)} ms`;
+            const latencyText = `${Math.round(this.game.latency)} ms LAT`;
+            this.drawText(latencyText, metricsX, metricsY, "#fff");
+        }
+
+        metricsY += 30;
+        
+        if (typeof this.game.processTime === 'number') {
+            const latencyText = `${Math.round(this.game.processTime)} ms PT`;
             this.drawText(latencyText, metricsX, metricsY, "#fff");
         }
     }
