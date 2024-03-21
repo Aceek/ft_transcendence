@@ -2,11 +2,13 @@ export class KeyEventController {
     constructor(socket, game) {
         this.socket = socket;
         this.game = game;
+        this.paddleUpdateInterval = null;
         this.initEventListeners();
     }
 
     initEventListeners() {
         document.addEventListener("keydown", (event) => this.handleKeyDown(event.key));
+        document.addEventListener("keyup", (event) => this.handleKeyUp(event.key));
     }
 
     handleKeyDown(key) {
@@ -18,17 +20,33 @@ export class KeyEventController {
                 break;
             case "ArrowUp":
             case "ArrowDown":
-                this.updateVerticalPaddlePosition(key);
+                if (!this.paddleUpdateInterval) {
+                    this.paddleUpdateInterval = setInterval(() => {
+                        this.updateVerticalPaddlePosition(key);
+                    }, 33);
+                }
                 break;
             case "ArrowLeft":
             case "ArrowRight":
-                this.updateHorizontalPaddlePosition(key);
+                if (!this.paddleUpdateInterval) {
+                    this.paddleUpdateInterval = setInterval(() => {
+                        this.updateHorizontalPaddlePosition(key);
+                    }, 33);
+                }
                 break;
             default:
                 break;
         }
     }
 
+    handleKeyUp(key) {
+        if (key === "ArrowUp" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight") {
+            if (this.paddleUpdateInterval) {
+                clearInterval(this.paddleUpdateInterval);
+                this.paddleUpdateInterval = null;
+            }
+        }
+    }
     
     handleEnterKey() {
         if (this.game.status !== 3) return;

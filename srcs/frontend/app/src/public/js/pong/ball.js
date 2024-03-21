@@ -1,4 +1,3 @@
-let lastDataTimestamp = 0; // Initialize outside the function to persist across calls
 export class Ball {
     constructor() {
       this.size = 0;
@@ -20,19 +19,6 @@ export class Ball {
   }
   
   handleCompactedDynamicData(ball_data, latency, processTime, gameStatus) {
-      
-    //   // Capture the current timestamp as soon as data is received
-    //   const currentTimestamp = Date.now();
-      
-    //   // Calculate the delta time since the last data was received, in milliseconds
-    //   const deltaTimeMs = lastDataTimestamp ? currentTimestamp - lastDataTimestamp : 0;
-      
-    //   // Update lastDataTimestamp for the next call
-    //   lastDataTimestamp = currentTimestamp;
-      
-    //   console.log(`Delta: ${deltaTimeMs - 16.67}ms`);
-    //   console.log(ball_data);
-    //   console.log(`Latency: ${latency}ms`);
     const serverX = parseFloat(ball_data[0]);
     const serverY = parseFloat(ball_data[1]);
     const vx = parseFloat(ball_data[2]);
@@ -51,9 +37,6 @@ export class Ball {
     }
     this.vx = vx;
     this.vy = vy;
-
-    // console.log(`SERV - X: ${this.x}, Y: ${this.y}, lantency ${latency}`);
-
     this.lastServerUpdate = Date.now();
   }
 }

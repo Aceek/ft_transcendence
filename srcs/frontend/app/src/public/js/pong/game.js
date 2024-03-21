@@ -86,14 +86,17 @@ export class Game {
     }
 
     
-    handleCompactedDynamicData(ball_data, players_data, process_time) {
+    handleCompactedDynamicData(ball_data, players_data, process_time, controlledPlayer) {
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.processTime, this.status);
         this.players.forEach((player) => {
-            player.handleCompactedDynamicData(players_data);
+            // Check if the current player is not the controlledPlayer
+            if (player !== this.controlledPlayer) {
+                player.handleCompactedDynamicData(players_data);
+            }
         });
         this.processTime = process_time;
-        // console.log(this.processTime);
     }
+    
 
     handlePaddleSideAssignment(paddleSide) {
         this.receivedSide = paddleSide.toLowerCase();

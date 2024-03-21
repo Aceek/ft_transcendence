@@ -54,7 +54,7 @@ function startSendingPing() {
                 timestamp: Date.now()
             }));
         }
-    }, 167);
+    }, 333);
 }
 
 function waitForInitialization() {
@@ -105,7 +105,6 @@ function mainLoop() {
     if (game && game.status === 1) {
         game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
         game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
-        // console.log(`INTER - X: ${game.ball.x}, Y: ${game.ball.y}`);
     }
     
     if (renderer) {
