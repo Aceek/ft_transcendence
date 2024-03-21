@@ -89,26 +89,39 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Potentially not online anymore -> to be tested
         await self.database_ops.set_user_status(self.user_id, "online")
         
-        # # Remove this channel from the group
-        # await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        # Remove this channel from the group
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     # -------------------------------RECEIVE-----------------------------------
         
     async def receive(self, text_data):
         data = json.loads(text_data)
 
-        # Handle "paddle_position_update" message
-        if "type" in data and data["type"] == "update":
+        # Common conditions
+        if "type" not in data:
+            print("Received message without a type.")
+            return
+
+        # Handle "update" message
+        if data["type"] == "update":
             pos = data.get('pos')
-            if pos is not None and self.paddle.side is not None:
-                if await self.paddle.check_movement(pos):
-                    await self.paddle.set_data_to_redis(pos)
+            side = data.get('side')
+            if pos is not None and side is not None:
+                if self.game_mode == "online":
+                    paddle = self.paddle
+                else:
+                    paddle = self.paddle_left if side == "left" else self.paddle_right
+                if await paddle.check_movement(pos):
+                    await paddle.set_data_to_redis(pos)
+
         # Handle "restart_game" message
-        elif "type" in data and data["type"] == "restart_game":
+        elif data["type"] == "restart_game":
             await self.redis_ops.add_restart_requests(self.user_id)
-        # Handling different types of messages
-        elif "type" in data and data["type"] == "ping":
+
+        # Handle "ping" message
+        elif data["type"] == "ping":
             await self.send_pong(data)
+
         else:
             print("Received unknown message type or missing key.")
     
@@ -148,9 +161,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def send_paddle_assignement(self, paddle):
-        if paddle.side is not None:
+        if paddle.position is not None:
 
-            key_map = get_player_key_map(paddle.side)
+            key_map = get_player_key_map(paddle.position)
             await self.send(text_data=json.dumps({
                 'type': 'game.paddle_side',
                 'paddle_side': key_map['position'],

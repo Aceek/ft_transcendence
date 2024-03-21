@@ -8,7 +8,7 @@ class Paddle:
         self.user_id = user_id
         self.redis_ops = redis_ops
         self.player_nb = player_nb
-        self.side = None
+        self.position = None
 
         self.size = PADDLE_HEIGHT
         self.speed = PADDLE_SPEED
@@ -54,12 +54,11 @@ class Paddle:
                 "max": (PlayerPosition.RIGHT, "max")
             }
         }
-        if self.side in collision_map:
-            return collision_map[self.side][boundary_condition]
-        
+        if self.position in collision_map:
+            return collision_map[self.position][boundary_condition]
 
     async def set_boundaries(self):
-        if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
+        if self.position in [PlayerPosition.BOTTOM, PlayerPosition.UP]:
             self.boundary_max = self.screen_width
             self.collision_boundary_max = self.screen_width - self.border_distance
             self.other_collision_boundary_max = self.screen_height - self.border_distance
@@ -69,7 +68,7 @@ class Paddle:
             self.other_collision_boundary_max = self.screen_width - self.border_distance
 
     async def set_axis_keys(self):
-        self.axis_key = 'paddle_x' if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'
+        self.axis_key = 'paddle_x' if self.position in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
 
     async def assignment(self, game_mode, player_nb):
@@ -85,7 +84,7 @@ class Paddle:
                     self.key_map = get_player_key_map(position)
                     key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
                     if await self.redis_ops.connection.sismember(key, self.user_id):
-                        self.side = position
+                        self.position = position
                         return True
 
             # If not already assigned, attempt to assign a new position based on order
@@ -100,20 +99,20 @@ class Paddle:
 
                 if assigned_count == 0:  # Position is available
                     await self.redis_ops.connection.sadd(key, self.user_id)
-                    self.side = position
+                    self.position = position
                     return True
 
                 assigned_positions += assigned_count
 
             # If all positions are filled or the player is beyond the maximum count, assign as spectator
             print(f"All positions filled or player_nb exceeded, user {self.user_id} is a spectator.")
-            self.side = PlayerPosition.SPEC
+            self.position = PlayerPosition.SPEC
             return False
         finally:
             await lock.release()
 
     async def check_movement(self, new_pos):
-        # Determine the axis and boundary based on the player's side
+        # Determine the axis and boundary based on the player's position
         current_pos_str = await self.redis_ops.get_dynamic_value(self.key_map[self.axis_key])
         current_pos = int(current_pos_str) if current_pos_str is not None else 0
 
@@ -124,10 +123,10 @@ class Paddle:
         # Check movement speed limit
         # If the player move more than 2 times the speed of the paddle
         # within the tick rate a potential cheat is suspected
-        movement_distance = abs(new_pos - current_pos)
-        if movement_distance > self.speed * 3:
-            print(f"Abnormal paddle position based on paddle speed ans server tick rate ({self.speed}). Movement Distance: {movement_distance}")
-            return False
+        # movement_distance = abs(new_pos - current_pos)
+        # if movement_distance > self.speed * 3:
+        #     print(f"Abnormal paddle position based on paddle speed ans server tick rate ({self.speed}). Movement Distance: {movement_distance}")
+        #     return False
 
         # Early exit if only 2 players
         if self.player_nb < 3:
@@ -161,5 +160,5 @@ class Paddle:
 
     async def set_data_to_redis(self, new_position):
         # Choose the correct axis key based on the player's side
-        key = self.key_map['paddle_x'] if self.side in [PlayerPosition.BOTTOM, PlayerPosition.UP] else self.key_map['paddle_y']
+        key = self.key_map['paddle_x'] if self.position in [PlayerPosition.BOTTOM, PlayerPosition.UP] else self.key_map['paddle_y']
         await self.redis_ops.set_dynamic_value(key, new_position)

@@ -93,11 +93,11 @@ export class KeyEventController {
 
     sendPaddlePositionUpdate() {
         const player = this.game.controlledPlayer;
-        let currentPos = ['left', 'right'].includes(player.side) ? player.paddleY :
-            player.paddleX;
-
+        let currentPos = ['left', 'right'].includes(player.side) ? player.paddleY : player.paddleX;
+    
         if (this.lastSentPaddlePos !== currentPos) {
-            this.socket.send(JSON.stringify({ type: "update", pos: currentPos }));
+            // Include the 'side' field in the message
+            this.socket.send(JSON.stringify({ type: "update", pos: currentPos, side: player.side }));
             this.lastSentPaddlePos = currentPos;
         }
     }
