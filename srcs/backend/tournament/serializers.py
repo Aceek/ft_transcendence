@@ -74,6 +74,7 @@ class LocalMatchesSerializer(serializers.ModelSerializer):
             and (instance.room_url and instance.room_url != "")
         ):
             representation["ready_to_play"] = True
+        representation["local"] = True
         return representation
 
 

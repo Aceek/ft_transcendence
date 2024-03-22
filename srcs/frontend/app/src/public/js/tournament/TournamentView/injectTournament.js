@@ -154,8 +154,8 @@ export async function injectMatchsInTournament(tournament, round, funct = create
 export async function injectPlayButton(match, matchDiv) {
   const playButton = document.createElement("button");
   playButton.classList.add("btn", "btn-primary");
-  if (match.player1 && match.player2) {
-    playButton.textContent = `${match.player1} vs ${match.player2}`;
+  if (match.local) {
+    playButton.textContent = `${match.user1} vs ${match.user2}`;
     playButton.style = "margin-top: 10px";
   } else {
     playButton.textContent = "Rejoindre votre match";

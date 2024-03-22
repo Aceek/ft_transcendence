@@ -80,21 +80,30 @@ class LocalTournament(models.Model):
     is_finished = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     participants = ArrayField(models.CharField(max_length=100), default=list)
-    uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    uid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
 
     def __str__(self):
         return self.name
 
+
 class LocalMatches(models.Model):
-    tournament = models.ForeignKey(LocalTournament, on_delete=models.CASCADE, related_name="local_matches")
-    player1 = models.CharField(max_length=100)
-    player2 = models.CharField(max_length=100)
+    tournament = models.ForeignKey(
+        LocalTournament, on_delete=models.CASCADE, related_name="local_matches"
+    )
+    user1 = models.CharField(max_length=100)
+    user2 = models.CharField(max_length=100)
     winner = models.CharField(max_length=100, null=True, blank=True)
     round = models.IntegerField(default=1, editable=False)
     is_finished = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
-    uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    room_url = models.CharField(max_length=100, null=True, blank=True, editable=False)  # Optionnel, selon l'usage hors ligne
+    uid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True
+    )
+    room_url = models.CharField(
+        max_length=100, null=True, blank=True, editable=False
+    )  # Optionnel, selon l'usage hors ligne
 
     def __str__(self):
         return f"Match {self.uid} in Tournament {self.tournament.name}"

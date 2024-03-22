@@ -1,4 +1,5 @@
-
+import { getDataWithToken } from "../pageUtils.js";
+import { api_url } from "../main.js";
 
 export function verifierNombreJoueurs() {
   const nombreJoueurs = parseInt(document.getElementById("nbPlayers").value);
@@ -48,4 +49,15 @@ export function verifySizeAlias() {
     }
   }
   return true;
+}
+
+export async function verifyifLocalTournament() {
+  const response = await getDataWithToken(api_url + "play/tournaments/local");
+  if (response.ok) {
+    const data = await response.json();
+    if (data.length > 0) {
+      return true;
+    }
+  }
+  return false;
 }

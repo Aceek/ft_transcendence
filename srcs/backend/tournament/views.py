@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from .manageTournament import ManageTournament
-from .manageLocalTournament import ManageLocalTournament
 from rest_framework import serializers
 from rest_framework import mixins
 
@@ -247,7 +246,7 @@ class LocalTournamentView(generics.GenericAPIView, mixins.ListModelMixin, mixins
         if count >= 1:
             raise serializers.ValidationError("You can't create more than 1 active tournaments that are not finished.")
         tournament = serializer.save(localOwnerUser=self.request.user)
-        manage_tournament = ManageLocalTournament(tournament)
+        manage_tournament = ManageTournament(tournament)
         manage_tournament.organize_matches()
 
     def get(self, request, *args, **kwargs):

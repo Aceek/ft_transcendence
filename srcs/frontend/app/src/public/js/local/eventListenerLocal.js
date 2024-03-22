@@ -1,5 +1,6 @@
-import { launchLocalTournament } from "./displayLocal.js";
-import { addAlias } from "./utilsLocal.js";
+import { addAlias, launchLocalTournament } from "./utilsLocal.js";
+import { router, api_url } from "../main.js";
+import { deleteDataWithToken } from "../pageUtils.js";
 
 export async function addEventListenersNbPlayers() {
   const nbPlayers = document.getElementById("nbPlayers");
@@ -16,4 +17,24 @@ export async function addEventListenersLanchLocalTournament() {
   lanchLocalTournament.addEventListener("click", async () => {
     await launchLocalTournament();
   });
+}
+
+export function addEventListenersJoinAndDeleteLocalTournament() {
+  document
+    .getElementById("joinLocalTournament")
+    .addEventListener("click", () => {
+      router("/local/tournament");
+    });
+  document
+    .getElementById("deleteLocalTournament")
+    .addEventListener("click", async () => {
+      const response = await deleteDataWithToken(
+        api_url + "play/tournaments/local"
+      );
+      if (response.ok) {
+        router("/local");
+      } else {
+        console.error("Erreur lors de la suppression du tournoi local");
+      }
+    });
 }

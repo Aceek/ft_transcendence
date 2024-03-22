@@ -1,8 +1,10 @@
-
-import { loadProfileCss, fetchTemplate, getDataWithToken } from "../../pageUtils.js";
+import {
+  loadProfileCss,
+  fetchTemplate,
+  getDataWithToken,
+} from "../../pageUtils.js";
 import { router, api_url } from "../../main.js";
 import { injectMatchsInTournament } from "../TournamentView/injectTournament.js";
-
 
 export async function displayLocalTournamentPage() {
   try {
@@ -23,12 +25,11 @@ export function injectUserInLocalTournament(tournament) {
   const users = tournament.participants;
   const usersContainer = document.getElementById("tournament_users_list");
   usersContainer.innerHTML = "";
-  
+
   users.forEach((user) => {
     const userDiv = createLocalUsersDiv(user);
     usersContainer.appendChild(userDiv);
   });
-  
 }
 
 export function createLocalUsersDiv(user) {
@@ -42,7 +43,6 @@ export function createLocalUsersDiv(user) {
   `;
   return userDiv;
 }
-
 
 export async function getLocalTournament() {
   const url = `${api_url}play/tournaments/local`;
@@ -66,7 +66,6 @@ export async function injectLocalTournamentInfo(tournament) {
     `Round : ${tournament.round}`;
 }
 
-
 export function createLocalMatchDiv(match) {
   const status = match.is_finished ? "Terminé" : "Non terminé";
   const inGame = match.is_in_game ? "En jeu" : "";
@@ -79,11 +78,11 @@ export function createLocalMatchDiv(match) {
       <span>${status}${inGame}</span>
     </div>
     <div class="match__player">
-      <span>${match.player1}</span>
+      <span>${match.user1}</span>
     </div>
     <div class="match__vs">VS</div>
     <div class="match__player">
-      <span>${match.player2}</span>
+      <span>${match.user2}</span>
     </div>
   `;
   return matchDiv;
