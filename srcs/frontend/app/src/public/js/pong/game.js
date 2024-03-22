@@ -1,5 +1,6 @@
 import { Ball } from './ball.js';
 import { Player } from './player.js';
+import { KeyEventController } from './keyEventController.js';
 
 export class Game {
     constructor() {
@@ -12,6 +13,8 @@ export class Game {
         this.players = [];
         this.status = -1;
         this.controlledPlayer = null;
+        this.leftPlayer = null;
+        this.rightPlayer = null;
         this.restartRequest = false;
         this.isInitialized = false;
         this.countdown = null;
@@ -36,8 +39,14 @@ export class Game {
 
     addPlayer(player) {
         this.players.push(player);
-        if (player.isControlled) {
+        if (this.mode === 'online' && player.isControlled) {
             this.controlledPlayer = player;
+        } else if (this.mode === 'offline') {
+            if (player.isControlled && player.side === 'left') {
+                this.leftPlayer = player;
+            } else if (player.isControlled && player.side === 'right') {
+                this.rightPlayer = player;
+            }
         }
     }
 
@@ -46,7 +55,7 @@ export class Game {
         for (let i = 0; i < this.playerNb; i++) {
             const playerSide = sides[i % sides.length];
             const isControlled = this.receivedSides.includes(playerSide);
-            const newPlayer = new Player(i, playerSide, isControlled);
+            const newPlayer = new Player(i, playerSide, isControlled, this.mode);
             this.addPlayer(newPlayer);
         }
     }

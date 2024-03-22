@@ -2,8 +2,25 @@ export class KeyEventController {
     constructor(socket, game) {
         this.socket = socket;
         this.game = game;
-        this.paddleUpdateInterval = null;
+        this.playersToControl = [];
         this.initEventListeners();
+    }
+
+    setPlayersToControl() {
+        this.playersToControl = [];
+    
+        if (this.game.mode === 'online') {
+            if (this.game.controlledPlayer) {
+                this.playersToControl.push(this.game.controlledPlayer);
+            }
+        } else if (this.game.mode === 'offline') {
+            if (this.game.leftPlayer) {
+                this.playersToControl.push(this.game.leftPlayer);
+            }
+            if (this.game.rightPlayer) {
+                this.playersToControl.push(this.game.rightPlayer);
+            }
+        }
     }
 
     initEventListeners() {
@@ -12,50 +29,30 @@ export class KeyEventController {
     }
 
     handleKeyDown(key) {
-        if (!this.game.controlledPlayer) return;
+        this.playersToControl.forEach(player => {
+            if ([player.moveUpKey, player.moveDownKey].includes(key)) {
+                if (!player.paddleUpdateInterval) {
+                    player.paddleUpdateInterval = setInterval(() => {
+                        this.updatePaddlePosition(key, player);
+                    }, 33);
+                }
+            }
+        });
 
-        switch (key) {
-            case "Enter":
-                this.handleEnterKey();
-                break;
-            case "ArrowUp":
-            case "ArrowDown":
-                if (!this.paddleUpdateInterval) {
-                    this.paddleUpdateInterval = setInterval(() => {
-                        this.updateVerticalPaddlePosition(key, this.game.controlledPlayer);
-                    }, 33);
-                }
-                break;
-            case "w":
-            case "s":
-                if (!this.paddleUpdateInterval) {
-                    this.paddleUpdateInterval = setInterval(() => {
-                        this.updateVerticalPaddlePosition(key, this.game.controlledPlayer);
-                    }, 33);
-                }
-                break;
-            case "ArrowLeft":
-            case "ArrowRight":
-                if (!this.paddleUpdateInterval) {
-                    this.paddleUpdateInterval = setInterval(() => {
-                        this.updateHorizontalPaddlePosition(key, this.game.controlledPlayer);
-                    }, 33);
-                }
-                break;
-            default:
-                break;
+        if (key === "Enter") {
+            this.handleEnterKey();
         }
     }
 
     handleKeyUp(key) {
-        if (key === "ArrowUp" || key === "ArrowDown" ||
-            key === "w" || key === "s" ||
-            key === "ArrowLeft" || key === "ArrowRight") {
-            if (this.paddleUpdateInterval) {
-                clearInterval(this.paddleUpdateInterval);
-                this.paddleUpdateInterval = null;
+        this.playersToControl.forEach(player => {
+            if ([player.moveUpKey, player.moveDownKey].includes(key)) {
+                if (player.paddleUpdateInterval) {
+                    clearInterval(player.paddleUpdateInterval);
+                    player.paddleUpdateInterval = null;
+                }
             }
-        }
+        });
     }
     
     handleEnterKey() {
@@ -70,40 +67,22 @@ export class KeyEventController {
         }
     }
 
-    updateVerticalPaddlePosition(key, player) {
+    updatePaddlePosition(key, player) {
         if (this.game.status !== 1) return;
-        if (!['left', 'right'].includes(player.side)) return;
-
-        const change = (key === "ArrowDown" || key === "s") ? player.paddleSpeed : (key === "ArrowUp" || key === "w") ? -player.paddleSpeed : 0;
-        this.updatePaddlePosition(change, 'Y', player);
-    }
-
-    updateHorizontalPaddlePosition(key, player) {
-        if (this.game.status !== 1) return;
-        if (!['bottom', 'up'].includes(player.side)) return;
-
-        const change = key === "ArrowRight" ? player.paddleSpeed : -player.paddleSpeed;
-        this.updatePaddlePosition(change, 'X', player);
-    }
-
-    updatePaddlePosition(change, axis, player) {
-        const paddleProp = axis === 'Y' ? 'paddleY' : 'paddleX';
-        const dimensionProp = axis === 'Y' ? 'paddleHeight' : 'paddleWidth';
-        const canvasDimension = axis === 'Y' ? this.game.canvasHeight : this.game.canvasWidth;
-
-        let newPos = player[paddleProp] + change;
-
-        if (newPos >= 0 && newPos + player[dimensionProp] <= canvasDimension) {
-            this.game.controlledPlayer[paddleProp] = newPos;
-            this.sendPaddlePositionUpdate(player);
+        const change = key === player.moveDownKey ? player.paddleSpeed : -player.paddleSpeed;
+        const newPos = player[player.paddleProp] + change;
+        
+        const canvasDimension = player.paddleProp === 'paddleY' ? this.game.canvasHeight : this.game.canvasWidth;
+            if (newPos >= 0 && newPos + player[player.dimensionProp] <= canvasDimension) {
+                player[player.paddleProp] = newPos;
+                this.sendPaddlePositionUpdate(player);
+            }
         }
-    }
-
-    sendPaddlePositionUpdate(player) {
-        let currentPos = ['left', 'right'].includes(player.side) ? player.paddleY : player.paddleX;
     
+    sendPaddlePositionUpdate(player) {
+        const currentPos = player[player.paddleProp];
+        
         if (this.lastSentPaddlePos !== currentPos) {
-            // Include the 'side' field in the message
             this.socket.send(JSON.stringify({ type: "update", pos: currentPos, side: player.side }));
             this.lastSentPaddlePos = currentPos;
         }
