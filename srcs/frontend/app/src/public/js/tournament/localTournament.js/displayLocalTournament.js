@@ -1,7 +1,7 @@
 
-import { loadProfileCss, fetchTemplate, getDataWithToken } from "../pageUtils.js";
-import { router, api_url } from "../main.js";
-import { injectMatchsInTournament } from "../tournament/TournamentView/injectTournament.js";
+import { loadProfileCss, fetchTemplate, getDataWithToken } from "../../pageUtils.js";
+import { router, api_url } from "../../main.js";
+import { injectMatchsInTournament } from "../TournamentView/injectTournament.js";
 
 
 export async function displayLocalTournamentPage() {
@@ -12,8 +12,7 @@ export async function displayLocalTournamentPage() {
     const tournament = await getLocalTournament();
     await injectLocalTournamentInfo(tournament);
     injectUserInLocalTournament(tournament);
-    injectMatchsInTournament(tournament, tournament.round);
-    console.log(tournament);
+    injectMatchsInTournament(tournament, tournament.round, createLocalMatchDiv);
   } catch (error) {
     console.error("Error:", error);
     router("/home");
@@ -65,6 +64,27 @@ export async function injectLocalTournamentInfo(tournament) {
     `Terminé : ${tournament.is_finished ? "Oui" : "Non"}`;
   document.getElementById("tournament_round").textContent =
     `Round : ${tournament.round}`;
+}
 
 
+export function createLocalMatchDiv(match) {
+  const status = match.is_finished ? "Terminé" : "Non terminé";
+  const inGame = match.is_in_game ? "En jeu" : "";
+
+  const matchDiv = document.createElement("div");
+  matchDiv.className =
+    "list-group-item d-flex align-items-center justify-content-between match";
+  matchDiv.innerHTML = `
+    <div class="match__info mb-2">
+      <span>${status}${inGame}</span>
+    </div>
+    <div class="match__player">
+      <span>${match.player1}</span>
+    </div>
+    <div class="match__vs">VS</div>
+    <div class="match__player">
+      <span>${match.player2}</span>
+    </div>
+  `;
+  return matchDiv;
 }

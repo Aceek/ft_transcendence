@@ -26,7 +26,7 @@ import {
 } from "./chat/chat.js";
 import { pongSocket } from "./pong/main.js";
 import { displayLocalPage } from "./local/displayLocal.js";
-import { displayLocalTournamentPage } from "./local/displayLocalTournament.js";
+import { displayLocalTournamentPage } from "./tournament/localTournament.js/displayLocalTournament.js";
 
 let portString = window.location.port ? ":" + window.location.port : "";
 export const api_url =

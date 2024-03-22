@@ -12,9 +12,19 @@ class ManageLocalTournament:
         # randomize the aliases list
         random.shuffle(self.aliases)
         if len(self.aliases) % 2 != 0:
-            # if the number of aliases is odd, we remove the last one and treat as bye
-            byeAlias = self.aliases.pop()
-            # Handle bye match case here, if necessary
+            # if the number of users is odd, we remove the last one
+            byeUser = self.aliases.pop()
+            byeMatch = LocalMatches.objects.create(
+                tournament=self.tournament,
+                player1=byeUser,
+                player2=byeUser,
+                is_active=True,
+                is_finished=True,
+                round=self.tournament.round,
+            )
+            byeMatch.room_url = ""
+            self.set_end_match(byeMatch, byeUser, False)
+            byeMatch.save()
 
         # create matches
         for i in range(0, len(self.aliases), 2):
@@ -27,7 +37,7 @@ class ManageLocalTournament:
                 is_active=True,
                 round=self.tournament.round,
             )
-            # Note: Adjust room_url or remove if not needed
+            match.room_url = f"/pong/offline/2/tournament/{str(match.uid)}"
             match.save()
 
     def end_round(self):

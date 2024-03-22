@@ -39,3 +39,13 @@ export function verifierValiditeAlias() {
   }
   return true;
 }
+
+export function verifySizeAlias() {
+  const inputsAlias = document.querySelectorAll("#joueursAlias input");
+  for (let input of inputsAlias) {
+    if (input.value.length > 10) {
+      return false;
+    }
+  }
+  return true;
+}

@@ -1,4 +1,4 @@
-from .models import Tournament, Matches, LocalTournament
+from .models import Tournament, Matches, LocalTournament, LocalMatches
 from rest_framework import serializers
 
 
@@ -59,6 +59,22 @@ class TournamentSerializer(serializers.ModelSerializer):
         return representation
 
 
+class LocalMatchesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LocalMatches
+        fields = '__all__'
+    
+    def to_representation(self, instance):
+        representation = super(LocalMatchesSerializer, self).to_representation(instance)
+        request = self.context.get("request")
+        if (
+            request
+            and instance.is_active
+            and instance.is_finished == False
+            and (instance.room_url and instance.room_url != "")
+        ):
+            representation["ready_to_play"] = True
+        return representation
 
 
 class LocalTournamentSerializer(serializers.ModelSerializer):
@@ -78,3 +94,15 @@ class LocalTournamentSerializer(serializers.ModelSerializer):
             )
         tournament = LocalTournament.objects.create(**validated_data)
         return tournament
+    
+    def to_representation(self, instance):
+        representation = super(LocalTournamentSerializer, self).to_representation(instance)
+
+        matches = LocalMatches.objects.filter(tournament=instance)
+        if matches:
+            representation["matches"] = LocalMatchesSerializer(
+                matches, many=True, context=self.context
+            ).data
+
+        return representation
+

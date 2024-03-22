@@ -3,6 +3,7 @@ import {
   verifierNombreJoueurs,
   verifierValiditeAlias,
   verifierUniciteAlias,
+  verifySizeAlias,
 } from "./verificationForm.js";
 import { printConfirmationMessage } from "../profile/profileUtils.js";
 
@@ -57,6 +58,12 @@ export function makeVerificationsLocal() {
 
   if (!verifierUniciteAlias()) {
     errorMessage = "Les alias doivent être uniques.";
+    printConfirmationMessage(errorMessage, "joueursAlias", "red");
+    return false;
+  }
+
+  if (!verifySizeAlias()) {
+    errorMessage = "Les alias doivent avoir une taille inférieure ou égale à 10.";
     printConfirmationMessage(errorMessage, "joueursAlias", "red");
     return false;
   }
