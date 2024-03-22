@@ -1,12 +1,30 @@
-body {
-    margin: 0;
-}
-
 canvas {
     display: none;
     margin: auto;
     background-color: #000;
     font-family: 'Geo', sans-serif;
-    border: 8px solid rgba(255, 255, 255, 0.5);
+    border: 7px solid rgba(255, 255, 255, 0.5);
     box-sizing: border-box;
+    border-radius: 10px;
+    box-shadow: 20px 20px 20px rgba(40, 40, 40, 0.75);
+    filter: drop-shadow(20 20 20px rgb(40, 40, 40));
+}
+
+.grid-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1; /* Ensure it stays behind other content */
+    background: linear-gradient(0deg, transparent 24%, rgba(0, 0, 0, .5) 25%, rgba(0, 0, 0, .5) 26%, transparent 27%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 0, 0, .5) 25%, rgba(0, 0, 0, .5) 26%, transparent 27%, transparent),
+                linear-gradient(0deg, rgba(5, 187, 224, 0.6), rgba(158, 4, 179, 0.6));
+    background-size: 50px 50px, 50px 50px, 100% 100%;
+    animation: moveGrid 5s linear infinite;
+}
+
+@keyframes moveGrid {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to { background-position: 50px 50px, 50px 50px, 0 0; }
 }
