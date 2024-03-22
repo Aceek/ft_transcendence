@@ -218,10 +218,10 @@ export class GameMessages extends BaseDrawing {
             signYDown = player.paddleY + player.paddleHeight + 30;
             this.drawText(player.moveUpKeySign, signX, signYUp, player.color);
             this.drawText(player.moveDownKeySign, signX, signYDown, player.color);
-        } else {
+        } else if (player.side === 'bottom' || player.side === 'up') {
             let signXUp, signXDown, signY;
             signXUp = player.paddleX - 30;
-            signXDown = player.paddleX + 30;
+            signXDown = player.paddleX + player.paddleWidth + 30;
             signY = player.paddleY + player.paddleHeight / 2;
             this.drawText(player.moveUpKeySign, signXUp, signY, player.color);
             this.drawText(player.moveDownKeySign, signXDown, signY, player.color);
