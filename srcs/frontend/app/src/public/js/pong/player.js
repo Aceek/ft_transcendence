@@ -9,7 +9,8 @@ export class Player {
         this.paddleUpdateInterval = null;
         this.score = 0;
         this.username = '';
-        this.color = this.assignColor(id);
+        this.assignedColor = this.assignColor(id);
+        this.color = this.assignedColor;
     }
 
     initPaddleProperties() {
@@ -46,7 +47,6 @@ export class Player {
         }
     }
     
-
     assignColor(id) {
         // const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Classic Green, Red, Blue, Yellow, Default White
         const colors = ['#00FF00', '#FF0000', '#0000FF', '#FFFF00', '#FFFFFF']; // Bright Green, Bright Red, Bright Blue, Bright Yellow, White
