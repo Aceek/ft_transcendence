@@ -39,9 +39,19 @@ export function addEventListenersJoinAndDeleteLocalTournament() {
     });
 }
 
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+}
+
 export function addEventListenerLaunchLocalGame() {
   document.getElementById("launchLocalGame").addEventListener("click", () => {
-    console.log("launchLocalGame");
-    router("/local/game");
+    console.log("Launching standard offline game");
+
+    const uuid = generateUUID();
+
+    router(`/pong/offline/2/standard/${uuid}/`);
   });
 }
