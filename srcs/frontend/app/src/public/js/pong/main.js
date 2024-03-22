@@ -23,12 +23,14 @@ export async function setupGame() {
     try {
         pongSocket = await initializeSocket(game);
         messageHandler(pongSocket, game);
-        
+
         new KeyEventController(pongSocket, game);
 
         waitForInitialization().then(() => {
             canvas.style.display = 'block'; // Make the canvas visible after initialization
             
+            game.setPlayersToControl();
+
             if (pingIntervalId) {
                 clearInterval(pingIntervalId);
                 pingIntervalId = null;
@@ -94,8 +96,8 @@ function updateFps(now) {
 
 function mainLoop() {
     const now = Date.now();
-	
-	if (!lastFpsTime) {
+    
+    if (!lastFpsTime) {
         lastFpsTime = now;
     }
     

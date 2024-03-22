@@ -1,12 +1,16 @@
 export class Player {
-    constructor(id, side, isControlled) {
+    constructor(id, side, isControlled, gameMode) {
         this.id = id;
         this.side = side;
         this.isControlled = isControlled;
+        this.gameMode = gameMode;
         this.initPaddleProperties();
+        this.initKeyAndPositionProperties();
+        this.paddleUpdateInterval = null;
         this.score = 0;
         this.username = '';
-        this.color = this.assignColor(id);
+        this.assignedColor = this.assignColor(id);
+        this.color = this.assignedColor;
     }
 
     initPaddleProperties() {
@@ -17,13 +21,39 @@ export class Player {
         this.paddleY = 0;
     }
 
+    initKeyAndPositionProperties() {
+        const isVertical = this.side === "left" || this.side === "right";
+        if (isVertical) {
+            if (this.gameMode == "offline") {
+                this.moveUpKey = this.side === "left" ? "w" : "ArrowUp";
+                this.moveDownKey = this.side === "left" ? "s" : "ArrowDown";
+                this.moveUpKeySign = this.side === "left" ? "w" : "↑";
+                this.moveDownKeySign = this.side === "left" ? "s" : "↓";
+            } else if (this.gameMode == "online") {
+                this.moveUpKey = "ArrowUp";
+                this.moveDownKey = "ArrowDown";
+                this.moveUpKeySign = "↑";
+                this.moveDownKeySign = "↓";
+            }
+            this.paddleProp = 'paddleY';
+            this.dimensionProp = 'paddleHeight';
+        } else {
+            this.moveUpKey = "ArrowLeft";
+            this.moveDownKey = "ArrowRight";
+            this.moveUpKeySign = "←";
+            this.moveDownKeySign = "→";
+            this.paddleProp = 'paddleX';
+            this.dimensionProp = 'paddleWidth';
+        }
+    }
+    
     assignColor(id) {
-        const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Green, Red, Blue, Yellow, Default White
+        // const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Classic Green, Red, Blue, Yellow, Default White
+        const colors = ['#00FF00', '#FF0000', '#0000FF', '#FFFF00', '#FFFFFF']; // Bright Green, Bright Red, Bright Blue, Bright Yellow, White
         return colors[id] || colors[4];
     }
 
     handleStaticData(staticData) {
-        // Handle paddle dimensions based on player's side
         this.adjustPaddleDimensions(staticData);
         this.paddleSpeed = parseInt(staticData.paddleSpeed, 10);
     }

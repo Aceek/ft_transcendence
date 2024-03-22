@@ -1,5 +1,6 @@
 import { Ball } from './ball.js';
 import { Player } from './player.js';
+import { KeyEventController } from './keyEventController.js';
 
 export class Game {
     constructor() {
@@ -12,6 +13,9 @@ export class Game {
         this.players = [];
         this.status = -1;
         this.controlledPlayer = null;
+        this.leftPlayer = null;
+        this.rightPlayer = null;
+        this.playersToControl = [];
         this.restartRequest = false;
         this.isInitialized = false;
         this.countdown = null;
@@ -26,7 +30,7 @@ export class Game {
         this.mode = '';
         this.type = '';
         this.tournamentId = '';
-        this.receivedSide = '';
+        this.receivedSides = [];
     }
 
     initCanvas() {
@@ -36,8 +40,14 @@ export class Game {
 
     addPlayer(player) {
         this.players.push(player);
-        if (player.isControlled) {
+        if (this.mode === 'online' && player.isControlled) {
             this.controlledPlayer = player;
+        } else if (this.mode === 'offline') {
+            if (player.isControlled && player.side === 'left') {
+                this.leftPlayer = player;
+            } else if (player.isControlled && player.side === 'right') {
+                this.rightPlayer = player;
+            }
         }
     }
 
@@ -45,12 +55,29 @@ export class Game {
         const sides = ['left', 'right', 'bottom', 'up'];
         for (let i = 0; i < this.playerNb; i++) {
             const playerSide = sides[i % sides.length];
-            const isControlled = playerSide === this.receivedSide;
-            const newPlayer = new Player(i, playerSide, isControlled);
+            const isControlled = this.receivedSides.includes(playerSide);
+            const newPlayer = new Player(i, playerSide, isControlled, this.mode);
             this.addPlayer(newPlayer);
         }
     }
 
+    setPlayersToControl() {
+        this.playersToControl = [];
+    
+        if (this.mode === 'online') {
+            if (this.controlledPlayer) {
+                this.playersToControl.push(this.controlledPlayer);
+            }
+        } else if (this.mode === 'offline') {
+            if (this.leftPlayer) {
+                this.playersToControl.push(this.leftPlayer);
+            }
+            if (this.rightPlayer) {
+                this.playersToControl.push(this.rightPlayer);
+            }
+        }
+    }
+    
     updateCanvasSize() {
         this.canvas.width = this.canvasWidth;
         this.canvas.height = this.canvasHeight;
@@ -86,22 +113,22 @@ export class Game {
     }
 
     
-    handleCompactedDynamicData(ball_data, players_data, process_time, controlledPlayer) {
+    handleCompactedDynamicData(ball_data, players_data, process_time) {
         this.ball.handleCompactedDynamicData(ball_data, this.latency, this.processTime, this.status);
         this.players.forEach((player) => {
-            // Check if the current player is not the controlledPlayer
-            if (player !== this.controlledPlayer) {
+            if (!player.isControlled) {
                 player.handleCompactedDynamicData(players_data);
             }
         });
         this.processTime = process_time;
     }
     
-
     handlePaddleSideAssignment(paddleSide) {
-        this.receivedSide = paddleSide.toLowerCase();
+        const side = paddleSide.toLowerCase();
+        if (!this.receivedSides.includes(side)) {
+            this.receivedSides.push(side);
+        }
     }
-    
     
     handleCountdown(seconds) {
         this.countdown = seconds;

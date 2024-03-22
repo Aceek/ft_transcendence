@@ -11,16 +11,26 @@ export class GameElements extends BaseDrawing {
     }
 
     drawPaddle(player) {
-        this.drawFilledRect(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight, player.color);
+        let color = player.color;
+        
+        if (this.game.status === 0 && player.isControlled) {
+            const blink = Math.floor(Date.now() / 333) % 2 === 0;
+            color = blink ? '#000' : player.color;
+        }
+
+        this.drawFilledRect(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight, color);
     }
+    
 
     drawWhiteDashLine() {
         this.ctx.strokeStyle = "#fff";
-        this.ctx.setLineDash([5, 5]);
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([10, 7]);
+    
         this.ctx.beginPath();
         this.ctx.moveTo(this.game.canvasWidth / 2, 0);
         this.ctx.lineTo(this.game.canvasWidth / 2, this.game.canvasHeight);
         this.ctx.stroke();
-        this.ctx.setLineDash([]);
     }
+    
 }

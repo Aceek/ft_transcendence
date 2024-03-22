@@ -107,8 +107,6 @@ export class GameMessages extends BaseDrawing {
         }
     }
     
-    
-
     calculateScorePosition(player) {
         let x, y;
         const offset = this.game.canvasHeight * 0.20;
@@ -178,33 +176,62 @@ export class GameMessages extends BaseDrawing {
         this.drawText(message, x, y, "#fff", "center");
     }
     
+    drawMetric(value, label, metricsY) {
+        const separationSpacing = 10;
+        const metricsX = this.game.canvasWidth - 45;
+    
+        this.ctx.textAlign = 'left';
+        this.setFont(20);
+        this.drawText(label, metricsX, metricsY, "#fff");
+    
+        this.ctx.textAlign = 'right';
+        this.setFont(30);
+        let numberText = Math.round(value).toString();
+        this.drawText(numberText, metricsX - separationSpacing, metricsY, "#fff");
+    }
+    
     drawPerformanceMetrics() {
         this.setTextProperties();
-        this.setFont(20);
-        
-        const rightPadding = 10;
-        const metricsX = this.game.canvasWidth - rightPadding;
         let metricsY = 30;
         
         this.ctx.textAlign = 'right';
         
         if (typeof this.game.fps === 'number') {
-            const fpsText = `${Math.round(this.game.fps)} FPS`;
-            this.drawText(fpsText, metricsX, metricsY, "#fff");
+            this.drawMetric(this.game.fps, "FPS", metricsY);
+            metricsY += 30;
         }
-        
-        metricsY += 30;
         
         if (typeof this.game.latency === 'number') {
-            const latencyText = `${Math.round(this.game.latency)} ms LAT`;
-            this.drawText(latencyText, metricsX, metricsY, "#fff");
+            this.drawMetric(this.game.latency, "ping", metricsY);
+            metricsY += 30;
         }
-
-        metricsY += 30;
         
-        if (typeof this.game.processTime === 'number') {
-            const latencyText = `${Math.round(this.game.processTime)} ms PT`;
-            this.drawText(latencyText, metricsX, metricsY, "#fff");
+        if (typeof this.game.processTime === 'number' && this.game.status === 1) {
+            this.drawMetric(this.game.processTime, "SPT", metricsY);
+            metricsY += 30;
         }
+    }
+    
+    drawPaddleKeySigns(player) {
+        this.setTextProperties();
+        const fontSize = 30;
+        this.setFont(fontSize);
+        
+        if (player.side === 'left' || player.side === 'right') {
+            let signX, signYUp, signYDown;
+            signX = player.paddleX + player.paddleWidth / 2;
+            signYUp = player.paddleY - 30;
+            signYDown = player.paddleY + player.paddleHeight + 30;
+            this.drawText(player.moveUpKeySign, signX, signYUp, player.color);
+            this.drawText(player.moveDownKeySign, signX, signYDown, player.color);
+        } else if (player.side === 'bottom' || player.side === 'up') {
+            let signXUp, signXDown, signY;
+            signXUp = player.paddleX - 30;
+            signXDown = player.paddleX + player.paddleWidth + 30;
+            signY = player.paddleY + player.paddleHeight / 2;
+            this.drawText(player.moveUpKeySign, signXUp, signY, player.color);
+            this.drawText(player.moveDownKeySign, signXDown, signY, player.color);
+        }
+    
     }
 }
