@@ -2,12 +2,12 @@ from .enum import PlayerPosition
 from .utils import get_player_key_map
 
 class Player:
-    def __init__(self, position, game, user):
+    def __init__(self, position, game, user, username):
         self.position = position
         self.id = position.value
         self.game = game
         self.user = user
-        self.username = user.username
+        self.username = username
         self.redis_ops = game.redis_ops
 
         if self.position == PlayerPosition.LEFT or self.position == PlayerPosition.RIGHT:

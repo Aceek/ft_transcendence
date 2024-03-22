@@ -40,13 +40,28 @@ export class KeyEventController {
     handleEnterKey() {
         if (this.game.status !== 3) return;
         
-        if (this.game.type === "tournament") {
-            const tournamentPageUrl = `/tournament/${this.game.tournamentId}`;
-            window.location.href = tournamentPageUrl;
-        } else if (this.game.type === "standard") {
-            this.socket.send(JSON.stringify({ type: "restart_game" }));
-            this.game.restartRequest = true;
+        switch (this.game.type) {
+            case "tournament":
+                this.handleTournamentMode();
+                break;
+            case "standard":
+                this.handleStandardMode();
+                break;
+            default:
+                console.log("Unknown game type.");
         }
+    }
+    
+    handleTournamentMode() {
+        console.log(this.game.mode);
+        const basePath = this.game.mode === "online" ? "/tournament/" : "/local/tournament";
+        const tournamentPageUrl = this.game.mode === "online" ? basePath + this.game.tournamentId : basePath;
+        window.location.href = tournamentPageUrl;
+    }
+    
+    handleStandardMode() {
+        this.socket.send(JSON.stringify({ type: "restart_game" }));
+        this.game.restartRequest = true;
     }
 
     updatePaddlePosition(key, player) {

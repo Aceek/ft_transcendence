@@ -17,8 +17,12 @@ class GameInitializer:
         self.game.database_ops = DatabaseOps()
         self.game.task = self.game.consumers.task
         if self.game.type == "tournament":
-            self.game.match, self.game.tournament = \
-                await self.game.database_ops.get_match_and_tournament(self.game.room_name)
+            if self.game.mode == "online":
+                self.game.match, self.game.tournament = \
+                    await self.game.database_ops.get_match_and_tournament(self.game.room_name)
+            elif self.game.mode == "offline":
+                self.game.match, self.game.tournament = \
+                    await self.game.database_ops.get_local_match_and_tournament(self.game.room_name)
             if self.game.tournament is not None:
                 self.game.tournament_id = str(self.game.tournament.uid)
 
@@ -58,20 +62,24 @@ class GameInitializer:
                 if custom_user is not None:
                     position = await self.game.redis_ops.get_player_position(user_id)
                     if position is not None:
-                        player = Player(position, self.game, custom_user)
-                        await player.set_username_to_redis(player.username)
+                        player = Player(position, self.game, custom_user, custom_user.username)
+                        await player.set_username_to_redis(custom_user.username)
                         await player.set_data_to_redis()
                         self.game.players.append(player)
                     else:
                         print(f"Unknown position for user with ID: {user_id}")
-        else:
+        elif self.game.mode == "offline":
             custom_user = await self.game.database_ops.get_custom_user(users_id[0])
             positions = [PlayerPosition.LEFT, PlayerPosition.RIGHT]
-            for position in positions:
-                player = Player(position, self.game, custom_user)
-                await player.set_data_to_redis()
-                username = f"{player.username} ({str(player.id + 1)})"
+            if self.game.type == "standard":
+                usernames = [f"{custom_user.username}(1)", f"{custom_user.username}(2)"]
+            elif self.game.type == "tournament":
+                usernames = [self.game.match.user1, self.game.match.user2]
+            for index, position in enumerate(positions):
+                username = usernames[index]
+                player = Player(position, self.game, custom_user, username)
                 await player.set_username_to_redis(username)
+                await player.set_data_to_redis()
                 self.game.players.append(player)
         
         self.game.players.sort(key=lambda player: player.position.value)

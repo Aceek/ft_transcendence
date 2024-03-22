@@ -28,6 +28,19 @@ class DatabaseOps:
             return None, None
 
     @database_sync_to_async
+    def get_local_match_and_tournament(self, match_id):
+        from tournament.models import LocalMatches
+
+        try:
+            match = LocalMatches.objects.get(pk=match_id)
+            tournament = match.tournament
+            return match, tournament
+
+        except LocalMatches.DoesNotExist:
+            print(f"Match with ID {match_id} does not exist.")
+            return None, None
+
+    @database_sync_to_async
     def set_user_status(self, user_id, status):
         from CustomUser.models import CustomUser
 
@@ -54,4 +67,4 @@ class DatabaseOps:
         from tournament.manageTournament import ManageTournament
 
         self.tournament_manager = ManageTournament(tournament)
-        self.tournament_manager.set_end_match(match, winner.user)
+        self.tournament_manager.set_end_match(match, winner.username)
