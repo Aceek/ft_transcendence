@@ -37,7 +37,7 @@ export async function injectWinner(tournament) {
   }
 }
 
-export async function injectRoundButtons(tournament) {
+export async function injectRoundButtons(tournament, funct = createMatchDiv) {
   const rounds = [...new Set(tournament.matches.map((match) => match.round))];
   const buttonsContainer = document.getElementById(
     "tournament_match_round_button_col"
@@ -59,7 +59,7 @@ export async function injectRoundButtons(tournament) {
     }
 
     button.addEventListener("click", () =>
-      injectMatchsInTournament(tournament, round)
+      injectMatchsInTournament(tournament, round, funct)
     );
     buttonsContainer.appendChild(button);
   });
@@ -124,7 +124,7 @@ export async function injectUsersInTournament(tournament) {
   }
 }
 
-export async function injectMatchsInTournament(tournament, round) {
+export async function injectMatchsInTournament(tournament, round, funct = createMatchDiv) {
   if (!tournament.matches) {
     console.log("No matches available");
     return;
@@ -135,7 +135,7 @@ export async function injectMatchsInTournament(tournament, round) {
     tournament.matches
       .filter((match) => match.round === round)
       .map(async (match) => {
-        const matchDiv = await createMatchDiv(match);
+        const matchDiv = await funct(match);
         matchesContainer.appendChild(matchDiv);
 
         if (
@@ -148,13 +148,19 @@ export async function injectMatchsInTournament(tournament, round) {
         }
       })
   );
-  await injectRoundButtons(tournament);
+  await injectRoundButtons(tournament, funct);
 }
 
 export async function injectPlayButton(match, matchDiv) {
   const playButton = document.createElement("button");
   playButton.classList.add("btn", "btn-primary");
-  playButton.textContent = "Rejoindre votre match";
+  if (match.local) {
+    playButton.textContent = `${match.user1} vs ${match.user2}`;
+    playButton.style = "margin-top: 10px";
+  } else {
+    playButton.textContent = "Rejoindre votre match";
+  }
+
   playButton.addEventListener("click", async () => {
     router(match.room_url);
   });

@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
-from .models import Tournament
-from .serializers import TournamentSerializer
+from .models import Tournament, LocalTournament
+from .serializers import TournamentSerializer, LocalTournamentSerializer
 from CustomUser.models import CustomUser
 from rest_framework.pagination import PageNumberPagination
 from stats.views import CustomPageNumberPagination
@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 from .manageTournament import ManageTournament
 from rest_framework import serializers
+from rest_framework import mixins
 
 # Create your views here.
 
@@ -79,7 +80,6 @@ class TournamentJoinView(APIView):
         return Response(
             {"message": "User joined the tournament"}, status=status.HTTP_200_OK
         )
-    
 
     def delete(self, request, uid):
         tournament = get_object_or_404(Tournament, uid=uid)
@@ -103,7 +103,7 @@ class TournamentJoinView(APIView):
                 {"message": "Can't leave tournament while it's finished"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         if tournament.ownerUser == user:
             return Response(
                 {"message": "Can't leave tournament while you are the owner"},
@@ -188,6 +188,7 @@ class UserTournamentView(generics.ListAPIView):
             user=self.request.user, is_finished=False
         ).order_by("-created_at")
 
+
 # get tournament owner by authenticated user
 class UserTournamentOwnerView(generics.ListAPIView):
     """
@@ -201,7 +202,7 @@ class UserTournamentOwnerView(generics.ListAPIView):
         return Tournament.objects.filter(
             ownerUser=self.request.user, is_finished=False
         ).order_by("-created_at")
-    
+
 
 # delete tournament by id if the authenticated user is the owner
 class TournamentDeleteView(generics.DestroyAPIView):
@@ -217,11 +218,9 @@ class TournamentDeleteView(generics.DestroyAPIView):
         if instance.is_finished:
             raise serializers.ValidationError("You can't delete a finished tournament")
         instance.delete()
-        return Response(
-            {"message": "Tournament deleted"}, status=status.HTTP_200_OK
-        )
+        return Response({"message": "Tournament deleted"}, status=status.HTTP_200_OK)
 
-  
+
 class TournamentHistoryView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TournamentSerializer
@@ -231,3 +230,34 @@ class TournamentHistoryView(generics.ListAPIView):
         return Tournament.objects.filter(
             user=self.request.user, is_finished=True
         ).order_by("-created_at")
+
+
+
+class LocalTournamentView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
+    queryset = LocalTournament.objects.all()
+    serializer_class = LocalTournamentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return LocalTournament.objects.filter(localOwnerUser=self.request.user, is_finished=False).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        count = LocalTournament.objects.filter(localOwnerUser=self.request.user, is_finished=False).count()
+        if count >= 1:
+            raise serializers.ValidationError("You can't create more than 1 active tournaments that are not finished.")
+        tournament = serializer.save(localOwnerUser=self.request.user)
+        manage_tournament = ManageTournament(tournament)
+        manage_tournament.organize_matches()
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        tournament = LocalTournament.objects.filter(localOwnerUser=request.user, is_finished=False).first()
+        if tournament:
+            tournament.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"detail": "No active tournament found for deletion."}, status=status.HTTP_404_NOT_FOUND)

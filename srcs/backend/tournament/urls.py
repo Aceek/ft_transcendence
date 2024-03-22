@@ -8,6 +8,7 @@ from .views import (
     UserTournamentOwnerView,
     TournamentDeleteView,
     TournamentHistoryView,
+    LocalTournamentView,
 )
 
 urlpatterns = [
@@ -48,5 +49,10 @@ urlpatterns = [
         "tournaments/history",
         TournamentHistoryView.as_view(),
         name="tournaments-history",
+    ),
+    path(
+        "tournaments/local",
+        LocalTournamentView.as_view(),
+        name="tournaments-local",
     ),
 ]
