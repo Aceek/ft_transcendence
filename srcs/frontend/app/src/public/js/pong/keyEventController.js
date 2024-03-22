@@ -22,7 +22,15 @@ export class KeyEventController {
             case "ArrowDown":
                 if (!this.paddleUpdateInterval) {
                     this.paddleUpdateInterval = setInterval(() => {
-                        this.updateVerticalPaddlePosition(key);
+                        this.updateVerticalPaddlePosition(key, this.game.controlledPlayer);
+                    }, 33);
+                }
+                break;
+            case "w":
+            case "s":
+                if (!this.paddleUpdateInterval) {
+                    this.paddleUpdateInterval = setInterval(() => {
+                        this.updateVerticalPaddlePosition(key, this.game.controlledPlayer);
                     }, 33);
                 }
                 break;
@@ -30,7 +38,7 @@ export class KeyEventController {
             case "ArrowRight":
                 if (!this.paddleUpdateInterval) {
                     this.paddleUpdateInterval = setInterval(() => {
-                        this.updateHorizontalPaddlePosition(key);
+                        this.updateHorizontalPaddlePosition(key, this.game.controlledPlayer);
                     }, 33);
                 }
                 break;
@@ -40,7 +48,9 @@ export class KeyEventController {
     }
 
     handleKeyUp(key) {
-        if (key === "ArrowUp" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight") {
+        if (key === "ArrowUp" || key === "ArrowDown" ||
+            key === "w" || key === "s" ||
+            key === "ArrowLeft" || key === "ArrowRight") {
             if (this.paddleUpdateInterval) {
                 clearInterval(this.paddleUpdateInterval);
                 this.paddleUpdateInterval = null;
@@ -60,39 +70,36 @@ export class KeyEventController {
         }
     }
 
-    updateVerticalPaddlePosition(key) {
+    updateVerticalPaddlePosition(key, player) {
         if (this.game.status !== 1) return;
-        if (!['left', 'right'].includes(this.game.controlledPlayer.side)) return;
+        if (!['left', 'right'].includes(player.side)) return;
 
-        const change = key === "ArrowDown" ? this.game.controlledPlayer.paddleSpeed : 
-            -this.game.controlledPlayer.paddleSpeed;
-        this.updatePaddlePosition(change, 'Y');
+        const change = (key === "ArrowDown" || key === "s") ? player.paddleSpeed : (key === "ArrowUp" || key === "w") ? -player.paddleSpeed : 0;
+        this.updatePaddlePosition(change, 'Y', player);
     }
 
-    updateHorizontalPaddlePosition(key) {
+    updateHorizontalPaddlePosition(key, player) {
         if (this.game.status !== 1) return;
-        if (!['bottom', 'up'].includes(this.game.controlledPlayer.side)) return;
+        if (!['bottom', 'up'].includes(player.side)) return;
 
-        const change = key === "ArrowRight" ? this.game.controlledPlayer.paddleSpeed :
-            -this.game.controlledPlayer.paddleSpeed;
-        this.updatePaddlePosition(change, 'X');
+        const change = key === "ArrowRight" ? player.paddleSpeed : -player.paddleSpeed;
+        this.updatePaddlePosition(change, 'X', player);
     }
 
-    updatePaddlePosition(change, axis) {
+    updatePaddlePosition(change, axis, player) {
         const paddleProp = axis === 'Y' ? 'paddleY' : 'paddleX';
         const dimensionProp = axis === 'Y' ? 'paddleHeight' : 'paddleWidth';
         const canvasDimension = axis === 'Y' ? this.game.canvasHeight : this.game.canvasWidth;
 
-        let newPos = this.game.controlledPlayer[paddleProp] + change;
+        let newPos = player[paddleProp] + change;
 
-        if (newPos >= 0 && newPos + this.game.controlledPlayer[dimensionProp] <= canvasDimension) {
+        if (newPos >= 0 && newPos + player[dimensionProp] <= canvasDimension) {
             this.game.controlledPlayer[paddleProp] = newPos;
-            this.sendPaddlePositionUpdate();
+            this.sendPaddlePositionUpdate(player);
         }
     }
 
-    sendPaddlePositionUpdate() {
-        const player = this.game.controlledPlayer;
+    sendPaddlePositionUpdate(player) {
         let currentPos = ['left', 'right'].includes(player.side) ? player.paddleY : player.paddleX;
     
         if (this.lastSentPaddlePos !== currentPos) {
