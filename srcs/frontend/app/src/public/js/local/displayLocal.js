@@ -6,6 +6,7 @@ import {
   injectJoinAndDeleteLocalTournament,
   manageCreationLocalTournament,
 } from "./utilsLocal.js";
+import { addEventListenerLaunchLocalGame } from "./eventListenerLocal.js";
 
 export async function displayLocalPage() {
   try {
@@ -18,6 +19,7 @@ export async function displayLocalPage() {
     } else {
       injectJoinAndDeleteLocalTournament();
     }
+    addEventListenerLaunchLocalGame();
   } catch (error) {
     console.error("Error:", error);
     router("/home");

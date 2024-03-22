@@ -38,3 +38,13 @@ export function addEventListenersJoinAndDeleteLocalTournament() {
       }
     });
 }
+
+
+export function addEventListenerLaunchLocalGame() {
+  document
+    .getElementById("launchLocalGame")
+    .addEventListener("click", () => {
+      console.log("launchLocalGame")
+      router("/local/game");
+    });
+}
