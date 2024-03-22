@@ -8,10 +8,12 @@ export class GameMessages extends BaseDrawing {
 
     drawCountdownMessages() {
         if (this.game.type === "tournament" && this.game.status === 2) {
-            this.drawTwoPartMessage(this.game.countdown.toString(), "Opponent forfeiting in...");
+            this.drawTwoPartMessage(this.game.countdown.toString(), 
+            "Opponent forfeiting in...");
         } else {
             this.drawPlayerNames();
-            this.drawTwoPartMessage(this.game.countdown.toString(), "Get ready...");
+            this.drawTwoPartMessage(this.game.countdown.toString(),
+            `${this.game.scoreLimit} points to win: Get ready...`);
         }
     }
 
@@ -73,12 +75,12 @@ export class GameMessages extends BaseDrawing {
         this.setTextProperties();
         
         // Main Message
-        this.setFont(70);
+        this.setFont(80);
         const mainY = this.game.canvasHeight / 2 - gap;
         this.drawText(mainText, this.game.canvasWidth / 2, mainY, "#fff");
         
         // Sub Message
-        this.setFont(30);
+        this.setFont(35);
         const subY = mainY + gap * 2;
         this.drawText(subText, this.game.canvasWidth / 2, subY, "#fff");
     }

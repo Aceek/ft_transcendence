@@ -7,4 +7,6 @@ canvas {
     margin: auto;
     background-color: #000;
     font-family: 'Geo', sans-serif;
+    border: 8px solid rgba(255, 255, 255, 0.5);
+    box-sizing: border-box;
 }

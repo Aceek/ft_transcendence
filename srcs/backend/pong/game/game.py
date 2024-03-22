@@ -150,13 +150,6 @@ class GameLogic:
                     break
 
                 await self.game_tick(delta_time)
-                # print("time dif :", (time.time() - self.last_update_time) * 1000)
-
-                # self.loop_count += 1
-                # if time.time() - self.loop_count_reset_time >= 1:
-                #     print("Loops in last second:", self.loop_count)
-                #     self.loop_count = 0
-                #     self.loop_count_reset_time = time.time()
 
                 process_time = (time.time() - self.last_update_time) * 1000
 

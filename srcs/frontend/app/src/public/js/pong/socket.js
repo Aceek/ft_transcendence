@@ -11,12 +11,10 @@ function constructSocketUrl() {
     return `wss://${hostname}${port ? `:${port}` : ''}/ws/pong/${mode}/${playerNb}/${type}/${roomId}/`;
 }
 
-
 export function initializeSocket(game) {
     return new Promise((resolve, reject) => {
         const socketUrl = constructSocketUrl();
         
-        // Early reject if the URL is invalid
         if (!socketUrl) {
             reject(new Error("Failed to initialize WebSocket: Invalid URL"));
             return;
@@ -46,7 +44,6 @@ export function initializeSocket(game) {
         });
     });
 }
-
 
 function handleWebSocketMessage(data, game) {
     switch (data.type) {

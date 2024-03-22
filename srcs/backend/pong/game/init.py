@@ -38,6 +38,7 @@ class GameInitializer:
             "gameMode": self.game.mode,
             "gameType": self.game.type,
             "tournamentId": self.game.tournament_id,
+            "scoreLimit": self.game.score_limit,
         }
         return static_data
 

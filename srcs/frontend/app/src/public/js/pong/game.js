@@ -101,6 +101,7 @@ export class Game {
         this.mode = staticData.gameMode;
         this.type = staticData.gameType;
         this.tournamentId = staticData.tournamentId;
+        this.scoreLimit = staticData.scoreLimit;
     }
     
     handleDynamicData(dynamicData) {

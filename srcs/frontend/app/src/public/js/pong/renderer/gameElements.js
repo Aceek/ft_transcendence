@@ -23,8 +23,8 @@ export class GameElements extends BaseDrawing {
     
 
     drawWhiteDashLine() {
-        this.ctx.strokeStyle = "#fff";
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        this.ctx.lineWidth = 4;
         this.ctx.setLineDash([10, 7]);
     
         this.ctx.beginPath();
@@ -32,5 +32,4 @@ export class GameElements extends BaseDrawing {
         this.ctx.lineTo(this.game.canvasWidth / 2, this.game.canvasHeight);
         this.ctx.stroke();
     }
-    
 }
