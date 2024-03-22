@@ -54,6 +54,10 @@ export class KeyEventController {
         const change = key === player.moveDownKey ? player.paddleSpeed : -player.paddleSpeed;
         const newPos = player[player.paddleProp] + change;
         
+        if (this.checkForPaddleCollision(player, newPos)) {
+            return;
+        }
+
         const canvasDimension = player.paddleProp === 'paddleY' ? this.game.canvasHeight : this.game.canvasWidth;
             if (newPos >= 0 && newPos + player[player.dimensionProp] <= canvasDimension) {
                 player[player.paddleProp] = newPos;
@@ -68,5 +72,27 @@ export class KeyEventController {
             this.socket.send(JSON.stringify({ type: "update", pos: currentPos, side: player.side }));
             this.lastSentPaddlePos = currentPos;
         }
+    }
+
+    checkForPaddleCollision(movingPlayer, newPos) {
+        const otherPlayers = this.game.players.filter(p => p.id !== movingPlayer.id);
+        for (let otherPlayer of otherPlayers) {
+            if (movingPlayer.paddleProp === 'paddleY') {
+                if (newPos < otherPlayer.paddleY + otherPlayer.paddleHeight &&
+                    newPos + movingPlayer.paddleHeight > otherPlayer.paddleY &&
+                    movingPlayer.paddleX < otherPlayer.paddleX + otherPlayer.paddleWidth &&
+                    movingPlayer.paddleX + movingPlayer.paddleWidth > otherPlayer.paddleX) {
+                    return true;
+                }
+            } else {
+                if (newPos < otherPlayer.paddleX + otherPlayer.paddleWidth &&
+                    newPos + movingPlayer.paddleWidth > otherPlayer.paddleX &&
+                    movingPlayer.paddleY < otherPlayer.paddleY + otherPlayer.paddleHeight &&
+                    movingPlayer.paddleY + movingPlayer.paddleHeight > otherPlayer.paddleY) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
