@@ -122,11 +122,13 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_compacted_dynamic_data(self, event):
         ball_data = event['ball']
         player_data = event['players']
+        process_time = event['processTime']
         
         await self.send(text_data=json.dumps({
             'type': 'game.compacted_dynamic_data',
             'ball': ball_data,
             'players': player_data,
+            'processTime': process_time,
         }))
 
     async def game_countdown(self, event):

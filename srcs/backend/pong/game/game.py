@@ -48,6 +48,8 @@ class GameLogic:
         self.tournament_id = ""
 
         self.target_loop_duration = 1 / TICK_RATE
+        self.loop_count = 0
+        self.loop_count_reset_time = time.time()
 
         self.redis_ops = None
         self.initializer = GameInitializer(self)
@@ -56,7 +58,7 @@ class GameLogic:
 
     # ---------------------------DATA UPDATES-----------------------------------
 
-    async def get_and_send_compacted_dynamic_data(self):
+    async def get_and_send_compacted_dynamic_data(self, process_time):
         ball_compacted_data = []
         players_compacted_data = []
 
@@ -64,7 +66,7 @@ class GameLogic:
         for player in self.players:
             players_compacted_data.append(player.get_dynamic_compacted_player_data())
 
-        await self.channel_com.send_compacted_dynamic_data(ball_compacted_data, players_compacted_data)
+        await self.channel_com.send_compacted_dynamic_data(ball_compacted_data, players_compacted_data, process_time)
 
     async def get_and_send_static_data(self):
         static_data = await self.redis_ops.get_static_data()
@@ -148,6 +150,18 @@ class GameLogic:
                     break
 
                 await self.game_tick(delta_time)
+                # print("time dif :", (time.time() - self.last_update_time) * 1000)
+
+                # self.loop_count += 1
+                # if time.time() - self.loop_count_reset_time >= 1:
+                #     print("Loops in last second:", self.loop_count)
+                #     self.loop_count = 0
+                #     self.loop_count_reset_time = time.time()
+
+                process_time = (time.time() - self.last_update_time) * 1000
+
+                # Broadcast the game data to all clients
+                await self.get_and_send_compacted_dynamic_data(process_time)
 
                 # Calculate the remaining tick time to send the data at fixed interval
                 loop_execution_time = time.time() - loop_start_time
@@ -212,8 +226,8 @@ class GameLogic:
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()
 
-        # Broadcast the game data to all clients
-        await self.get_and_send_compacted_dynamic_data()
+        # # Broadcast the game data to all clients
+        # await self.get_and_send_compacted_dynamic_data()
 
     # -------------------------------END GAME-----------------------------------
 
