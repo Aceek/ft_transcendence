@@ -23,25 +23,33 @@ export class Player {
     initKeyAndPositionProperties() {
         const isVertical = this.side === "left" || this.side === "right";
         if (isVertical) {
-            if (this.gameMode === "offline") {
+            if (this.gameMode == "offline") {
                 this.moveUpKey = this.side === "left" ? "w" : "ArrowUp";
                 this.moveDownKey = this.side === "left" ? "s" : "ArrowDown";
-            } else if (this.gameMode === "online") {
-                this.moveUpKey =  "ArrowUp";
+                this.moveUpKeySign = this.side === "left" ? "w" : "↑";
+                this.moveDownKeySign = this.side === "left" ? "s" : "↓";
+            } else if (this.gameMode == "online") {
+                this.moveUpKey = "ArrowUp";
                 this.moveDownKey = "ArrowDown";
+                this.moveUpKeySign = "↑";
+                this.moveDownKeySign = "↓";
             }
             this.paddleProp = 'paddleY';
             this.dimensionProp = 'paddleHeight';
         } else {
             this.moveUpKey = "ArrowLeft";
             this.moveDownKey = "ArrowRight";
+            this.moveUpKeySign = "←";
+            this.moveDownKeySign = "→";
             this.paddleProp = 'paddleX';
             this.dimensionProp = 'paddleWidth';
         }
     }
+    
 
     assignColor(id) {
-        const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Green, Red, Blue, Yellow, Default White
+        // const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Classic Green, Red, Blue, Yellow, Default White
+        const colors = ['#00FF00', '#FF0000', '#0000FF', '#FFFF00', '#FFFFFF']; // Bright Green, Bright Red, Bright Blue, Bright Yellow, White
         return colors[id] || colors[4];
     }
 

@@ -15,6 +15,7 @@ export class Game {
         this.controlledPlayer = null;
         this.leftPlayer = null;
         this.rightPlayer = null;
+        this.playersToControl = [];
         this.restartRequest = false;
         this.isInitialized = false;
         this.countdown = null;
@@ -57,6 +58,23 @@ export class Game {
             const isControlled = this.receivedSides.includes(playerSide);
             const newPlayer = new Player(i, playerSide, isControlled, this.mode);
             this.addPlayer(newPlayer);
+        }
+    }
+
+    setPlayersToControl() {
+        this.playersToControl = [];
+    
+        if (this.mode === 'online') {
+            if (this.controlledPlayer) {
+                this.playersToControl.push(this.controlledPlayer);
+            }
+        } else if (this.mode === 'offline') {
+            if (this.leftPlayer) {
+                this.playersToControl.push(this.leftPlayer);
+            }
+            if (this.rightPlayer) {
+                this.playersToControl.push(this.rightPlayer);
+            }
         }
     }
     

@@ -2,25 +2,7 @@ export class KeyEventController {
     constructor(socket, game) {
         this.socket = socket;
         this.game = game;
-        this.playersToControl = [];
         this.initEventListeners();
-    }
-
-    setPlayersToControl() {
-        this.playersToControl = [];
-    
-        if (this.game.mode === 'online') {
-            if (this.game.controlledPlayer) {
-                this.playersToControl.push(this.game.controlledPlayer);
-            }
-        } else if (this.game.mode === 'offline') {
-            if (this.game.leftPlayer) {
-                this.playersToControl.push(this.game.leftPlayer);
-            }
-            if (this.game.rightPlayer) {
-                this.playersToControl.push(this.game.rightPlayer);
-            }
-        }
     }
 
     initEventListeners() {
@@ -29,7 +11,7 @@ export class KeyEventController {
     }
 
     handleKeyDown(key) {
-        this.playersToControl.forEach(player => {
+        this.game.playersToControl.forEach(player => {
             if ([player.moveUpKey, player.moveDownKey].includes(key)) {
                 if (!player.paddleUpdateInterval) {
                     player.paddleUpdateInterval = setInterval(() => {
@@ -45,7 +27,7 @@ export class KeyEventController {
     }
 
     handleKeyUp(key) {
-        this.playersToControl.forEach(player => {
+        this.game.playersToControl.forEach(player => {
             if ([player.moveUpKey, player.moveDownKey].includes(key)) {
                 if (player.paddleUpdateInterval) {
                     clearInterval(player.paddleUpdateInterval);

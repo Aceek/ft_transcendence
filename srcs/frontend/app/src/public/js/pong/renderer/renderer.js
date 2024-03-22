@@ -15,6 +15,12 @@ export class Renderer {
         this.messages.drawScores();
         this.messages.drawPerformanceMetrics();
         
+        if (this.game.status === 0) {
+            this.game.playersToControl.forEach(player => {
+                this.messages.drawPaddleKeySigns(player);
+            });
+        }
+
         if (this.game.status !== -1) {
             this.drawGameActiveElements();
         }

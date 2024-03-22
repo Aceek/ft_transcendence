@@ -107,8 +107,6 @@ export class GameMessages extends BaseDrawing {
         }
     }
     
-    
-
     calculateScorePosition(player) {
         let x, y;
         const offset = this.game.canvasHeight * 0.20;
@@ -206,5 +204,28 @@ export class GameMessages extends BaseDrawing {
             const latencyText = `${Math.round(this.game.processTime)} ms PT`;
             this.drawText(latencyText, metricsX, metricsY, "#fff");
         }
+    }
+
+    drawPaddleKeySigns(player) {
+        this.setTextProperties();
+        const fontSize = 30;
+        this.setFont(fontSize);
+        
+        if (player.side === 'left' || player.side === 'right') {
+            let signX, signYUp, signYDown;
+            signX = player.paddleX + player.paddleWidth / 2;
+            signYUp = player.paddleY - 30;
+            signYDown = player.paddleY + player.paddleHeight + 30;
+            this.drawText(player.moveUpKeySign, signX, signYUp, player.color);
+            this.drawText(player.moveDownKeySign, signX, signYDown, player.color);
+        } else {
+            let signXUp, signXDown, signY;
+            signXUp = player.paddleX - 30;
+            signXDown = player.paddleX + 30;
+            signY = player.paddleY + player.paddleHeight / 2;
+            this.drawText(player.moveUpKeySign, signXUp, signY, player.color);
+            this.drawText(player.moveDownKeySign, signXDown, signY, player.color);
+        }
+    
     }
 }
