@@ -27,21 +27,21 @@ export class Player {
             if (this.gameMode == "offline") {
                 this.moveUpKey = this.side === "left" ? "w" : "ArrowUp";
                 this.moveDownKey = this.side === "left" ? "s" : "ArrowDown";
-                this.moveUpKeySign = this.side === "left" ? "w" : "↑";
-                this.moveDownKeySign = this.side === "left" ? "s" : "↓";
+                this.moveUpKeySign = this.side === "left" ? "w" : "▲";
+                this.moveDownKeySign = this.side === "left" ? "s" : "▼";
             } else if (this.gameMode == "online") {
                 this.moveUpKey = "ArrowUp";
                 this.moveDownKey = "ArrowDown";
-                this.moveUpKeySign = "↑";
-                this.moveDownKeySign = "↓";
+                this.moveUpKeySign = "⬆️▲";
+                this.moveDownKeySign = "▼";
             }
             this.paddleProp = 'paddleY';
             this.dimensionProp = 'paddleHeight';
         } else {
             this.moveUpKey = "ArrowLeft";
             this.moveDownKey = "ArrowRight";
-            this.moveUpKeySign = "←";
-            this.moveDownKeySign = "→";
+            this.moveUpKeySign = "◄";
+            this.moveDownKeySign = "►";
             this.paddleProp = 'paddleX';
             this.dimensionProp = 'paddleWidth';
         }
@@ -49,10 +49,10 @@ export class Player {
     
     assignColor(id) {
         const colors = [
-            'rgba(0, 255, 255, 1)', // Flashy Turquoise/Cyan 
-            'rgba(255, 0, 255, 1)', // Bright Purple
-            'rgba(65, 105, 225, 1)', // Royal Blue
-            'rgba(255, 105, 180, 1)', // Flashy Pink
+            'rgba(0, 255, 255, 1)', // Turquoise/Cyan
+            'rgba(255, 0, 255, 1)', // Purple
+            'rgba(50, 255, 150, 1)', // Green
+            'rgba(255, 165, 0, 1)', // Orange
         ];
         
         
