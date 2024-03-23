@@ -48,8 +48,17 @@ export class Player {
     }
     
     assignColor(id) {
-        // const colors = ['#008000', '#FF0000', '#0000FF', '#FFFF00', '#FFF']; // Classic Green, Red, Blue, Yellow, Default White
-        const colors = ['#00FF00', '#FF0000', '#0000FF', '#FFFF00', '#FFFFFF']; // Bright Green, Bright Red, Bright Blue, Bright Yellow, White
+        const colors = [
+            'rgba(0, 255, 255, 1)', // Flashy Turquoise/Cyan 
+            'rgba(255, 0, 255, 1)', // Bright Purple
+            'rgba(65, 105, 225, 1)', // Royal Blue
+            'rgba(255, 105, 180, 1)', // Flashy Pink
+        ];
+        
+        
+        
+        
+        
         return colors[id] || colors[4];
     }
 

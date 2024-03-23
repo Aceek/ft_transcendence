@@ -15,7 +15,7 @@ export class GameElements extends BaseDrawing {
         
         if (this.game.status === 0 && player.isControlled) {
             const blink = Math.floor(Date.now() / 333) % 2 === 0;
-            color = blink ? '#000' : player.color;
+            color = blink ? '#2D2D2D' : player.color;
         }
 
         this.drawFilledRect(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight, color);
@@ -23,7 +23,7 @@ export class GameElements extends BaseDrawing {
     
 
     drawWhiteDashLine() {
-        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
         this.ctx.lineWidth = 4;
         this.ctx.setLineDash([10, 7]);
     
