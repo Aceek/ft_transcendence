@@ -18,17 +18,17 @@ export class Ball {
       this.vy = parseFloat(dynamicData.b_vy);
   }
   
-  handleCompactedDynamicData(ball_data, latency, processTime, gameStatus) {
+  handleCompactedDynamicData(ball_data, avgPing, processTime, gameStatus) {
     const serverX = parseFloat(ball_data[0]);
     const serverY = parseFloat(ball_data[1]);
     const vx = parseFloat(ball_data[2]);
     const vy = parseFloat(ball_data[3]);
     
-    if (latency == null || processTime == null || gameStatus !== 1) {
+    if (avgPing == null || processTime == null || gameStatus !== 1) {
       this.x = serverX;
       this.y = serverY;
     } else {
-      const latencyInSeconds = (latency + processTime) / 1000;
+      const latencyInSeconds = (avgPing + processTime) / 1000;
       const adjustedX = serverX + vx * latencyInSeconds;
       const adjustedY = serverY + vy * latencyInSeconds;
       

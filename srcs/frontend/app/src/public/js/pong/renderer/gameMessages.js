@@ -199,12 +199,13 @@ export class GameMessages extends BaseDrawing {
         this.ctx.textAlign = 'right';
         
         if (typeof this.game.fps === 'number') {
-            this.drawMetric(this.game.fps, "FPS", metricsY);
+            this.drawMetric(this.game.fps, "fps", metricsY);
             metricsY += 20;
         }
         
-        if (typeof this.game.latency === 'number') {
-            this.drawMetric(this.game.latency, "ping", metricsY);
+        if (typeof this.game.avgPing === 'number') {
+            const avgLatency = (this.game.status === 1 ? this.game.avgPing + this.game.processTime : this.game.avgPing)
+            this.drawMetric(avgLatency, "ms", metricsY);
             metricsY += 20;
         }
         

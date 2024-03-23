@@ -27,6 +27,7 @@ export async function setupGame() {
         new KeyEventController(pongSocket, game);
 
         waitForInitialization().then(() => {
+            
             canvas.style.display = 'block'; // Make the canvas visible after initialization
             
             game.setPlayersToControl();
@@ -75,10 +76,10 @@ function waitForInitialization() {
 //-----------------------------MAIN LOOP------------------------------------
 
 let frameCount = 0;
-let lastFpsTime = 0; // Initialize with 0 to handle the first frame's timestamp
+let lastFpsTime = 0; 
 
 function interpolatePosition(lastPosition, speed, deltaTime) {
-    return lastPosition + speed * (deltaTime / 1000); // deltaTime is in milliseconds
+    return lastPosition + speed * (deltaTime / 1000);
 }
 
 function updateFps(now) {

@@ -67,13 +67,19 @@ function handleWebSocketMessage(data, game) {
     }
 }
 
+
 export function messageHandler(socket, game) {
     socket.onmessage = function(event) {
         const data = JSON.parse(event.data);
         if (data.type == "pong") {
-            game.latency = (Date.now() - data.timestamp) / 2;
+            game.avgPing = calculateAvgPing(game.avgPing, data.timestamp, 0.2);
         } else {
             handleWebSocketMessage(data, game);
         }
     };
+}
+
+function calculateAvgPing(currentAvgPing, dataTimestamp, alpha) {
+    const measuredPing = (Date.now() - dataTimestamp) / 2;
+    return (alpha * measuredPing) + ((1 - alpha) * currentAvgPing);
 }

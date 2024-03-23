@@ -19,7 +19,7 @@ export class Game {
         this.restartRequest = false;
         this.isInitialized = false;
         this.countdown = null;
-        this.latency = null;
+        this.avgPing = null;
         this.fps = null;
         this.processTime = null;
 
@@ -115,7 +115,7 @@ export class Game {
 
     
     handleCompactedDynamicData(ball_data, players_data, process_time) {
-        this.ball.handleCompactedDynamicData(ball_data, this.latency, this.processTime, this.status);
+        this.ball.handleCompactedDynamicData(ball_data, this.avgPing, this.processTime, this.status);
         this.players.forEach((player) => {
             if (!player.isControlled) {
                 player.handleCompactedDynamicData(players_data);
