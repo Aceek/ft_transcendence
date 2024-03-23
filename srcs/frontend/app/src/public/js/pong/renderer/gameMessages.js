@@ -47,7 +47,7 @@ export class GameMessages extends BaseDrawing {
             this.drawTwoPartMessage("Game Over!", "");
         } else if (this.game.type === "tournament") {
             this.drawTwoPartMessage("Game Over!",
-                "Press Enter to go back to tournament page...");
+                "Press Enter to go to tournament page...");
         } else if (this.game.type === "standard") {
             let restartMessage = "Press Enter to restart...";
             if (this.game.restartRequest) {
@@ -60,14 +60,14 @@ export class GameMessages extends BaseDrawing {
     drawNetworkIssueMessages() {
         this.setTextProperties();
         const mainMessage = "Network Issue";
-        const subMessage = "Technical difficulties detected. Try refreshing or quit the page.";
+        const subMessage = "Try refreshing or quit the page...";
         this.drawTwoPartMessage(mainMessage, subMessage);
     }
     
     drawServerDownMessages() {
         this.setTextProperties();
         const mainMessage = "Server Down";
-        const subMessage = "Technical difficulties detected. Try refreshing or quit the page.";
+        const subMessage = "Try refreshing or quit the page...";
         this.drawTwoPartMessage(mainMessage, subMessage);
     }
     drawTwoPartMessage(mainText, subText) {
