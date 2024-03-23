@@ -18,7 +18,7 @@ export class Renderer {
 
         if (this.game.status === 0) {
             this.game.playersToControl.forEach(player => {
-                this.messages.drawPaddleKeySigns(player);
+                this.messages.drawPaddleKeySymbols(player);
             });
         }
         

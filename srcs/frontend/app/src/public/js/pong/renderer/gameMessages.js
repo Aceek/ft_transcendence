@@ -231,25 +231,25 @@ export class GameMessages extends BaseDrawing {
     }
     
     
-    drawPaddleKeySigns(player) {
+    drawPaddleKeySymbols(player) {
         this.setTextProperties();
         const fontSize = 30;
         this.setFont(fontSize);
         
         if (player.side === 'left' || player.side === 'right') {
-            let signX, signYUp, signYDown;
-            signX = player.paddleX + player.paddleWidth / 2;
-            signYUp = player.paddleY - 30;
-            signYDown = player.paddleY + player.paddleHeight + 30;
-            this.drawText(player.moveUpKeySign, signX, signYUp, player.color);
-            this.drawText(player.moveDownKeySign, signX, signYDown, player.color);
+            let symbolX, symbolYUp, symbolYDown;
+            symbolX = player.paddleX + player.paddleWidth / 2;
+            symbolYUp = player.paddleY - 30;
+            symbolYDown = player.paddleY + player.paddleHeight + 30;
+            this.drawText(player.moveUpKeySymbol, symbolX, symbolYUp, player.color);
+            this.drawText(player.moveDownKeySymbol, symbolX, symbolYDown, player.color);
         } else if (player.side === 'bottom' || player.side === 'up') {
-            let signXUp, signXDown, signY;
-            signXUp = player.paddleX - 30;
-            signXDown = player.paddleX + player.paddleWidth + 30;
-            signY = player.paddleY + player.paddleHeight / 2;
-            this.drawText(player.moveUpKeySign, signXUp, signY, player.color);
-            this.drawText(player.moveDownKeySign, signXDown, signY, player.color);
+            let symbolXUp, symbolXDown, symbolY;
+            symbolXUp = player.paddleX - 30;
+            symbolXDown = player.paddleX + player.paddleWidth + 30;
+            symbolY = player.paddleY + player.paddleHeight / 2;
+            this.drawText(player.moveUpKeySymbol, symbolXUp, symbolY, player.color);
+            this.drawText(player.moveDownKeySymbol, symbolXDown, symbolY, player.color);
         }
     
     }

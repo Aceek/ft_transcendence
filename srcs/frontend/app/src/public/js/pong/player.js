@@ -27,21 +27,21 @@ export class Player {
             if (this.gameMode == "offline") {
                 this.moveUpKey = this.side === "left" ? "w" : "ArrowUp";
                 this.moveDownKey = this.side === "left" ? "s" : "ArrowDown";
-                this.moveUpKeySign = this.side === "left" ? "w" : "▲";
-                this.moveDownKeySign = this.side === "left" ? "s" : "▼";
+                this.moveUpKeySymbol = this.side === "left" ? "w" : "▲";
+                this.moveDownKeySymbol = this.side === "left" ? "s" : "▼";
             } else if (this.gameMode == "online") {
                 this.moveUpKey = "ArrowUp";
                 this.moveDownKey = "ArrowDown";
-                this.moveUpKeySign = "⬆️▲";
-                this.moveDownKeySign = "▼";
+                this.moveUpKeySymbol = "▲";
+                this.moveDownKeySymbol = "▼";
             }
             this.paddleProp = 'paddleY';
             this.dimensionProp = 'paddleHeight';
         } else {
             this.moveUpKey = "ArrowLeft";
             this.moveDownKey = "ArrowRight";
-            this.moveUpKeySign = "◄";
-            this.moveDownKeySign = "►";
+            this.moveUpKeySymbol = "◄";
+            this.moveDownKeySymbol = "►";
             this.paddleProp = 'paddleX';
             this.dimensionProp = 'paddleWidth';
         }
