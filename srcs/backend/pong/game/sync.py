@@ -9,6 +9,7 @@ class GameSync:
         self.redis_ops = game.redis_ops
         self.room_name = game.room_name
         self.player_nb = game.player_nb if game.mode == "online" else 1
+        self.game_mode = game.mode
         self.game_type = game.type
         self.channel_com = game.channel_com
 
@@ -33,12 +34,20 @@ class GameSync:
                 return False
             await asyncio.sleep(1)
 
-    async def wait_for_players_to_start(self, current_status):
-        if self.game_type == "tournament":
-            if current_status == GameStatus.SUSPENDED:
+    async def wait_for_players_to_start(self):
+        if self.game_mode == "offline":
+            return not await self.wait_to_exit()
+
+        return await self.wait_for_players(
+            self.check_for_players_ready,
+            "Checking if players are ready"
+        )
+
+    async def wait_for_players_to_resume(self):
+        if self.game_mode == "offline":
+            return not await self.wait_to_exit()
+        elif self.game_type == "tournament":
                 return await self.wait_for_tournament_to_resume()
-            elif current_status == GameStatus.UNSTARTED:
-                return not await self.wait_for_tournament_to_exit(current_status)
 
         return await self.wait_for_players(
             self.check_for_players_ready,
@@ -54,15 +63,14 @@ class GameSync:
             return True
         return False
 
-    async def wait_for_tournament_to_exit(self, current_status):
+    async def wait_to_exit(self):
         start_time = time.time()
         last_connected_time = start_time
 
         while True:
             connected_users_count = await self.redis_ops.get_connected_users_nb()
 
-            if current_status != GameStatus.COMPLETED and \
-                connected_users_count == self.player_nb:
+            if connected_users_count == self.player_nb:
                 print("All players connected. Tournament game can start.")
                 return False
             elif connected_users_count > 0:

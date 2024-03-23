@@ -16,6 +16,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
         self.assigned = False
+        self.current_position = None
+        self.positions = []
 
     # -------------------------------CONNECT-----------------------------------
 
@@ -67,7 +69,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def init_paddle(self):
         paddle = Paddle(self.user_id, self.redis_ops, self.player_nb)
-        self.assigned = await paddle.assignment(self.game_mode, self.player_nb)
+        self.assigned, self.current_position = await paddle.assignment(self.game_mode, self.player_nb, self.positions)
+        self.positions.append(self.current_position)
         if self.assigned == True:
             await paddle.set_boundaries()
             await paddle.set_axis_keys()

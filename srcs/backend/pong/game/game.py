@@ -94,7 +94,7 @@ class GameLogic:
         return True
 
     async def is_game_resuming(self):
-        if await self.game_sync.wait_for_players_to_start(GameStatus.SUSPENDED):
+        if await self.game_sync.wait_for_players_to_resume():
             await self.launch_game()
             return True
 
@@ -109,7 +109,7 @@ class GameLogic:
             await self.initializer.init_static_data()
             await self.update_game_status_and_notify(GameStatus.UNSTARTED)
 
-            if await self.game_sync.wait_for_players_to_start(GameStatus.UNSTARTED):
+            if await self.game_sync.wait_for_players_to_start():
                 await self.initializer.init_objects()
                 await self.game_loop()
             else:
@@ -179,7 +179,7 @@ class GameLogic:
             elif self.type == "tournament":
                 if self.winner is not None:
                     await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
-                await self.game_sync.wait_for_tournament_to_exit(GameStatus.COMPLETED)
+                await self.game_sync.wait_to_exit(GameStatus.COMPLETED)
 
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")

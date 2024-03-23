@@ -71,21 +71,25 @@ class Paddle:
         self.axis_key = 'paddle_x' if self.position in [PlayerPosition.BOTTOM, PlayerPosition.UP] else 'paddle_y'
         self.reverse_axis_key = 'paddle_y' if self.axis_key == 'paddle_x' else 'paddle_x'
 
-    async def assignment(self, game_mode, player_nb):
+    async def assignment(self, game_mode, player_nb, positions):
         # Attempt to acquire a lock for the paddle assignment process
         lock_key = f"game:{self.redis_ops.room_name}:lock:assignment"
         lock = self.redis_ops.connection.lock(lock_key, timeout=5)
         await lock.acquire()
 
         try:
-            if game_mode == "online":
-                # Check if the user is already assigned a position
-                for position in PlayerPosition:
-                    self.key_map = get_player_key_map(position)
-                    key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
-                    if await self.redis_ops.connection.sismember(key, self.user_id):
-                        self.position = position
-                        return True
+            # Check if the user is already assigned a position
+            for position in PlayerPosition:
+                # Skip already assigned positions for offline mode. This has no effect for online mode.
+                if game_mode == "offline" and position in positions:
+                    continue
+
+                self.key_map = get_player_key_map(position)
+                key = f"game:{self.redis_ops.room_name}:paddle:{self.key_map['position']}"
+
+                if await self.redis_ops.connection.sismember(key, self.user_id):
+                    self.position = position
+                    return True, position
 
             # If not already assigned, attempt to assign a new position based on order
             assigned_positions = 0
@@ -100,14 +104,14 @@ class Paddle:
                 if assigned_count == 0:  # Position is available
                     await self.redis_ops.connection.sadd(key, self.user_id)
                     self.position = position
-                    return True
+                    return True, position
 
                 assigned_positions += assigned_count
 
             # If all positions are filled or the player is beyond the maximum count, assign as spectator
             print(f"All positions filled or player_nb exceeded, user {self.user_id} is a spectator.")
             self.position = PlayerPosition.SPEC
-            return False
+            return False, PlayerPosition.SPEC
         finally:
             await lock.release()
 
