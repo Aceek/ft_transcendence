@@ -14,6 +14,7 @@ export class Renderer {
         this.elements.drawWhiteDashLine();
         this.messages.drawScores();
         this.messages.drawPerformanceMetrics();
+        this.messages.drawGameInfo();
 
         if (this.game.status === 0) {
             this.game.playersToControl.forEach(player => {

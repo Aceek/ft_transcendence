@@ -13,7 +13,7 @@ export class GameMessages extends BaseDrawing {
         } else {
             this.drawPlayerNames();
             this.drawTwoPartMessage(this.game.countdown.toString(),
-            `${this.game.scoreLimit} points to win: Get ready...`);
+            "Get ready...");
         }
     }
 
@@ -180,39 +180,55 @@ export class GameMessages extends BaseDrawing {
     
     drawMetric(value, label, metricsY) {
         const separationSpacing = 10;
-        const metricsX = this.game.canvasWidth - 45;
+        const metricsX = this.game.canvasWidth - 40;
     
         this.ctx.textAlign = 'left';
         this.setFont(20);
         this.drawText(label, metricsX, metricsY, "#fff");
     
         this.ctx.textAlign = 'right';
-        this.setFont(30);
+        this.setFont(20);
         let numberText = Math.round(value).toString();
         this.drawText(numberText, metricsX - separationSpacing, metricsY, "#fff");
     }
     
     drawPerformanceMetrics() {
         this.setTextProperties();
-        let metricsY = 30;
+        let metricsY = 15;
         
         this.ctx.textAlign = 'right';
         
         if (typeof this.game.fps === 'number') {
             this.drawMetric(this.game.fps, "FPS", metricsY);
-            metricsY += 30;
+            metricsY += 20;
         }
         
         if (typeof this.game.latency === 'number') {
             this.drawMetric(this.game.latency, "ping", metricsY);
-            metricsY += 30;
+            metricsY += 20;
         }
         
-        if (typeof this.game.processTime === 'number' && this.game.status === 1) {
-            this.drawMetric(this.game.processTime, "SPT", metricsY);
-            metricsY += 30;
-        }
+        // if (typeof this.game.processTime === 'number' && this.game.status === 1) {
+        //     this.drawMetric(this.game.processTime, "SPT", metricsY);
+        //     metricsY += 20;
+        // }
     }
+
+    drawGameInfo() {
+        const infoSpacing = 20;
+        let infoY = 15;
+        const infoX = 10;
+    
+        this.setFont(20);
+        this.ctx.fillStyle = "#fff";
+        this.ctx.textAlign = 'left';
+    
+        // Display each piece of information
+        this.drawText(`${this.game.mode} - ${this.game.type}`, infoX, infoY, "#fff");
+        infoY += infoSpacing;
+        this.drawText(`${this.game.scoreLimit} pts`, infoX, infoY, "#fff");
+    }
+    
     
     drawPaddleKeySigns(player) {
         this.setTextProperties();
