@@ -63,8 +63,10 @@ class DatabaseOps:
         self.history_manager = ManageHistory(players[0].user, players[1].user, winner.user)
 
     @database_sync_to_async
-    def update_tournament(self, match, tournament, winner):
+    def update_tournament(self, mode, match, tournament, winner):
         from tournament.manageTournament import ManageTournament
 
+        winner_field = winner.user if mode == "online" else winner.username
+
         self.tournament_manager = ManageTournament(tournament)
-        self.tournament_manager.set_end_match(match, winner.username)
+        self.tournament_manager.set_end_match(match, winner_field)

@@ -178,7 +178,7 @@ class GameLogic:
                     await self.game_loop()
             elif self.type == "tournament":
                 if self.winner is not None:
-                    await self.database_ops.update_tournament(self.match, self.tournament, self.winner)
+                        await self.database_ops.update_tournament(self.mode, self.match, self.tournament, self.winner)
                 await self.game_sync.wait_to_exit(GameStatus.COMPLETED)
 
         except asyncio.CancelledError:
@@ -218,9 +218,6 @@ class GameLogic:
 
         # Set the ball data to Redis
         await self.ball.set_data_to_redis()
-
-        # # Broadcast the game data to all clients
-        # await self.get_and_send_compacted_dynamic_data()
 
     # -------------------------------END GAME-----------------------------------
 
