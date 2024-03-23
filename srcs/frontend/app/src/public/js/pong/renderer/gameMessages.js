@@ -80,7 +80,7 @@ export class GameMessages extends BaseDrawing {
         this.drawText(mainText, this.game.canvasWidth / 2, mainY, "#fff");
         
         // Sub Message
-        this.setFont(30);
+        this.setFont(35);
         const subY = mainY + gap * 2;
         this.drawText(subText, this.game.canvasWidth / 2, subY, "#fff");
     }

@@ -7,7 +7,9 @@ export class GameElements extends BaseDrawing {
     }
 
     drawBall(x, y) {
+        this.setShadowEffect();
         this.drawFilledRect(x - this.game.ball.size / 2, y - this.game.ball.size / 2, this.game.ball.size, this.game.ball.size, "#fff");
+        this.resetShadowEffect(); 
     }
 
     drawPaddle(player) {
@@ -16,12 +18,17 @@ export class GameElements extends BaseDrawing {
         if (this.game.status === 0 && player.isControlled) {
             const blink = Math.floor(Date.now() / 333) % 2 === 0;
             color = blink ? '#2D2D2D' : player.color;
+            if (!blink) {
+                this.setShadowEffect();
+            }
+        } else {
+            this.setShadowEffect();
         }
-
         this.drawFilledRect(player.paddleX, player.paddleY, player.paddleWidth, player.paddleHeight, color);
+        this.resetShadowEffect();
     }
     
-
+    
     drawWhiteDashLine() {
         this.ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
         this.ctx.lineWidth = 4;
