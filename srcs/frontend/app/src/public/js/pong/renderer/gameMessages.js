@@ -182,14 +182,16 @@ export class GameMessages extends BaseDrawing {
         const separationSpacing = 10;
         const metricsX = this.game.canvasWidth - 40;
     
+        const color = label === 'fps' ? (value < 50 ? '#B22222' : '#FFFFFF') : (value > 15 ? '#FF0000' : '#FFFFFF');
+    
         this.ctx.textAlign = 'left';
         this.setFont(20);
-        this.drawText(label, metricsX, metricsY, "#fff");
+        this.drawText(label, metricsX, metricsY, color);
     
         this.ctx.textAlign = 'right';
         this.setFont(20);
         let numberText = Math.round(value).toString();
-        this.drawText(numberText, metricsX - separationSpacing, metricsY, "#fff");
+        this.drawText(numberText, metricsX - separationSpacing, metricsY, color);
     }
     
     drawPerformanceMetrics() {
@@ -204,16 +206,12 @@ export class GameMessages extends BaseDrawing {
         }
         
         if (typeof this.game.avgPing === 'number') {
-            const avgLatency = (this.game.status === 1 ? this.game.avgPing + this.game.processTime : this.game.avgPing)
+            const avgLatency = (this.game.status === 1 ? this.game.avgPing + this.game.processTime : this.game.avgPing);
             this.drawMetric(avgLatency, "ms", metricsY);
             metricsY += 20;
         }
-        
-        // if (typeof this.game.processTime === 'number' && this.game.status === 1) {
-        //     this.drawMetric(this.game.processTime, "SPT", metricsY);
-        //     metricsY += 20;
-        // }
     }
+    
 
     drawGameInfo() {
         const infoSpacing = 20;
