@@ -30,6 +30,8 @@ class GameLogic:
         self.paddle_border_distance = PADDLE_BORDER_DISTANCE
         self.ball_size = BALL_SIZE
         self.ball_speed = BALL_SPEED
+        self.ball_speed_max= BALL_SPEED_MAX
+        self.ball_speed_increase = BALL_SPEED_INCREASE
         
         if self.player_nb > 2:
             self.screen_width = self.screen_height
