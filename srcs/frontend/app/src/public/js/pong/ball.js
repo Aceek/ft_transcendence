@@ -19,24 +19,21 @@ export class Ball {
   }
   
   handleCompactedDynamicData(ball_data, avgPing, processTime, gameStatus) {
-    const serverX = parseFloat(ball_data[0]);
-    const serverY = parseFloat(ball_data[1]);
-    const vx = parseFloat(ball_data[2]);
-    const vy = parseFloat(ball_data[3]);
+    const [serverX, serverY, serverVx, serverVy] = ball_data.map(parseFloat);
     
-    if (avgPing == null || processTime == null || gameStatus !== 1) {
-      this.x = serverX;
-      this.y = serverY;
+    const shouldAdjustForLatency = avgPing !== null && 
+                                   processTime !== null &&
+                                   gameStatus === 1;
+    if (shouldAdjustForLatency) {
+        const latencyInSeconds = (avgPing + processTime) / 1000;
+        this.lastServerX = serverX + serverVx * latencyInSeconds;
+        this.lastServerY = serverY + serverVy * latencyInSeconds;
     } else {
-      const latencyInSeconds = (avgPing + processTime) / 1000;
-      const adjustedX = serverX + vx * latencyInSeconds;
-      const adjustedY = serverY + vy * latencyInSeconds;
-      
-      this.lastServerX = adjustedX;
-      this.lastServerY = adjustedY;
+        this.lastServerX = serverX;
+        this.lastServerY = serverY;
     }
-    this.vx = vx;
-    this.vy = vy;
+    this.lastServerVx = serverVx;
+    this.lastServerVy = serverVy;
     this.lastServerUpdate = Date.now();
   }
 }

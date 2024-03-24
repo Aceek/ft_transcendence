@@ -96,8 +96,8 @@ function mainLoop() {
     
     const gameDeltaTime = now - game.ball.lastServerUpdate;
     if (game && game.status === 1) {
-        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.vx, gameDeltaTime);
-        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.vy, gameDeltaTime);
+        game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.lastServerVx, gameDeltaTime);
+        game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.lastServerVy, gameDeltaTime);
     }
     
     if (renderer) {

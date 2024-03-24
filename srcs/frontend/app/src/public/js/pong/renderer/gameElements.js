@@ -9,7 +9,7 @@ export class GameElements extends BaseDrawing {
     drawBall(x, y) {
         this.setShadowEffect();
         this.drawFilledRect(x - this.game.ball.size / 2, y - this.game.ball.size / 2, this.game.ball.size, this.game.ball.size, "#fff");
-        this.resetShadowEffect(); 
+        this.resetShadowEffect();
     }
 
     drawPaddle(player) {
@@ -33,7 +33,7 @@ export class GameElements extends BaseDrawing {
         this.ctx.strokeStyle = dashColor;
         this.ctx.lineWidth = 4;
         this.ctx.setLineDash([10, 7]);
-    
+
         this.ctx.beginPath();
         this.ctx.moveTo(this.game.canvasWidth / 2, 0);
         this.ctx.lineTo(this.game.canvasWidth / 2, this.game.canvasHeight);

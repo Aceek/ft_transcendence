@@ -199,6 +199,7 @@ class GameLogic:
             self.ball.reset_value()
             if player is not None:
                 await player.update_score()
+                await self.ball.set_data_to_redis()
                 await self.get_and_send_dynamic_data()
                 if player.check_win():
                     self.winner = player

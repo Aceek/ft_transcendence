@@ -111,6 +111,11 @@ export class Game {
             this.handleGameRestart();
         }
         this.ball.handleDynamicData(dynamicData);
+        // this.players.forEach((player) => {
+        //     if (!player.isControlled) {
+        //         player.handleDynamicData(dynamicData);
+        //     }
+        // });
         this.players.forEach(player => player.handleDynamicData(dynamicData));
     }
 
