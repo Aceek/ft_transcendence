@@ -16,7 +16,7 @@ export class KeyEventController {
                 if (!player.paddleUpdateInterval) {
                     player.paddleUpdateInterval = setInterval(() => {
                         this.updatePaddlePosition(key, player);
-                    }, 33);
+                    }, 17);
                 }
             }
         });

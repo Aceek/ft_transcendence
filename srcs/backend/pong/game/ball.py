@@ -12,7 +12,6 @@ class Ball:
         self.speed_increase = game.ball_speed_increase
         self.reset_value()
 
-
     def reset_value(self):
         self.x = int(self.game.screen_width / 2)
         self.y = int(self.game.screen_height / 2)
