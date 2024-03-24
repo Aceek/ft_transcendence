@@ -28,9 +28,9 @@ export class GameElements extends BaseDrawing {
         this.resetShadowEffect();
     }
     
-    
     drawWhiteDashLine() {
-        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+        const dashColor = "rgba(255, 255, 255, 0.85)";
+        this.ctx.strokeStyle = dashColor;
         this.ctx.lineWidth = 4;
         this.ctx.setLineDash([10, 7]);
     

@@ -1,23 +1,38 @@
 .game-container {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center-align items horizontally */
-    justify-content: flex-start; /* Align items from the top */
-    position: relative; /* Relative to the viewport */
-    min-height: 80; /* Full viewport height */
-    padding-top: 3vh; /* Adjust based on desired starting position from top */
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    min-height: 80;
+    padding-top: 3vh;
 }
 
 canvas#pongCanvas {
     display: none;
-    margin: 3px; /* Add space above and below the canvas */
+    margin: 15px;
     background-color: #2D2D2D;
     font-family: 'Geo', sans-serif;
-    border: 7px solid rgba(255, 255, 255, 0.85);
+    border: none;
     box-sizing: border-box;
-    border-radius: 5px;
-    box-shadow: 20px 20px 20px rgba(40, 40, 40, 0.75);
-    filter: drop-shadow(20 20 20px rgb(40, 40, 40));
+    border-radius: 10px;
+    box-shadow: 
+        0 0 15px var(--glow-intensity-1),
+        0 0 30px var(--glow-intensity-2),
+        0 0 45px var(--glow-intensity-3),
+        0 0 60px var(--glow-intensity-4),
+        0 0 75px var(--glow-intensity-5);
+    filter: drop-shadow(0 8px 10px rgb(0, 0, 0));
+    transition: transform 0.2s, filter 0.5s;
+}
+
+:root {
+    --glow-color-base: 255, 255, 255; /* Base RGB color without alpha */
+    --glow-intensity-1: rgba(var(--glow-color-base), 0.75);
+    --glow-intensity-2: rgba(var(--glow-color-base), 0.6);
+    --glow-intensity-3: rgba(var(--glow-color-base), 0.45);
+    --glow-intensity-4: rgba(var(--glow-color-base), 0.3);
+    --glow-intensity-5: rgba(var(--glow-color-base), 0.15);
 }
 
 .neon-text-container {
@@ -52,7 +67,16 @@ canvas#pongCanvas {
         text-shadow: none;
     }    
 }
-    
+
+#scoreOverlay {
+    position: absolute; /* Positioned absolutely to fit over the canvas */
+    display: none;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.5s ease-out; /* Adjust the speed of the fade-out effect as needed */
+    pointer-events: none; /* Ensure clicks pass through to the canvas */
+}
+
 .grid-background {
     position: fixed;
     top: 0;
@@ -60,15 +84,18 @@ canvas#pongCanvas {
     right: 0;
     bottom: 0;
     z-index: -1; /* Ensure it stays behind other content */
-    background: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .85) 25%, rgba(255, 255, 255, .85) 26%, transparent 27%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .85) 25%, rgba(255, 255, 255, .85) 26%, transparent 27%, transparent),
-                linear-gradient(0deg, rgba(13, 185, 220, 0.6), rgba(201, 14, 226, 0.6));
-    background-size: 50px 50px, 50px 50px, 100% 100%;
-    animation: moveGrid 5s linear infinite;
+    background: 
+        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.5) 25%, rgba(255, 255, 255, 0.5) 26%, transparent 27%, transparent),
+        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.5) 25%, rgba(255, 255, 255, 0.5) 26%, transparent 27%, transparent),
+        linear-gradient(135deg, rgba(13, 185, 220, 0.6), rgba(201, 14, 226, 0.6));
+    background-size: 60px 60px, 60px 60px, cover; /* Adjusted for thicker grid lines */
+    background-blend-mode: screen;
+    animation: moveGrid 10s linear infinite forwards;
 }
 
 @keyframes moveGrid {
-    from { background-position: 0 0, 0 0, 0 0; }
-    to { background-position: 50px 50px, 50px 50px, 0 0; }
+    0% { background-position: 0 0, 0 0, 0 0; }
+    50% { background-position: 100px 100px, 100px 100px, 0 0; } /* Subtle shift halfway through for dynamic movement */
+    100% { background-position: 60px 60px, 60px 60px, 0 0; }
 }
 

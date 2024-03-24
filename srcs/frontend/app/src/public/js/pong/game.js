@@ -22,6 +22,7 @@ export class Game {
         this.avgPing = null;
         this.fps = null;
         this.processTime = null;
+        this.lastScoringPlayer = null;
 
         // Game configuration properties
         this.canvasWidth = 0;
@@ -56,7 +57,7 @@ export class Game {
         for (let i = 0; i < this.playerNb; i++) {
             const playerSide = sides[i % sides.length];
             const isControlled = this.receivedSides.includes(playerSide);
-            const newPlayer = new Player(i, playerSide, isControlled, this.mode);
+            const newPlayer = new Player(i, playerSide, isControlled, this);
             this.addPlayer(newPlayer);
         }
     }

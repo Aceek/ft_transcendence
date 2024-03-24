@@ -1,15 +1,19 @@
+import { updateGlowBaseColorFromRgba, assignColor } from './colorUtils.js';
+import { showScoreOverlay } from './overlayEffects.js';
+
 export class Player {
-    constructor(id, side, isControlled, gameMode) {
+    constructor(id, side, isControlled, game) {
         this.id = id;
         this.side = side;
         this.isControlled = isControlled;
-        this.gameMode = gameMode;
+        this.game = game;
         this.initPaddleProperties();
         this.initKeyAndPositionProperties();
         this.paddleUpdateInterval = null;
         this.score = 0;
+        this.scoreTmp = this.score;
         this.username = '';
-        this.assignedColor = this.assignColor(id);
+        this.assignedColor = assignColor(id);
         this.color = this.assignedColor;
     }
 
@@ -24,12 +28,12 @@ export class Player {
     initKeyAndPositionProperties() {
         const isVertical = this.side === "left" || this.side === "right";
         if (isVertical) {
-            if (this.gameMode == "offline") {
+            if (this.game.mode == "offline") {
                 this.moveUpKey = this.side === "left" ? "w" : "ArrowUp";
                 this.moveDownKey = this.side === "left" ? "s" : "ArrowDown";
                 this.moveUpKeySymbol = this.side === "left" ? "w" : "▲";
                 this.moveDownKeySymbol = this.side === "left" ? "s" : "▼";
-            } else if (this.gameMode == "online") {
+            } else if (this.game.mode == "online") {
                 this.moveUpKey = "ArrowUp";
                 this.moveDownKey = "ArrowDown";
                 this.moveUpKeySymbol = "▲";
@@ -45,21 +49,6 @@ export class Player {
             this.paddleProp = 'paddleX';
             this.dimensionProp = 'paddleWidth';
         }
-    }
-    
-    assignColor(id) {
-        const colors = [
-            'rgba(0, 255, 255, 1)', // Turquoise/Cyan
-            'rgba(255, 0, 255, 1)', // Purple
-            'rgba(50, 255, 150, 1)', // Green
-            'rgba(255, 165, 0, 1)', // Orange
-        ];
-        
-        
-        
-        
-        
-        return colors[id] || colors[4];
     }
 
     handleStaticData(staticData) {
@@ -78,6 +67,10 @@ export class Player {
         this.paddleX = parseInt(sideData.x, 10);
         this.paddleY = parseInt(sideData.y, 10);
         this.score = parseInt(sideData.score, 10);
+        if (this.score > this.scoreTmp) {
+            this.handleScoreUpdate();
+        }
+        this.scoreTmp = this.score;
         this.username = sideData.username;
     }
 
@@ -97,6 +90,14 @@ export class Player {
         };
     }
 
+    handleScoreUpdate() {
+        const canvas = document.getElementById('pongCanvas');
+        if (!canvas) return;
+    
+        updateGlowBaseColorFromRgba(this.assignedColor);
+        showScoreOverlay(this.assignedColor);
+    }
+    
     handleCompactedDynamicData(pos) {
         const isVertical = this.side === "left" || this.side === "right";
         if (isVertical) {
