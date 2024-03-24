@@ -6,7 +6,6 @@ export function startSendingPing(pongSocket) {
                 timestamp: Date.now()
             }));
         }
-        console.log("piing");
     }, 500);
     return id;
 }
