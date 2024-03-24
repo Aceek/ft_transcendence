@@ -23,8 +23,6 @@ class GameLogic:
 
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
-        if self.player_nb > 2:
-            self.screen_width = self.screen_height
 
         self.paddle_height = PADDLE_HEIGHT
         self.paddle_width = PADDLE_WIDTH
@@ -32,7 +30,15 @@ class GameLogic:
         self.paddle_border_distance = PADDLE_BORDER_DISTANCE
         self.ball_size = BALL_SIZE
         self.ball_speed = BALL_SPEED
-
+        self.ball_speed_max= BALL_SPEED_MAX
+        self.ball_speed_increase = BALL_SPEED_INCREASE
+        
+        if self.player_nb > 2:
+            self.screen_width = self.screen_height
+            self.ball_speed =\
+                round(self.ball_speed * (self.screen_width / SCREEN_WIDTH))
+            self.ball_speed_max =\
+                round(self.ball_speed_max * (self.screen_width / SCREEN_WIDTH))
         self.score_start = SCORE_START
         self.score_limit = SCORE_LIMIT
 
@@ -88,7 +94,9 @@ class GameLogic:
         if current_status == GameStatus.COMPLETED:
             return False
         elif current_status == GameStatus.SUSPENDED:
-            # Notify all the clients the game is suspendended
+            # Update the last ball position to redis and
+            # notify all the clients the game is suspendended
+            await self.ball.set_data_to_redis()
             await self.get_and_send_dynamic_data()
             return await self.is_game_resuming()
         return True
@@ -140,46 +148,24 @@ class GameLogic:
         await self.launch_game()
 
         try:
-            while True:
+            while await self.is_game_active():
                 loop_start_time = time.time()
-                current_time = time.time()
-                delta_time = current_time - self.last_update_time
-                self.last_update_time = current_time
 
-                if not await self.is_game_active():
-                    break
+                # Calculate delta time
+                delta_time = loop_start_time - self.last_update_time
+                self.last_update_time = loop_start_time
 
-                await self.game_tick(delta_time)
-
-                process_time = (time.time() - self.last_update_time) * 1000
+                # Perform game updates
+                process_time = await self.game_tick(delta_time)
 
                 # Broadcast the game data to all clients
                 await self.get_and_send_compacted_dynamic_data(process_time)
 
-                # Calculate the remaining tick time to send the data at fixed interval
-                loop_execution_time = time.time() - loop_start_time
-                sleep_duration = max(0, self.target_loop_duration - loop_execution_time)
-                
+                # Sleep to maintain the target loop duration
+                sleep_duration = max(0, self.target_loop_duration - (time.time() - loop_start_time))
                 await asyncio.sleep(sleep_duration)
-
-            # Handle the case of a forfeit, the winner is the remaining player
-            if self.winner is None:
-                self.winner = await self.get_winner_by_forfeit()
-
-            # Only try to restart the game for standard games
-            if self.type == "standard":
-                # Feature currenlty not working for 2+ players
-                if self.player_nb < 3:
-                    if self.winner is not None:
-                        await self.database_ops.update_match_history(self.winner, self.players)
-                if await self.game_sync.wait_for_players_to_restart():
-                    await self.redis_ops.del_all_restart_requests()
-                    await self.reset_players()
-                    await self.game_loop()
-            elif self.type == "tournament":
-                if self.winner is not None:
-                        await self.database_ops.update_tournament(self.mode, self.match, self.tournament, self.winner)
-                await self.game_sync.wait_to_exit(GameStatus.COMPLETED)
+            
+            await self.handle_game_end()
 
         except asyncio.CancelledError:
              print("Game loop cancelled. Performing cleanup.")
@@ -189,8 +175,10 @@ class GameLogic:
             await self.perform_cleanup()
 
     async def game_tick(self, delta_time):
-        # Update the ball position in fucntion on vellocity and delta time
+
+        # Update ball position
         self.ball.update_position(delta_time)
+        start_process_time = time.time()
 
         # Check and handle wall collision
         if self.ball.check_wall_collision():
@@ -204,7 +192,7 @@ class GameLogic:
         collision, player = self.ball.check_paddle_collision(self.players)
         if collision:
             self.ball.handle_paddle_bounce_calculation(player)
-        
+
         # Check and handle goal scored
         scored, player = self.ball.check_score()
         if scored:
@@ -216,10 +204,30 @@ class GameLogic:
                     self.winner = player
                     await self.update_game_status_and_notify(GameStatus.COMPLETED)
 
-        # Set the ball data to Redis
-        await self.ball.set_data_to_redis()
+        return (time.time() - start_process_time) * 1000
 
     # -------------------------------END GAME-----------------------------------
+
+    async def handle_game_end(self):
+        # Handle the case of a forfeit, the winner is the remaining player
+        if self.winner is None:
+            self.winner = await self.get_winner_by_forfeit()
+
+        # Only try to restart the game for standard games
+        if self.type == "standard":
+            # Feature currenlty not working for 2+ players
+            if self.player_nb < 3:
+                if self.winner is not None:
+                    await self.database_ops.update_match_history(self.winner, self.players)
+            if await self.game_sync.wait_for_players_to_restart():
+                await self.redis_ops.del_all_restart_requests()
+                await self.reset_players()
+                await self.game_loop()
+        elif self.type == "tournament":
+            if self.winner is not None:
+                    await self.database_ops.update_tournament(self.mode, self.match, self.tournament, self.winner)
+            await self.game_sync.wait_to_exit(GameStatus.COMPLETED)
+        
 
     async def reset_players(self):
         for player in self.players:

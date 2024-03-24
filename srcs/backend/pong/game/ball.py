@@ -8,8 +8,9 @@ class Ball:
         self.game = game  
         self.redis_ops = game.redis_ops
         self.size = game.ball_size
+        self.speed_max = game.ball_speed_max
+        self.speed_increase = game.ball_speed_increase
         self.reset_value()
-
 
     def reset_value(self):
         self.x = int(self.game.screen_width / 2)
@@ -51,17 +52,23 @@ class Ball:
             paddle_x, paddle_y = player.paddle_x, player.paddle_y
             paddle_width, paddle_height = player.paddle_width, player.paddle_height
 
-            # Check for horizontal overlap
-            if paddle_x <= self.x - self.size / 2 <= paddle_x + paddle_width or \
-                paddle_x <= self.x + self.size / 2 <= paddle_x + paddle_width:
-                # Check for vertical overlap
-                if paddle_y <= self.y - self.size / 2 <= paddle_y + paddle_height or \
-                    paddle_y <= self.y + self.size / 2 <= paddle_y + paddle_height:
-                    if player.position == PlayerPosition.LEFT or player.position == PlayerPosition.RIGHT:
-                        self.vx *= -1
-                    elif player.position == PlayerPosition.BOTTOM or player.position == PlayerPosition.UP:
-                        self.vy *= -1
+            if player.position == PlayerPosition.LEFT:
+                if paddle_y <= self.y <= paddle_y + paddle_height and self.x - self.size / 2 <= paddle_x + paddle_width:
+                    self.vx *= -1
                     return True
+            elif player.position == PlayerPosition.RIGHT:
+                if paddle_y <= self.y <= paddle_y + paddle_height and self.x + self.size / 2 >= paddle_x:
+                    self.vx *= -1
+                    return True
+            elif player.position == PlayerPosition.BOTTOM:
+                if paddle_x <= self.x <= paddle_x + paddle_width and self.y + self.size / 2 >= paddle_y:
+                    self.vy *= -1
+                    return True
+            elif player.position == PlayerPosition.UP:
+                if paddle_x <= self.x <= paddle_x + paddle_width and self.y - self.size / 2 <= paddle_y + paddle_height:
+                    self.vy *= -1
+                    return True
+                    
             return False
 
         for player in players:
@@ -116,8 +123,12 @@ class Ball:
             relative_position = (self.x + self.size / 2 - paddle_x) / paddle_width
         angle = (relative_position - 0.5) * math.pi / 2 
 
-        # Calculate speed based on the current velocity
-        speed = math.sqrt(self.vx**2 + self.vy**2)
+        # Calculate current speed and potential new speed
+        current_speed = math.sqrt(self.vx**2 + self.vy**2)
+        potential_new_speed = current_speed * (1 + self.speed_increase)
+
+        # Only update speed if it doesn't exceed the maximum speed
+        speed = potential_new_speed if potential_new_speed <= self.speed_max else current_speed
 
         # Adjust velocity based on the collision with the paddle
         if position == PlayerPosition.LEFT:
@@ -132,8 +143,6 @@ class Ball:
         elif position == PlayerPosition.UP:
             self.vx = speed * math.sin(angle)
             self.vy = speed * math.cos(angle)
-
-        # print(f"Bounce detected! Ball Position: ({self.x}, {self.y}), Relative Position: {relative_position}, Angle: {angle} radians")
 
 #------------------------------REDIS-------------------------------------
 

@@ -32,6 +32,8 @@ class Paddle:
 
         self.axis_key = None
         self.reverse_axis_key = None
+        
+        self.last_pos = None
 
     async def get_collision_details(self, boundary_condition):
         # Define a mapping of which paddle positions to check based on the current paddle's position
@@ -115,52 +117,50 @@ class Paddle:
         finally:
             await lock.release()
 
-    async def check_movement(self, new_pos):
-        # Determine the axis and boundary based on the player's position
-        current_pos_str = await self.redis_ops.get_dynamic_value(self.key_map[self.axis_key])
-        current_pos = int(current_pos_str) if current_pos_str is not None else 0
+    # async def check_movement(self, new_pos):
+    #     # Determine the axis and boundary based on the player's position
+    #     current_pos_str = await self.redis_ops.get_dynamic_value(self.key_map[self.axis_key])
+    #     current_pos = int(current_pos_str)
 
-        # Check game boundaries
-        if new_pos < self.boundary_min or new_pos + self.size > self.boundary_max:
-            return False
+    #     # Check game boundaries
+    #     if new_pos < self.boundary_min or new_pos + self.size > self.boundary_max:
+    #         return False
 
-        # Check movement speed limit
-        # If the player move more than 2 times the speed of the paddle
-        # within the tick rate a potential cheat is suspected
-        # movement_distance = abs(new_pos - current_pos)
-        # if movement_distance > self.speed * 3:
-        #     print(f"Abnormal paddle position based on paddle speed ans server tick rate ({self.speed}). Movement Distance: {movement_distance}")
-        #     return False
+    #     # Check movement speed limit
+    #     if new_pos < current_pos - self.speed or new_pos > current_pos + self.speed:
+    #         print(f"Abnormal paddle position based on paddle speed ans server tick rate ({self.speed})")
+    #         return False
 
-        # Early exit if only 2 players
-        if self.player_nb < 3:
-            return True
+    #     # Early exit if only 2 players
+    #     if self.player_nb < 3:
+    #         return True
 
-        # Check if the paddle is in potential range of others
-        relevant_position = None
-        if new_pos <= self.collision_boundary_min:
-            relevant_position, relevant_boundary = await self.get_collision_details("min")
-        elif new_pos + self.size >= self.collision_boundary_max:
-            relevant_position, relevant_boundary = await self.get_collision_details("max")
+    #     # Check if the paddle is in potential range of others
+    #     relevant_position = None
+    #     if new_pos <= self.collision_boundary_min:
+    #         relevant_position, relevant_boundary = await self.get_collision_details("min")
+    #     elif new_pos + self.size >= self.collision_boundary_max:
+    #         relevant_position, relevant_boundary = await self.get_collision_details("max")
 
-        # If a potentially colliding position is found
-        if relevant_position is not None:
-            other_key_map = get_player_key_map(relevant_position)
-            other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
+    #     # If a potentially colliding position is found
+    #     if relevant_position is not None:
+    #         other_key_map = get_player_key_map(relevant_position)
+    #         other_paddle_pos_str = await self.redis_ops.get_dynamic_value(other_key_map[self.reverse_axis_key])
             
-            # Other player does not exist in the game, thus no need to check
-            if other_paddle_pos_str is None:
-                return True
-            else:
-                other_paddle_pos = int(other_paddle_pos_str)
+    #         # Other player does not exist in the game, thus no need to check
+    #         if other_paddle_pos_str is None:
+    #             return True
+    #         else:
+    #             other_paddle_pos = int(other_paddle_pos_str)
 
-            # Checking collision based on boundaries
-            if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min:
-                return False
-            elif relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
-                return False
+    #         # Checking collision based on boundaries
+    #         if relevant_boundary == "min" and other_paddle_pos <= self.other_collision_boundary_min:
+    #             return False
+    #         elif relevant_boundary == "max" and other_paddle_pos + self.size >= self.other_collision_boundary_max:
+    #             return False
 
-        return True
+    #     self.last_pos = new_pos
+    #     return True
 
     async def set_data_to_redis(self, new_position):
         # Choose the correct axis key based on the player's side

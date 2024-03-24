@@ -114,8 +114,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     paddle = self.paddle
                 else:
                     paddle = self.paddle_left if side == "left" else self.paddle_right
-                if await paddle.check_movement(pos):
-                    await paddle.set_data_to_redis(pos)
+                # if await paddle.check_movement(pos):
+                await paddle.set_data_to_redis(pos)
 
         # Handle "restart_game" message
         elif data["type"] == "restart_game":
