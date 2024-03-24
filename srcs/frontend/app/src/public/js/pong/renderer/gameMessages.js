@@ -222,7 +222,6 @@ export class GameMessages extends BaseDrawing {
         this.ctx.fillStyle = "#fff";
         this.ctx.textAlign = 'left';
     
-        // Display each piece of information
         this.drawText(`${this.game.mode} - ${this.game.type}`, infoX, infoY, "#fff");
         infoY += infoSpacing;
         this.drawText(`${this.game.scoreLimit} pts`, infoX, infoY, "#fff");

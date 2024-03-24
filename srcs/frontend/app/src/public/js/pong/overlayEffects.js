@@ -18,7 +18,6 @@ export function showScoreOverlay(color) {
 
     updateOverlayPosition();
 
-    // Set the overlay's background color to the assigned color and make it visible
     overlay.style.backgroundColor = color;
     overlay.style.display = 'block';
     overlay.style.opacity = '0.5';
