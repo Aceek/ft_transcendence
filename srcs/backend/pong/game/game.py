@@ -23,8 +23,6 @@ class GameLogic:
 
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
-        if self.player_nb > 2:
-            self.screen_width = self.screen_height
 
         self.paddle_height = PADDLE_HEIGHT
         self.paddle_width = PADDLE_WIDTH
@@ -32,6 +30,11 @@ class GameLogic:
         self.paddle_border_distance = PADDLE_BORDER_DISTANCE
         self.ball_size = BALL_SIZE
         self.ball_speed = BALL_SPEED
+        
+        if self.player_nb > 2:
+            self.screen_width = self.screen_height
+            self.ball_speed =\
+                round(self.ball_speed * (self.screen_width / SCREEN_WIDTH))
 
         self.score_start = SCORE_START
         self.score_limit = SCORE_LIMIT
