@@ -37,7 +37,8 @@ class GameLogic:
             self.screen_width = self.screen_height
             self.ball_speed =\
                 round(self.ball_speed * (self.screen_width / SCREEN_WIDTH))
-
+            self.ball_speed_max =\
+                round(self.ball_speed_max * (self.screen_width / SCREEN_WIDTH))
         self.score_start = SCORE_START
         self.score_limit = SCORE_LIMIT
 

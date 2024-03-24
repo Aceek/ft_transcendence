@@ -53,23 +53,23 @@ class Ball:
             paddle_x, paddle_y = player.paddle_x, player.paddle_y
             paddle_width, paddle_height = player.paddle_width, player.paddle_height
 
-            # Check for horizontal overlap
-            horizontal_overlap = paddle_x <= self.x - self.size / 2 <= paddle_x + paddle_width or \
-                                paddle_x <= self.x + self.size / 2 <= paddle_x + paddle_width
-
-            # Check for vertical overlap
-            vertical_overlap = paddle_y <= self.y - self.size / 2 <= paddle_y + paddle_height or \
-                            paddle_y <= self.y + self.size / 2 <= paddle_y + paddle_height
-
-             # Check for horizontal overlap
-            if horizontal_overlap:
-                # Check for vertical overlap
-                if vertical_overlap:
-                    if player.position == PlayerPosition.LEFT or player.position == PlayerPosition.RIGHT:
-                        self.vx *= -1
-                    elif player.position == PlayerPosition.BOTTOM or player.position == PlayerPosition.UP:
-                        self.vy *= -1
+            if player.position == PlayerPosition.LEFT:
+                if paddle_y <= self.y <= paddle_y + paddle_height and self.x - self.size / 2 <= paddle_x + paddle_width:
+                    self.vx *= -1
                     return True
+            elif player.position == PlayerPosition.RIGHT:
+                if paddle_y <= self.y <= paddle_y + paddle_height and self.x + self.size / 2 >= paddle_x:
+                    self.vx *= -1
+                    return True
+            elif player.position == PlayerPosition.BOTTOM:
+                if paddle_x <= self.x <= paddle_x + paddle_width and self.y + self.size / 2 >= paddle_y:
+                    self.vy *= -1
+                    return True
+            elif player.position == PlayerPosition.UP:
+                if paddle_x <= self.x <= paddle_x + paddle_width and self.y - self.size / 2 <= paddle_y + paddle_height:
+                    self.vy *= -1
+                    return True
+                    
             return False
 
         for player in players:
