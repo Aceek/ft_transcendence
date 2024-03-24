@@ -156,16 +156,10 @@ class GameLogic:
                 self.last_update_time = loop_start_time
 
                 # Perform game updates
-                operation_times, process_time = await self.game_tick(delta_time)
+                process_time = await self.game_tick(delta_time)
 
                 # Broadcast the game data to all clients
                 await self.get_and_send_compacted_dynamic_data(process_time)
-
-                # Log process time and operation times if necessary
-                if process_time > 10:
-                    print(f"PROCESS TIME : {process_time}")
-                    for op_time in operation_times:
-                        print(op_time)
 
                 # Sleep to maintain the target loop duration
                 sleep_duration = max(0, self.target_loop_duration - (time.time() - loop_start_time))
@@ -181,36 +175,25 @@ class GameLogic:
             await self.perform_cleanup()
 
     async def game_tick(self, delta_time):
-        # Initialize an array to store operation times
-        operation_times = []
 
         # Update ball position
-        start_time = time.time()
         self.ball.update_position(delta_time)
         start_process_time = time.time()
-        operation_times.append({'operation': 'update_position', 'delta_time': (time.time() - start_time) * 1000})
 
         # Check and handle wall collision
-        start_time = time.time()
         if self.ball.check_wall_collision():
             self.ball.handle_wall_bounce()
-        operation_times.append({'operation': 'check_wall_collision', 'delta_time': (time.time() - start_time) * 1000})
 
         # Retrieve paddle position from players
         for player in self.players:
-            start_time = time.time()
             await player.get_paddle_from_redis()
-            operation_times.append({'operation': f'get_paddle_from_redis_{player.id}', 'delta_time': (time.time() - start_time) * 1000})
 
         # Check and handle paddle collision
-        start_time = time.time()
         collision, player = self.ball.check_paddle_collision(self.players)
         if collision:
             self.ball.handle_paddle_bounce_calculation(player)
-        operation_times.append({'operation': 'check_paddle_collision', 'delta_time': (time.time() - start_time) * 1000})
 
         # Check and handle goal scored
-        start_time = time.time()
         scored, player = self.ball.check_score()
         if scored:
             self.ball.reset_value()
@@ -220,10 +203,8 @@ class GameLogic:
                 if player.check_win():
                     self.winner = player
                     await self.update_game_status_and_notify(GameStatus.COMPLETED)
-        operation_times.append({'operation': 'check_score', 'delta_time': (time.time() - start_time) * 1000})
 
-        # This could also be returned if you need to use it outside this function
-        return operation_times, (time.time() - start_process_time) * 1000
+        return (time.time() - start_process_time) * 1000
 
     # -------------------------------END GAME-----------------------------------
 
