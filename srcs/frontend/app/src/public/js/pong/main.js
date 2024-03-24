@@ -2,6 +2,7 @@ import { initializeSocket, messageHandler } from './socket.js';
 import { KeyEventController } from './keyEventController.js';
 import { Renderer } from './renderer/renderer.js';
 import { Game } from './game.js';
+import { startSendingPing } from './pingUtils.js';
 
 export let pongSocket;
 let game;
@@ -36,7 +37,7 @@ export async function setupGame() {
                 clearInterval(pingIntervalId);
                 pingIntervalId = null;
             }
-            startSendingPing();
+            pingIntervalId = startSendingPing(pongSocket);
             
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
@@ -47,17 +48,6 @@ export async function setupGame() {
     } catch (error) {
         console.error("Failed to initialize WebSocket:", error);
     }
-}
-
-function startSendingPing() {
-    pingIntervalId = setInterval(() => {
-        if (pongSocket.readyState === WebSocket.OPEN) {
-            pongSocket.send(JSON.stringify({
-                type: "ping",
-                timestamp: Date.now()
-            }));
-        }
-    }, 500);
 }
 
 function waitForInitialization() {
