@@ -44,19 +44,17 @@ async function preventEnterSubmit() {
 }
 
 async function handleInjectJoinOrOwnTournament() {
-  const joinTournamentButton = document.getElementById(
-    "joined_tournament_button"
-  );
+  const joinTournamentButton = document.getElementById("joined_tournament_button");
   joinTournamentButton.addEventListener("click", async () => {
-    joinedOrOwnedActive = true;
-    await injectJoinedOrOwnTournamentList(true);
+    if (!joinTournamentButton.disabled) {
+      await injectJoinedOrOwnTournamentList(true);
+    }
   });
 
-  const ownTournamentButton = document.getElementById(
-    "owner_tournament_button"
-  );
+  const ownTournamentButton = document.getElementById("owner_tournament_button");
   ownTournamentButton.addEventListener("click", async () => {
-    joinedOrOwnedActive = false;
-    await injectJoinedOrOwnTournamentList(false);
+    if (!ownTournamentButton.disabled) {
+      await injectJoinedOrOwnTournamentList(false);
+    }
   });
 }

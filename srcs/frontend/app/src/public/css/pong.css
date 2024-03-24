@@ -52,23 +52,3 @@ canvas#pongCanvas {
         text-shadow: none;
     }    
 }
-    
-.grid-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1; /* Ensure it stays behind other content */
-    background: linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .85) 25%, rgba(255, 255, 255, .85) 26%, transparent 27%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .85) 25%, rgba(255, 255, 255, .85) 26%, transparent 27%, transparent),
-                linear-gradient(0deg, rgba(13, 185, 220, 0.6), rgba(201, 14, 226, 0.6));
-    background-size: 50px 50px, 50px 50px, 100% 100%;
-    animation: moveGrid 5s linear infinite;
-}
-
-@keyframes moveGrid {
-    from { background-position: 0 0, 0 0, 0 0; }
-    to { background-position: 50px 50px, 50px 50px, 0 0; }
-}
-

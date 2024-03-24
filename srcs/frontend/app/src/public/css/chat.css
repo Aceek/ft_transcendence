@@ -1,7 +1,3 @@
-body{
-    color: #1a202c;
-    background-color: #e2e8f0;    
-}
 
 .profile-link-chat {
     color: #007bff;
@@ -25,49 +21,51 @@ body{
     text-decoration: none;
 }
 
+.chat-link {
+    background-color: #1e1e1e;
+}
 
 .chat-link:hover {
     background-color: #f0f0f0;
     cursor: pointer;
-  }
+}
   
-  .chat-link.selected {
-    background-color: #0056b3;
+.chat-link.selected {
+  background-color: #0056b3;
+  color: white;
+}
 
-    color: white;
-  }
-  
-  .chat-link.selected:hover {
-    background-color: #007bff;
-
+.chat-link.selected:hover {
+  background-color: #007bff;
 }
 
 #search-results-container {
-    position: absolute;
-    width: calc(100% - 10px);
-    background-color: white;
-    box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-    z-index: 1000;
-    max-height: 300px;
-    max-width: 300px;
-    overflow-y: auto;
-    border-radius: 0 0 5px 5px;
-  }
-  
-  .search-result-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-  }
-  
-  .search-result-item:last-child {
-    border-bottom: none;
-  }
-  
-  .search-result-item:hover {
-    background-color: #f9f9f9;
-  }
-  
+  position: absolute;
+  width: calc(100% - 10px);
+  background-color: #333;
+  color: #e0e0e0;
+  box-shadow: 0px 4px 6px rgba(0,0,0,0.2);
+  z-index: 1000;
+  max-height: 300px;
+  max-width: 300px;
+  overflow-y: auto;
+  border-radius: 0 0 5px 5px;
+}
+
+.search-result-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background-color: #f9f9f9;
+}
+
 
 .text-online {
     color: green;

@@ -25,6 +25,7 @@ volumes:
   elk-metricbeat01-secret:
   elk-logstash01-secret:
   elk-filebeat01-secret:
+  media:
 
 services:
   db:
@@ -63,6 +64,7 @@ services:
       - api-secret:/home/user/api
       - vault-cert:/vault-cert
       - ./vault/services/api.sh:/home/user/api.sh:ro,Z
+      - media:/app/media
     healthcheck:
       test: [
         "CMD", 
@@ -117,7 +119,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./frontend/app/src:/usr/share/nginx/html
       - nginx-certs:/usr/share/nginx/certs
-      - ./backend/media:/usr/share/nginx/media
+      - media:/usr/share/nginx/media
     depends_on:
       backend:
         condition: service_healthy

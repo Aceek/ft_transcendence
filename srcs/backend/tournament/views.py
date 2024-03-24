@@ -239,7 +239,7 @@ class LocalTournamentView(generics.GenericAPIView, mixins.ListModelMixin, mixins
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return LocalTournament.objects.filter(localOwnerUser=self.request.user, is_finished=False).order_by("-created_at")
+        return LocalTournament.objects.filter(localOwnerUser=self.request.user).order_by("-created_at")
 
     def perform_create(self, serializer):
         count = LocalTournament.objects.filter(localOwnerUser=self.request.user, is_finished=False).count()
@@ -256,8 +256,6 @@ class LocalTournamentView(generics.GenericAPIView, mixins.ListModelMixin, mixins
         return self.create(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
-        tournament = LocalTournament.objects.filter(localOwnerUser=request.user, is_finished=False).first()
-        if tournament:
-            tournament.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({"detail": "No active tournament found for deletion."}, status=status.HTTP_404_NOT_FOUND)
+        LocalTournament.objects.filter(localOwnerUser=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    

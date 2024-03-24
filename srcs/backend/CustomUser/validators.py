@@ -36,11 +36,11 @@ def validate_image_size(value):
         raise ValidationError("La taille du fichier ne doit pas dépasser 3 Mo.")
 
 
-def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png", "image/webp"]):
+def validate_mime_type(value, allowed_mime_types=["image/jpeg", "image/png", "image/webp", "image/jpg"]):
     mime_type, _ = mimetypes.guess_type(value.name)
     if mime_type not in allowed_mime_types:
         raise ValidationError(
-            "Le type MIME de l'image n'est pas pris en charge. (jpeg, png, webp))"
+            "Le type MIME de l'image n'est pas pris en charge. (jpeg, png, webp, jpg))"
         )
 
 
@@ -58,8 +58,8 @@ def validate_image_dimensions(value):
         )
 
 
-def validate_image_ext(value, allowed_formats=["jpeg", "png", "webp"]):
+def validate_image_ext(value, allowed_formats=["jpeg", "png", "webp", "jpg"]):
     image_extension = value.name.split(".")[-1].lower()
 
     if image_extension not in allowed_formats:
-        raise ValidationError("L'extension du fichier n'est pas autorisée. (jpeg, png, webp)")
+        raise ValidationError("L'extension du fichier n'est pas autorisée. (jpeg, png, webp, jpg)")

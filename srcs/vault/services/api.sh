@@ -45,3 +45,6 @@ export EMAIL_HOST_USER=$(echo $EMAIL_CONF | jq -r .user)
 export EMAIL_HOST_PASSWORD=$(echo $EMAIL_CONF | jq -r .password)
 
 exec python3 /app/start_server.py
+
+
+

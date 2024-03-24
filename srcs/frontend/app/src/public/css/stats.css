@@ -1,24 +1,54 @@
 .summary-container {
-  background-color: #f9f9f9;
+  background-color: #333;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  color: #ccc;
 }
 
 .summary-title {
   font-size: 22px;
   font-weight: bold;
   margin-bottom: 20px;
-  color: #333;
+  color: #e0e0e0;
 }
 
 .summary-stat {
   font-size: 18px;
   margin-bottom: 15px;
-  color: #555;
+  color: #ddd;
 }
 
 .icon {
   margin-right: 10px;
   color: #007bff;
+}
+
+#eloChart, #winLossRatioChart, #winLoseChart {
+  background-color: #323232;
+}
+
+.form-select {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 0.5em 3.5em 0.5em 1em;
+  border-radius: 0.25em;
+}
+
+.form-select {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23e0e0e0" d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 1.3em auto;
+}
+
+.form-select:focus {
+  border-color: #777;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }

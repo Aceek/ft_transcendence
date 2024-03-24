@@ -1,0 +1,93 @@
+body, button, input, textarea, select {
+    font-family: 'Geo', sans-serif;
+    color: #e0b0ff;
+    background-color: #2D2D2D;
+}
+
+.btn-primary {
+    background-color: #2D2D2D;
+    color: #e0b0ff;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.btn-primary:hover {
+    background-color: #3e3e3e;
+}
+
+.btn-selected, .btn:active, .btn.active {
+  color: #ffffff; 
+  background-color: #6672e8;
+  border-color: #6672e8; 
+}
+
+.card {
+  background-color: #1e1e1e;
+  border-color: #323232;
+  color: #e0e0e0;
+}
+
+.card-body {
+  background-color: #323232;
+}
+
+.btn {
+  background-color: #333;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.btn:hover {
+  background-color: #444;
+}
+
+.form-control {
+  background-color: #2c2c2c;
+  color: #ffffff;
+  border: 1px solid #4e4e4e;
+  box-shadow: none;
+}
+
+.form-control:focus {
+  background-color: #2c2c2c;
+  color: #ffffff;
+  border-color: #767676;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(130, 138, 145, 0.25);
+}
+
+select.form-control:focus, textarea.form-control:focus {
+  background-color: #2c2c2c;
+  color: #ffffff;
+  border-color: #767676;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(130, 138, 145, 0.25);
+}
+
+.form-control::placeholder {
+  color: #b1b1b1;
+  opacity: 1;
+}
+
+.input-group-text {
+  background-color: #2c2c2c;
+  color: #ffffff;
+  border: 1px solid #4e4e4e;
+}
+
+.input-group-text:focus {
+  border-color: #767676;
+  box-shadow: none;
+}
+
+/* .li-item  */
+.li-item {
+  background-color: #323232;
+  color: #ffffff;
+  border: 1px solid #4e4e4e;
+}
+/* list-group-item */
+.list-group-item {
+  background-color: #323232;
+  color: #ffffff;
+  border: 1px solid #4e4e4e;
+}

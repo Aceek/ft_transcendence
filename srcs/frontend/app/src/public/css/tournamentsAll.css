@@ -5,11 +5,8 @@
   text-overflow: ellipsis;
 }
 
-
 body{
-  color: #1a202c;
   text-align: end;
-  background-color: #e2e8f0;    
 }
 
 .tournament_status {
@@ -57,7 +54,6 @@ body{
 }
 
 h3 {
-  color: RGB(13, 110, 253);
   font-size: 1.2em;
   text-align: center;
 }
@@ -80,7 +76,6 @@ h3 {
   flex-direction: column;
   min-width: 0;
   word-wrap: break-word;
-  background-color: #fff;
   background-clip: border-box;
   border: 0 solid rgba(0,0,0,.125);
   border-radius: .25rem;
