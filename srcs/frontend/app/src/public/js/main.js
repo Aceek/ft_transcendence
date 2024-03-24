@@ -11,7 +11,7 @@ import { displayFriendsProfile } from "./profile/profileFriends.js";
 import { displayStats } from "./profile/stats/stats.js";
 import { injectNavBar, updateActiveLink } from "./navbar.js";
 import { getPongGamePage } from "./pong/displayPong.js";
-import { deleteNavbar } from "./pageUtils.js";
+import { deleteNavbar, loadProfileCss } from "./pageUtils.js";
 import { displayTournamentAllPage } from "./tournament/TournamentAll/tournamentAll.js";
 import { displayTournamentPage } from "./tournament/TournamentView/tournament.js";
 import { get2FAPage } from "./2fa/2fa.js";
@@ -58,7 +58,12 @@ export function clearLoadedCss() {
   const head = document.head;
   const links = Array.from(head.querySelectorAll("link"));
   links.forEach((link) => {
-    if (link.id === "CssFromPageSPA" && !link.href.includes("navbar.css")) {
+    if (
+      link.id === "CssFromPageSPA" &&
+      !link.href.includes("navbar.css") &&
+      !link.href.includes("animatedBackground.css") &&
+      !link.href.includes("retroTheme.css")
+    ) {
       head.removeChild(link);
     }
   });
@@ -72,6 +77,8 @@ function resetDataForReloadingPage(path) {
 }
 
 export async function router(path, updateHistory = true) {
+  loadProfileCss("/public/css/animatedBackground.css");
+  loadProfileCss("/public/css/retroTheme.css");
   if (!path) {
     path = window.location.pathname;
   }
@@ -105,12 +112,20 @@ async function matchRegex(path) {
   const profileMatch = path.match(/^\/profile\/(?!stats$)([a-zA-Z0-9_-]+)$/);
   const profileStatsMatch = path.match(/^\/profile\/([a-zA-Z0-9_-]+)\/stats$/);
   const tournamentMatch = path.match(/^\/tournament\/([a-zA-Z0-9_-]+)$/);
-  
+
   // pong routes
-  const onlineStandardMatch = path.match(new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`));
-  const onlineTournamentMatch = path.match(new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/?$`));
-  const offlineStandardMatch = path.match(new RegExp(`^/pong/offline/2/standard/(${uuidPattern})/?$`));
-  const offlineTournamentMatch = path.match(new RegExp(`^/pong/offline/2/tournament/(${uuidPattern})/?$`));
+  const onlineStandardMatch = path.match(
+    new RegExp(`^/pong/online/([2-4])/standard/(${uuidPattern})/?$`)
+  );
+  const onlineTournamentMatch = path.match(
+    new RegExp(`^/pong/online/2/tournament/(${uuidPattern})/?$`)
+  );
+  const offlineStandardMatch = path.match(
+    new RegExp(`^/pong/offline/2/standard/(${uuidPattern})/?$`)
+  );
+  const offlineTournamentMatch = path.match(
+    new RegExp(`^/pong/offline/2/tournament/(${uuidPattern})/?$`)
+  );
 
   if (profileStatsMatch) {
     const UID = profileStatsMatch[1];
@@ -126,8 +141,12 @@ async function matchRegex(path) {
     const tournamentID = tournamentMatch[1];
     await displayTournamentPage(tournamentID);
     return true;
-  } else if (onlineStandardMatch || onlineTournamentMatch ||
-            offlineStandardMatch || offlineTournamentMatch) {
+  } else if (
+    onlineStandardMatch ||
+    onlineTournamentMatch ||
+    offlineStandardMatch ||
+    offlineTournamentMatch
+  ) {
     console.log("Loading pong game:");
     await getPongGamePage();
     return true;
@@ -168,7 +187,7 @@ async function handleAuthenticatedRoutes(path) {
         await displayLocalTournamentPage();
         console.log("Loading local tournament page");
         break;
-      
+
       default:
         console.log("Path not found, loading default page");
         await display404();

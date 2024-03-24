@@ -130,27 +130,18 @@ export async function injectOwnedTournamentList() {
     console.error("Error:", error);
   }
 }
-
-export async function injectJoinedOrOwnTournamentList(joined = true) {
+export async function injectJoinedOrOwnTournamentList(joined) {
+  const joinTournamentButton = document.getElementById("joined_tournament_button");
+  const ownTournamentButton = document.getElementById("owner_tournament_button");
   if (joined) {
-    const joinTournamentButton = document.getElementById(
-      "joined_tournament_button"
-    );
-    joinTournamentButton.classList.add("active");
-    const ownTournamentButton = document.getElementById(
-      "owner_tournament_button"
-    );
+    joinTournamentButton.disabled = true;
+    ownTournamentButton.disabled = false;
     ownTournamentButton.classList.remove("active");
     await injectJoinedTournamentList();
   } else {
-    const joinTournamentButton = document.getElementById(
-      "joined_tournament_button"
-    );
+    joinTournamentButton.disabled = false;
+    ownTournamentButton.disabled = true;
     joinTournamentButton.classList.remove("active");
-    const ownTournamentButton = document.getElementById(
-      "owner_tournament_button"
-    );
-    ownTournamentButton.classList.add("active");
     await injectOwnedTournamentList();
   }
 }

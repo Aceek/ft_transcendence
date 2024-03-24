@@ -130,6 +130,8 @@ export async function changeAvatar(profile) {
         updateAvatarImage(file);
       } else {
         console.error("Erreur lors de la modification de l'avatar.");
+        const errorMessage = extractErrorMessages(await updateSuccess.response.json());
+        printConfirmationMessage(errorMessage, "avatar", "red");
       }
     });
 }

@@ -77,25 +77,3 @@ canvas#pongCanvas {
     pointer-events: none; /* Ensure clicks pass through to the canvas */
 }
 
-.grid-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1; /* Ensure it stays behind other content */
-    background: 
-        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.5) 25%, rgba(255, 255, 255, 0.5) 26%, transparent 27%, transparent),
-        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.5) 25%, rgba(255, 255, 255, 0.5) 26%, transparent 27%, transparent),
-        linear-gradient(135deg, rgba(13, 185, 220, 0.6), rgba(201, 14, 226, 0.6));
-    background-size: 60px 60px, 60px 60px, cover; /* Adjusted for thicker grid lines */
-    background-blend-mode: screen;
-    animation: moveGrid 10s linear infinite forwards;
-}
-
-@keyframes moveGrid {
-    0% { background-position: 0 0, 0 0, 0 0; }
-    50% { background-position: 100px 100px, 100px 100px, 0 0; } /* Subtle shift halfway through for dynamic movement */
-    100% { background-position: 60px 60px, 60px 60px, 0 0; }
-}
-

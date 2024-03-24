@@ -9,11 +9,12 @@ import { injectUserInfo } from "../profileUtils.js";
 import { getProfile } from "../getProfile.js";
 import { ajusterInterfaceProfil } from "../profileFriends.js";
 
-
 export async function displayProfileStatsInfo(userUID = null) {
   try {
     loadProfileCss("/public/css/profile.css");
-    const profileTemplateHtml = await fetchTemplate("/public/html/profile.html");
+    const profileTemplateHtml = await fetchTemplate(
+      "/public/html/profile.html"
+    );
     document.getElementById("main").innerHTML = profileTemplateHtml;
     const profile = await getProfile(userUID);
     injectUserInfo(profile);
@@ -26,7 +27,6 @@ export async function displayProfileStatsInfo(userUID = null) {
   }
 }
 
-
 export async function displayStats(userUID = null) {
   await displayProfileStatsInfo(userUID);
   await fetchTemplate("/public/html/stats.html")
@@ -35,6 +35,7 @@ export async function displayStats(userUID = null) {
       friendHistoryDiv.innerHTML = statsDivString;
 
       await loadScript("https://cdn.jsdelivr.net/npm/chart.js");
+      loadProfileCss("/public/css/stats.css");
       try {
         const statsData = await fetchData(userUID);
         await displayListenProfileButton(userUID);
@@ -73,7 +74,6 @@ async function displayListenProfileButton(userUID = null) {
 
 async function displaySummary(data) {
   try {
-    loadProfileCss("/public/css/stats.css");
     loadProfileCss(
       "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
     );
@@ -230,5 +230,3 @@ function displayEloChart(data) {
     },
   });
 }
-
-

@@ -1,7 +1,41 @@
 .active {
-    color: RGB(13, 110, 253) !important;
+  color: RGB(13, 110, 253) !important;
 }
 
-.nav-link {
-    text-align: end;
+.navbar {
+  background-color: #121212;
+  border-color: #222;
+}
+
+.nav-link, .navbar-brand {
+  color: #e0e0e0;
+  text-align: end;
+}
+
+.nav-link:hover, .navbar-brand:hover {
+  color: #ffffff;
+}
+
+.navbar-dark .navbar-nav .nav-link.dropdown-toggle {
+  color: #e0e0e0;
+}
+
+.navbar-dark .dropdown-menu {
+  background-color: #121212;
+  border-color: #222;
+}
+
+.navbar-dark .dropdown-menu .dropdown-item {
+  color: #e0e0e0;
+}
+
+.navbar-dark .dropdown-menu .dropdown-item:hover, 
+.navbar-dark .dropdown-menu .dropdown-item:focus {
+  background-color: #333;
+  color: #ffffff;
+}
+
+.dropdown-menu .active {
+  background-color: #6672e8;
+  color: #fff !important;
 }

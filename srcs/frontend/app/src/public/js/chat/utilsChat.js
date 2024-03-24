@@ -144,7 +144,7 @@ export function createMessageElement(message, conversation) {
 
   const backgroundDiv = document.createElement("div");
   backgroundDiv.id = isSender ? "right-background" : "left-background";
-  backgroundDiv.classList.add("flex-shrink-1", "bg-light", "rounded", "py-2", "px-3");
+  backgroundDiv.classList.add("flex-shrink-1", "bg-dark", "rounded", "py-2", "px-3");
   if (isSender) {
     backgroundDiv.classList.add("ml-3");
   } else {

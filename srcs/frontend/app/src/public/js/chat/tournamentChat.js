@@ -42,7 +42,7 @@ export function createTournamentMessage(message) {
     <div class="d-flex align-items-center">
       <img src="/public/images/profile.jpg" class="rounded-circle me-1" alt="tournament-avatar" width="40" height="40">
     </div>
-    <div id="left-background" class="flex-shrink-1 bg-light rounded py-2 px-3 mr-3">
+    <div id="left-background" class="flex-shrink-1 bg-dark rounded py-2 px-3 mr-3">
       <div class="font-weight-bold mb-1">Tournament info</div>
       <div class="message-content tournament-link-chat" data-uid=${message.tournamentId}>${message.text}</div>
     </div>
