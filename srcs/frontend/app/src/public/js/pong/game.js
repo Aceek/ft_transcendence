@@ -1,6 +1,6 @@
 import { Ball } from './ball.js';
 import { Player } from './player.js';
-import { KeyEventController } from './keyEventController.js';
+import { updateGlowBaseColorFromRgba } from './colorUtils.js';
 
 export class Game {
     constructor() {
@@ -107,13 +107,23 @@ export class Game {
     
     handleDynamicData(dynamicData) {
         this.status = parseInt(dynamicData.gs, 10);
-        if (this.status === 1) {
-            this.restartRequest = false;
+        if (this.status === 0 || this.status === 1) {
+            this.handleGameRestart();
         }
         this.ball.handleDynamicData(dynamicData);
         this.players.forEach(player => player.handleDynamicData(dynamicData));
     }
 
+    handleGameRestart() {
+        // Reset the canvas glow color to white when a game is restarting
+        if (this.status === 0 && this.restartRequest === true) {
+            updateGlowBaseColorFromRgba('rgba(255, 255, 255, 1)');
+        }
+        // Reset the restart request as the new game is ongoing
+        if (this.status === 1 && this.restartRequest === true) {
+            this.restartRequest = false;
+        }
+    }
     
     handleCompactedDynamicData(ball_data, players_data, process_time) {
         this.ball.handleCompactedDynamicData(ball_data, this.avgPing, this.processTime, this.status);

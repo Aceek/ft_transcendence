@@ -23,6 +23,7 @@ export function assignColor(id) {
         'rgba(255, 0, 255, 1)', // Purple
         'rgba(50, 255, 150, 1)', // Green
         'rgba(255, 165, 0, 1)', // Orange
+        'rgba(255, 255, 255, 1)', // White
     ];
     return colors[id] || colors[4];
 }

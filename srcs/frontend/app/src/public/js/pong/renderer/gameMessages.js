@@ -182,7 +182,7 @@ export class GameMessages extends BaseDrawing {
         const separationSpacing = 10;
         const metricsX = this.game.canvasWidth - 40;
     
-        const color = label === 'fps' ? (value < 50 ? '#B22222' : '#FFFFFF') : (value > 15 ? '#FF0000' : '#FFFFFF');
+        const color = label === 'fps' ? (value < 50 ? '#B22222' : '#FFFFFF') : (value > 9 ? '#FF0000' : '#FFFFFF');
     
         this.ctx.textAlign = 'left';
         this.setFont(20);
