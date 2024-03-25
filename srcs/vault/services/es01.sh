@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sleep 2
+
 export VAULT_TOKEN=$(grep 'token ' /secret/token.cfg | awk '{print $2}')
 
 export ES_01=$(curl --cacert /vault-cert/vault.crt -X 'GET' 'https://vault:8200/v1/secret/es01' -H 'accept */*' -H "X-Vault-Token: $VAULT_TOKEN" | jq -r .data)
