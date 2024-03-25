@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sleep 10
+
 export VAULT_TOKEN=$(grep 'token ' /secret/token.cfg | awk '{print $2}')
 
 export METRICBEAT=$(curl --cacert /vault-cert/vault.crt -X 'GET' 'https://vault:8200/v1/secret/metricbeat01' -H 'accept */*' -H "X-Vault-Token: $VAULT_TOKEN" | jq -r .data)
