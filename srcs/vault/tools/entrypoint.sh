@@ -24,6 +24,8 @@ VAULT_UNSEAL_KEY=$(cat /vault/secrets/vault_unseal_key.cfg)
 # Unseal the vault
 vault operator unseal $VAULT_UNSEAL_KEY
 
+sleep 2
+
 # Unset the VAULT_UNSEAL_KEY variable
 unset VAULT_UNSEAL_KEY
 
