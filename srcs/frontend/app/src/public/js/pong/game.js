@@ -87,12 +87,12 @@ export class Game {
     handleStaticData(staticData) {
         this.parseStaticData(staticData);
         this.updateCanvasSize();
-        this.createPlayers();
-        this.players.forEach(player => player.handleStaticData(staticData));
-        this.ball.handleStaticData(staticData);
         if (!this.isInitialized) {
+            this.createPlayers();
             this.isInitialized = true;
         }
+        this.players.forEach(player => player.handleStaticData(staticData));
+        this.ball.handleStaticData(staticData);
     }
 
     parseStaticData(staticData) {
@@ -111,11 +111,6 @@ export class Game {
             this.handleGameRestart();
         }
         this.ball.handleDynamicData(dynamicData);
-        // this.players.forEach((player) => {
-        //     if (!player.isControlled) {
-        //         player.handleDynamicData(dynamicData);
-        //     }
-        // });
         this.players.forEach(player => player.handleDynamicData(dynamicData));
     }
 

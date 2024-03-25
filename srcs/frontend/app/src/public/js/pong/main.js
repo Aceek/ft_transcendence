@@ -99,10 +99,11 @@ function mainLoop() {
         game.ball.x = interpolatePosition(game.ball.lastServerX, game.ball.lastServerVx, gameDeltaTime);
         game.ball.y = interpolatePosition(game.ball.lastServerY, game.ball.lastServerVy, gameDeltaTime);
     }
-    
+	
     if (renderer) {
         renderer.draw();
     }
     
+
     animationFrameId = requestAnimationFrame(mainLoop);
 }
