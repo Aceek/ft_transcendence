@@ -85,14 +85,14 @@ export class Game {
     }
 
     handleStaticData(staticData) {
-        this.parseStaticData(staticData);
-        this.updateCanvasSize();
         if (!this.isInitialized) {
+            this.parseStaticData(staticData);
+            this.updateCanvasSize();
             this.createPlayers();
+            this.players.forEach(player => player.handleStaticData(staticData));
+            this.ball.handleStaticData(staticData);
             this.isInitialized = true;
         }
-        this.players.forEach(player => player.handleStaticData(staticData));
-        this.ball.handleStaticData(staticData);
     }
 
     parseStaticData(staticData) {
