@@ -204,7 +204,7 @@ export class GameMessages extends BaseDrawing {
             this.drawMetric(this.game.fps, "fps", metricsY);
             metricsY += 20;
         }
-        
+
         if (typeof this.game.avgPing === 'number') {
             const avgLatency = (this.game.status === 1 ? this.game.avgPing + this.game.processTime : this.game.avgPing);
             this.drawMetric(avgLatency, "ms", metricsY);
@@ -212,7 +212,6 @@ export class GameMessages extends BaseDrawing {
         }
     }
     
-
     drawGameInfo() {
         const infoSpacing = 20;
         let infoY = 15;
